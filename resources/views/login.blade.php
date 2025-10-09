@@ -14,7 +14,7 @@
         }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen bg-white text-black font-sans">
+<body class="flex flex-col items-center justify-between min-h-screen bg-white text-black font-sans">
 
     <!-- Logo -->
     <div class="absolute top-[-15px] left-1">
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Contenedor principal -->
-    <div class="w-full max-w-[50%]">
+    <div class="w-full max-w-[50%] mt-[15vh]">
         <h1 class="text-4xl font-bold text-center mb-8">Inicia sesión</h1>
 
         <form action="#" method="POST" class="space-y-4">
@@ -57,11 +57,11 @@
         <div class="text-center mt-3">
             <a href="#" class="text-black hover:text-[var(--azul)]">¿Olvidaste tu contraseña?</a>
         </div>
-
-        <!-- Nota -->
-        <p class="text-center text-[var(--gris-oscuro)]">
-            No compartas tu contraseña con nadie.
-        </p>
     </div>
+
+    <!-- Nota -->
+    <p class="text-center text-[var(--gris-oscuro)] mb-4">
+        No compartas tu contraseña con nadie.
+    </p>
 </body>
 </html>
