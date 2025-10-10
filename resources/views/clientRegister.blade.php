@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login</title>
+  <title>Register</title>
 
   <!--Logo-->
   <link rel="icon" href="{{ asset('images/logo_blue.png') }}" type="image/png">
@@ -44,18 +44,67 @@
 
     <!-- Contenedor principal -->
     <div class="w-full max-w-[50%] mt-[5vh]">
-        <h1 class="text-4xl font-bold text-center mb-8 istok-web-bold">Inicia sesión</h1>
+        <h1 class="text-4xl font-bold text-center mb-8 istok-web-bold">Registrar cliente</h1>
 
         <form action="#" method="POST" class="space-y-4">
             @csrf
 
+            <!--Nota-->
+            <div>
+                <span>Por favor, llena todos los campos del formulario con los datos proporcionados por el cliente.</span>
+            </div>
+
+            <!--Nombre Completo-->
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Nombre completo</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
+                    <input type="text" placeholder="Nombre completo" class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
+                </div>
+            </div>
+
             <!-- Correo -->
             <div>
-                <label class="block font-bold mb-1 istok-web-bold">Correo electrónico</label>
+                <label class="block font-bold mb-1 istok-web-bold">Correo electrónico <span class="text-xs istok-web-regular text-[var(--gris-oscuro)]"> Se enviará un correo con el enlace para activar su cuenta.</span></label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
                     <input type="email" placeholder="ejemplo@gmail.com" class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
                 </div>
             </div>
+
+            <!--Teléfono-->
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Teléfono</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
+                    <input type="tel" placeholder="Introduce 10 dígitos" class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
+                </div>
+            </div>
+
+            <!--Fecha de nacimiento-->
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Fecha de nacimiento</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
+                    <input type="date" class="flex-1 bg-transparent outline-none istok-web-regular">
+                </div>
+            </div>
+
+            <!--Tipo de membresía-->
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Tipo de membresía</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
+                    <select id="#" name="#" class="flex-1 bg-transparent outline-none istok-web-regular"> <!--Fer, cambia el id y name-->
+                        <option value="#">Mensual</option> <!--Fer, cambia los valores de los Value-->
+                        <option value="#">Semestral</option> 
+                        <option value="#">Anual</option>
+                    </select>
+                </div>
+            </div>
+
+            <!--Huella dactilar
+                        <div>
+                <label class="block font-bold mb-1 istok-web-bold">Huella dactilar <span class="text-xs istok-web-regular text-[var(--gris-oscuro)]"> Sin huella</span></label>
+                <div class="">
+                    <input type="" class="">
+                </div>
+            </div>-->
 
             <!-- Contraseña -->
             <div>
@@ -68,21 +117,22 @@
                 </div>
             </div>
 
-            <!-- Botón -->
-            <button type="submit" class="w-full mt-2 bg-[var(--azul)] text-white istok-web-regular py-3 rounded-full hover:bg-[var(--azul-oscuro)] transition">
-                Iniciar sesión
-            </button>
+            <div class="flex gap-4">
+                <!-- Botón cancelar -->
+                <button type="submit" class="w-full mt-2 bg-transparent text-[var(--gris-oscuro)] border-2 border-[var(--gris-oscuro)] istok-web-regular py-3 rounded-full hover:bg-[var(--gris-oscuro)] hover:text-white transition-colors">
+                    Cancelar
+                </button>
+                <!-- Botón registrar cliente-->
+                <button type="submit" class="w-full mt-2 bg-[var(--azul)] text-white istok-web-regular py-3 rounded-full hover:bg-[var(--azul-oscuro)] transition">
+                    Registrar cliente
+                </button>
+            </div>
         </form>
-
-        <!-- Recuperar contraseña -->
-        <div class="text-center mt-3">
-            <a href="#" class="text-black istok-web-regular hover:text-[var(--azul)]">¿Olvidaste tu contraseña?</a>
-        </div>
     </div>
 
     <!-- Nota -->
-    <p class="text-center istok-web-regular text-[var(--gris-oscuro)] mb-4">
-        No compartas tu contraseña con nadie.
+    <p class="text-center istok-web-regular text-[var(--gris-oscuro)] my-4">
+        Al registrar al cliente se generará el cálculo automático de pago y promociones.
     </p>
 </body>
 </html>
