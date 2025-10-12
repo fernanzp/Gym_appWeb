@@ -46,88 +46,121 @@
     <div class="w-full max-w-[50%] mt-[5vh]">
         <h1 class="text-4xl font-bold text-center mb-8 istok-web-bold">Registrar cliente</h1>
 
-        <form action="#" method="POST" class="space-y-4">
+        <form action="{{ route('clientes.store') }}" method="POST" class="space-y-4">
             @csrf
 
-            <!--Nota-->
+            @if (session('success'))
+                <div class="p-3 rounded-md bg-green-100 text-green-800">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @error('general')
+                <div class="p-3 rounded-md bg-red-100 text-red-800">{{ $message }}</div>
+            @enderror
+
+            <!-- Nota -->
             <div>
                 <span>Por favor, llena todos los campos del formulario con los datos proporcionados por el cliente.</span>
             </div>
 
-            <!--Nombre Completo-->
+            <!-- Nombre completo -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Nombre completo</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    <input type="text" placeholder="Nombre completo" class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
+                    <input name="nombre_comp" type="text" placeholder="Nombre completo"
+                        value="{{ old('nombre_comp') }}"
+                        class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
                 </div>
+                @error('nombre_comp') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
             <!-- Correo -->
             <div>
-                <label class="block font-bold mb-1 istok-web-bold">Correo electrónico <span class="text-xs istok-web-regular text-[var(--gris-oscuro)]"> Se enviará un correo con el enlace para activar su cuenta.</span></label>
+                <label class="block font-bold mb-1 istok-web-bold">
+                    Correo electrónico
+                    <span class="text-xs istok-web-regular text-[var(--gris-oscuro)]">
+                        Se enviará un correo con el enlace para activar su cuenta.
+                    </span>
+                </label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    <input type="email" placeholder="ejemplo@gmail.com" class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
+                    <input name="email" type="email" placeholder="ejemplo@gmail.com"
+                        value="{{ old('email') }}"
+                        class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
                 </div>
+                @error('email') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <!--Teléfono-->
+            <!-- Teléfono -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Teléfono</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    <input type="tel" placeholder="Introduce 10 dígitos" class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
+                    <input name="telefono" type="tel" placeholder="Introduce 10 dígitos"
+                        value="{{ old('telefono') }}"
+                        class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
                 </div>
+                @error('telefono') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <!--Fecha de nacimiento-->
+            <!-- Fecha de nacimiento -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Fecha de nacimiento</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    <input type="date" class="flex-1 bg-transparent outline-none istok-web-regular">
+                    <input name="fecha_nac" type="date" value="{{ old('fecha_nac') }}"
+                        class="flex-1 bg-transparent outline-none istok-web-regular">
                 </div>
+                @error('fecha_nac') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <!--Tipo de membresía-->
+            <!-- Tipo de membresía -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Tipo de membresía</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    <select id="#" name="#" class="flex-1 bg-transparent outline-none istok-web-regular"> <!--Fer, cambia el id y name-->
-                        <option value="#">Mensual</option> <!--Fer, cambia los valores de los Value-->
-                        <option value="#">Semestral</option> 
-                        <option value="#">Anual</option>
+                    <select id="plan_id" name="plan_id" class="flex-1 bg-transparent outline-none istok-web-regular">
+                        @foreach($planes as $p)
+                            <option value="{{ $p->id }}" @selected(old('plan_id') == $p->id)>
+                                {{ $p->nombre }} ({{ $p->duracion_dias }} días) – ${{ number_format($p->precio, 0) }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
+                @error('plan_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
-
-            <!--Huella dactilar
-                        <div>
-                <label class="block font-bold mb-1 istok-web-bold">Huella dactilar <span class="text-xs istok-web-regular text-[var(--gris-oscuro)]"> Sin huella</span></label>
-                <div class="">
-                    <input type="" class="">
-                </div>
-            </div>-->
 
             <!-- Contraseña -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Contraseña</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    <input type="password" placeholder="Contraseña" class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="w-6 h-6">
-                        <path d="M320 144C254.8 144 201.2 173.6 160.1 211.7C121.6 247.5 95 290 81.4 320C95 350 121.6 392.5 160.1 428.3C201.2 466.4 254.8 496 320 496C385.2 496 438.8 466.4 479.9 428.3C518.4 392.5 545 350 558.6 320C545 290 518.4 247.5 479.9 211.7C438.8 173.6 385.2 144 320 144zM127.4 176.6C174.5 132.8 239.2 96 320 96C400.8 96 465.5 132.8 512.6 176.6C559.4 220.1 590.7 272 605.6 307.7C608.9 315.6 608.9 324.4 605.6 332.3C590.7 368 559.4 420 512.6 463.4C465.5 507.1 400.8 544 320 544C239.2 544 174.5 507.2 127.4 463.4C80.6 419.9 49.3 368 34.4 332.3C31.1 324.4 31.1 315.6 34.4 307.7C49.3 272 80.6 220 127.4 176.6zM320 400C364.2 400 400 364.2 400 320C400 290.4 383.9 264.5 360 250.7C358.6 310.4 310.4 358.6 250.7 360C264.5 383.9 290.4 400 320 400zM240.4 311.6C242.9 311.9 245.4 312 248 312C283.3 312 312 283.3 312 248C312 245.4 311.8 242.9 311.6 240.4C274.2 244.3 244.4 274.1 240.5 311.5zM286 196.6C296.8 193.6 308.2 192.1 319.9 192.1C328.7 192.1 337.4 193 345.7 194.7C346 194.8 346.2 194.8 346.5 194.9C404.4 207.1 447.9 258.6 447.9 320.1C447.9 390.8 390.6 448.1 319.9 448.1C258.3 448.1 206.9 404.6 194.7 346.7C192.9 338.1 191.9 329.2 191.9 320.1C191.9 309.1 193.3 298.3 195.9 288.1C196.1 287.4 196.2 286.8 196.4 286.2C208.3 242.8 242.5 208.6 285.9 196.7z" fill="#727272"/>
-                    </svg>
+                    <input name="contrasena" type="password" placeholder="Contraseña"
+                        class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
+                </div>
+                @error('contrasena') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <!-- Confirmación de contraseña -->
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Confirmar contraseña</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
+                    <input name="contrasena_confirmation" type="password" placeholder="Repite la contraseña"
+                        class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
                 </div>
             </div>
 
             <div class="flex gap-4">
-                <!-- Botón cancelar -->
-                <button type="submit" class="w-full mt-2 bg-transparent text-[var(--gris-oscuro)] border-2 border-[var(--gris-oscuro)] istok-web-regular py-3 rounded-full hover:bg-[var(--gris-oscuro)] hover:text-white transition-colors">
+                <!-- Botón cancelar sin submit -->
+                <a href="{{ url()->previous() }}"
+                class="w-full mt-2 text-center bg-transparent text-[var(--gris-oscuro)] border-2 border-[var(--gris-oscuro)] istok-web-regular py-3 rounded-full hover:bg-[var(--gris-oscuro)] hover:text-white transition-colors">
                     Cancelar
-                </button>
-                <!-- Botón registrar cliente-->
-                <button type="submit" class="w-full mt-2 bg-[var(--azul)] text-white istok-web-regular py-3 rounded-full hover:bg-[var(--azul-oscuro)] transition">
+                </a>
+
+                <!-- Botón registrar -->
+                <button type="submit"
+                        class="w-full mt-2 bg-[var(--azul)] text-white istok-web-regular py-3 rounded-full hover:bg-[var(--azul-oscuro)] transition">
                     Registrar cliente
                 </button>
             </div>
         </form>
+
     </div>
 
     <!-- Nota -->

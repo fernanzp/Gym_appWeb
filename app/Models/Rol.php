@@ -12,6 +12,8 @@ class Rol extends Model
     // Definir el nombre de la tabla
     protected $table = 'roles';
 
+    public $timestamps = false;  // Agrega esto
+
     // Los campos que se pueden asignar masivamente
     protected $fillable = ['rol'];
 

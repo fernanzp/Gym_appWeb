@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClienteController;
 
 //Ruta base
 Route::get('/', function () {
@@ -15,9 +16,9 @@ Route::middleware('web')->group(function () {
 });
 
 //Ruta para el dashboard
-Route::middleware(['auth'])->group(function () {
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
-});
+Route::view('/dashboard', 'dashboard')->name('dashboard');
+
 
 //Ruta para el registro de clientes
-Route::view('/register', 'clientRegister');
+Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
+Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
