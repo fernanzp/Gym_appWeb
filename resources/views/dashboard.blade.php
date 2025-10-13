@@ -105,7 +105,7 @@
             <!-- Card 1 -->
             <article class="h-[180px] rounded-2xl bg-gradient-to-br from-[var(--azul)] to-[#023373] text-white shadow-sm flex flex-col">
               <a href="{{ route('clientRegister') }}" class="p-4">
-                <h3 class="text-xl font-bold">Registrar nuevo cliente</h3>
+                <h3 class="text-xl font-bold text-center">Registrar nuevo cliente</h3>
                 <div class="w-full h-full flex items-center justify-center">
                   <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
                     <path fill="#ffffff" d="M136 128a120 120 0 1 1 240 0 120 120 0 1 1 -240 0zM48 482.3C48 383.8 127.8 304 226.3 304l59.4 0c98.5 0 178.3 79.8 178.3 178.3 0 16.4-13.3 29.7-29.7 29.7L77.7 512C61.3 512 48 498.7 48 482.3zM544 96c13.3 0 24 10.7 24 24l0 48 48 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-48 0 0 48c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-48-48 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l48 0 0-48c0-13.3 10.7-24 24-24z"/>
@@ -116,21 +116,77 @@
 
             <!-- Card 2 -->
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Ocupación actual</h3>
+              <h3 class="text-xl font-bold text-center">Ocupación actual</h3>
+              <div class="w-full h-full flex items-center justify-center">
+                <p class="text-6xl istok-web-bold">-%</p>
+              </div>
               <!--<p class="text-sm text-black/80">Proximamente</p>-->
             </article>
 
             <!-- Card 3 -->
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Membresías por vencer esta semana</h3>
+              <h3 class="text-xl font-bold text-center">Membresías por vencer esta semana</h3>
+              <div class="w-full h-full flex items-center justify-center">
+                <p class="text-6xl istok-web-bold">-</p>
+              </div>
               <!--<p class="text-sm text-white/80">Contenido</p>-->
             </article>
 
             <!-- Card 4 -->
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Nuevos usuarios en el último mes</h3>
+              <h3 class="text-xl font-bold text-center">Nuevos usuarios en el último mes</h3>
+              <div class="w-full h-full flex items-center justify-center">
+                <p class="text-6xl istok-web-bold">-</p>
+              </div>
               <!--<p class="text-sm text-white/80">Contenido</p>-->
             </article>
+          </div>
+
+          <!--Tabla usuarios-->
+          <div class="mt-6">
+            <h1 class="text-3xl istok-web-bold mb-1">Nuevos usuarios en el último mes</h1>
+            <div class="overflow-x-auto rounded-2xl bg-[var(--gris-bajito)] ring-1 ring-black/10">
+                <table class="min-w-full">
+                <thead class="bg-[var(--gris-bajito)] text-xl istok-web-bold">
+                    <tr class="border-b border-[var(--gris-medio)]">
+                    <th class="px-4 py-3 text-left">Nombre completo</th>
+                    <th class="px-4 py-3 text-left ">Teléfono</th>
+                    <th class="px-4 py-3 text-left ">Membresía</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--gris-medio)] istok-web-regular">
+                    <!-- Fila 1 -->
+                    <tr class="hover:bg-[#FAFAFA]">
+                    <td class="px-4 py-3">
+                        <p class="text-[#0460D9]">Juan Pérez Rodríguez</p>
+                    </td>
+                    <td class="px-4 py-3 text-gray-800">3141254879</td>
+                    <td class="px-4 py-3"><span class="text-green-600">Vigente</span></td>
+                    </tr>
+
+                    <!-- Fila 2 -->
+                    <tr class="hover:bg-[#FAFAFA]">
+                    <td class="px-4 py-3"><p class="text-[#0460D9]">Juan Pérez Rodríguez</p></td>
+                    <td class="px-4 py-3 text-gray-800">3141254879</td>
+                    <td class="px-4 py-3"><span class="text-red-600">Vencida</span></td>
+                    </tr>
+
+                    <!-- Fila 3 -->
+                    <tr class="hover:bg-[#FAFAFA]">
+                    <td class="px-4 py-3"><p class="text-[#0460D9]">Juan Pérez Rodríguez</p></td>
+                    <td class="px-4 py-3 text-gray-800">3141254879</td>
+                    <td class="px-4 py-3"><span class="text-[var(--gris-medio)]">Congelada</span></td>
+                    </tr>
+
+                    <!-- Más filas dummy… copia/pega según necesites -->
+                    <tr class="hover:bg-[#FAFAFA]">
+                    <td class="px-4 py-3"><p class="text-[#0460D9]">Juan Pérez Rodríguez</p></td>
+                    <td class="px-4 py-3 text-gray-800">3141254879</td>
+                    <td class="px-4 py-3"><span class="text-green-600">Vigente</span></td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
           </div>
         </section>
       </main>
