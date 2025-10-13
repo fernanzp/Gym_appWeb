@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Panel de control</title>
+  <title>Membresías</title>
 
   <!--Logo-->
   <link rel="icon" href="{{ asset('images/logo_blue.png') }}" type="image/png">
@@ -37,7 +37,7 @@
         <nav class="flex flex-col items-center gap-6" role="navigation" aria-label="Sidebar">
           
           <!-- Home (activo) -->
-          <a href="#" class="p-2 rounded-xl text-[var(--azul)] hover:opacity-85" aria-current="page" title="Inicio"> <!--ring-2 ring-[var(--azul)]-->
+          <a href="{{ route('dashboard') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Inicio"> <!--ring-2 ring-[var(--azul)]-->
             <svg class="w-8 h-8" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272l16 0 0 176c0 35.3 28.7 64 64 64l288 0c35.3 0 64-28.7 64-64l0-176 16 0c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1l-224-208zM240 320l32 0c26.5 0 48 21.5 48 48l0 96-128 0 0-96c0-26.5 21.5-48 48-48z"/>
             </svg>
@@ -53,7 +53,7 @@
           </a>
 
           <!-- Membresías -->
-          <a href="{{ route('membresias') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Membresías"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
+          <a href="{{ route('membresias') }}" class="p-2 rounded-xl text-[var(--azul)] hover:opacity-85" aria-current="page" title="Membresías"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
             <svg class="w-8 h-8" viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l448 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32zm80 256l64 0c44.2 0 80 35.8 80 80 0 8.8-7.2 16-16 16L80 384c-8.8 0-16-7.2-16-16 0-44.2 35.8-80 80-80zm-24-96a56 56 0 1 1 112 0 56 56 0 1 1 -112 0zm240-48l112 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-112 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 96l112 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-112 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/>
             </svg>
@@ -83,7 +83,7 @@
 
             $fechaCorta = $dias[$hoy->dayOfWeek] . ', ' . $hoy->format('j') . ' ' . $meses[$hoy->month - 1];
           @endphp
-          <h1 class="text-3xl istok-web-bold">Panel de control</h1>
+          <h1 class="text-3xl istok-web-bold">Membresías</h1>
           <div class="flex items-center gap-3">
             <div class="text-right leading-tight">
               <p class="istok-web-bold">
@@ -100,38 +100,9 @@
         </header>
 
         <!-- Contenido grande -->
-        <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Card 1 -->
-            <article class="h-[180px] rounded-2xl bg-gradient-to-br from-[var(--azul)] to-[#023373] text-white shadow-sm flex flex-col">
-              <a href="{{ route('clientRegister') }}" class="p-4">
-                <h3 class="text-xl font-bold">Registrar nuevo cliente</h3>
-                <div class="w-full h-full flex items-center justify-center">
-                  <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-                    <path fill="#ffffff" d="M136 128a120 120 0 1 1 240 0 120 120 0 1 1 -240 0zM48 482.3C48 383.8 127.8 304 226.3 304l59.4 0c98.5 0 178.3 79.8 178.3 178.3 0 16.4-13.3 29.7-29.7 29.7L77.7 512C61.3 512 48 498.7 48 482.3zM544 96c13.3 0 24 10.7 24 24l0 48 48 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-48 0 0 48c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-48-48 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l48 0 0-48c0-13.3 10.7-24 24-24z"/>
-                  </svg>
-                </div>
-              </a>
-            </article>
-
-            <!-- Card 2 -->
-            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Ocupación actual</h3>
-              <!--<p class="text-sm text-black/80">Proximamente</p>-->
-            </article>
-
-            <!-- Card 3 -->
-            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Membresías por vencer esta semana</h3>
-              <!--<p class="text-sm text-white/80">Contenido</p>-->
-            </article>
-
-            <!-- Card 4 -->
-            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Nuevos usuarios en el último mes</h3>
-              <!--<p class="text-sm text-white/80">Contenido</p>-->
-            </article>
-          </div>
+        <section class="mt-6 bg-[#D9D9D9] rounded-2xl flex-1 p-6 min-h-0 overflow-auto no-scrollbar grid place-content-center text-center">
+          <!-- Aquí va tu contenido de la vista membresías (widgets, tablas, etc.) -->
+           <p class="text-3xl">Esta vista se encuentra en desarrollo. Pronto podrás administrar membresías desde aquí.</p>
         </section>
       </main>
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Panel de control</title>
+  <title>Accesos</title>
 
   <!--Logo-->
   <link rel="icon" href="{{ asset('images/logo_blue.png') }}" type="image/png">
@@ -37,7 +37,7 @@
         <nav class="flex flex-col items-center gap-6" role="navigation" aria-label="Sidebar">
           
           <!-- Home (activo) -->
-          <a href="#" class="p-2 rounded-xl text-[var(--azul)] hover:opacity-85" aria-current="page" title="Inicio"> <!--ring-2 ring-[var(--azul)]-->
+          <a href="{{ route('dashboard') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Inicio"> <!--ring-2 ring-[var(--azul)]-->
             <svg class="w-8 h-8" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272l16 0 0 176c0 35.3 28.7 64 64 64l288 0c35.3 0 64-28.7 64-64l0-176 16 0c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1l-224-208zM240 320l32 0c26.5 0 48 21.5 48 48l0 96-128 0 0-96c0-26.5 21.5-48 48-48z"/>
             </svg>
@@ -61,7 +61,7 @@
           </a>
 
           <!-- Accesos -->
-          <a href="{{ route('accesos') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Accesos"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
+          <a href="{{ route('accesos') }}" class="p-2 rounded-xl text-[var(--azul)] hover:opacity-85" aria-current="page" title="Accesos"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
             <svg class="w-8 h-8" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M48 256c0-114.9 93.1-208 208-208 63.1 0 119.6 28.1 157.8 72.5 8.6 10.1 23.8 11.2 33.8 2.6s11.2-23.8 2.6-33.8C403.3 34.6 333.7 0 256 0 114.6 0 0 114.6 0 256l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40zm458.5-52.9c-2.7-13-15.5-21.3-28.4-18.5s-21.3 15.5-18.5 28.4c2.9 13.9 4.5 28.3 4.5 43.1l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c0-18.1-1.9-35.8-5.5-52.9zM256 80c-19 0-37.4 3-54.5 8.6-15.2 5-18.7 23.7-8.3 35.9 7.1 8.3 18.8 10.8 29.4 7.9 10.6-2.9 21.8-4.4 33.4-4.4 70.7 0 128 57.3 128 128l0 24.9c0 25.2-1.5 50.3-4.4 75.3-1.7 14.6 9.4 27.8 24.2 27.8 11.8 0 21.9-8.6 23.3-20.3 3.3-27.4 5-55 5-82.7l0-24.9c0-97.2-78.8-176-176-176zM150.7 148.7c-9.1-10.6-25.3-11.4-33.9-.4-23.1 29.8-36.8 67.1-36.8 107.7l0 24.9c0 24.2-2.6 48.4-7.8 71.9-3.4 15.6 7.9 31.1 23.9 31.1 10.5 0 19.9-7 22.2-17.3 6.4-28.1 9.7-56.8 9.7-85.8l0-24.9c0-27.2 8.5-52.4 22.9-73.1 7.2-10.4 8-24.6-.2-34.2zM256 160c-53 0-96 43-96 96l0 24.9c0 35.9-4.6 71.5-13.8 106.1-3.8 14.3 6.7 29 21.5 29 9.5 0 17.9-6.2 20.4-15.4 10.5-39 15.9-79.2 15.9-119.7l0-24.9c0-28.7 23.3-52 52-52s52 23.3 52 52l0 24.9c0 36.3-3.5 72.4-10.4 107.9-2.7 13.9 7.7 27.2 21.8 27.2 10.2 0 19-7 21-17 7.7-38.8 11.6-78.3 11.6-118.1l0-24.9c0-53-43-96-96-96zm24 96c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 24.9c0 59.9-11 119.3-32.5 175.2l-5.9 15.3c-4.8 12.4 1.4 26.3 13.8 31s26.3-1.4 31-13.8l5.9-15.3C267.9 411.9 280 346.7 280 280.9l0-24.9z"/>
             </svg>
@@ -83,7 +83,7 @@
 
             $fechaCorta = $dias[$hoy->dayOfWeek] . ', ' . $hoy->format('j') . ' ' . $meses[$hoy->month - 1];
           @endphp
-          <h1 class="text-3xl istok-web-bold">Panel de control</h1>
+          <h1 class="text-3xl istok-web-bold">Accesos</h1>
           <div class="flex items-center gap-3">
             <div class="text-right leading-tight">
               <p class="istok-web-bold">
@@ -100,38 +100,9 @@
         </header>
 
         <!-- Contenido grande -->
-        <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Card 1 -->
-            <article class="h-[180px] rounded-2xl bg-gradient-to-br from-[var(--azul)] to-[#023373] text-white shadow-sm flex flex-col">
-              <a href="{{ route('clientRegister') }}" class="p-4">
-                <h3 class="text-xl font-bold">Registrar nuevo cliente</h3>
-                <div class="w-full h-full flex items-center justify-center">
-                  <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-                    <path fill="#ffffff" d="M136 128a120 120 0 1 1 240 0 120 120 0 1 1 -240 0zM48 482.3C48 383.8 127.8 304 226.3 304l59.4 0c98.5 0 178.3 79.8 178.3 178.3 0 16.4-13.3 29.7-29.7 29.7L77.7 512C61.3 512 48 498.7 48 482.3zM544 96c13.3 0 24 10.7 24 24l0 48 48 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-48 0 0 48c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-48-48 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l48 0 0-48c0-13.3 10.7-24 24-24z"/>
-                  </svg>
-                </div>
-              </a>
-            </article>
-
-            <!-- Card 2 -->
-            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Ocupación actual</h3>
-              <!--<p class="text-sm text-black/80">Proximamente</p>-->
-            </article>
-
-            <!-- Card 3 -->
-            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Membresías por vencer esta semana</h3>
-              <!--<p class="text-sm text-white/80">Contenido</p>-->
-            </article>
-
-            <!-- Card 4 -->
-            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
-              <h3 class="text-xl font-bold">Nuevos usuarios en el último mes</h3>
-              <!--<p class="text-sm text-white/80">Contenido</p>-->
-            </article>
-          </div>
+        <section class="mt-6 bg-[#D9D9D9] rounded-2xl flex-1 p-6 min-h-0 overflow-auto no-scrollbar grid place-content-center text-center">
+          <!-- Aquí va tu contenido de la vista accesos (widgets, tablas, etc.) -->
+           <p class="text-3xl">Esta vista se encuentra en desarrollo. Pronto podrás visualizar los accesos desde aquí.</p>
         </section>
       </main>
 
