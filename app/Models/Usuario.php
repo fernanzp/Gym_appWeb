@@ -5,6 +5,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Rol;
 
 class Usuario extends Authenticatable
 {
@@ -28,5 +29,10 @@ class Usuario extends Authenticatable
         } else {
             $this->attributes['contrasena'] = Hash::make($value);
         }
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Rol::class, 'roles_usuarios', 'usuario_id', 'rol_id');
     }
 }

@@ -127,18 +127,16 @@
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
               <h3 class="text-xl font-bold text-center">Membresías por vencer esta semana</h3>
               <div class="w-full h-full flex items-center justify-center">
-                <p class="text-6xl istok-web-bold">-</p>
+                <p class="text-6xl istok-web-bold">{{ $porVencerCount }}</p>
               </div>
-              <!--<p class="text-sm text-white/80">Contenido</p>-->
             </article>
 
             <!-- Card 4 -->
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
               <h3 class="text-xl font-bold text-center">Nuevos usuarios en el último mes</h3>
               <div class="w-full h-full flex items-center justify-center">
-                <p class="text-6xl istok-web-bold">-</p>
+                <p class="text-6xl istok-web-bold">{{ $nuevosUsuariosCount }}</p>
               </div>
-              <!--<p class="text-sm text-white/80">Contenido</p>-->
             </article>
           </div>
 
@@ -155,42 +153,38 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[var(--gris-medio)] istok-web-regular">
-                    <!-- Fila 1 -->
+                  @forelse($nuevosUsuarios as $u)
+                    @php
+                      $estatus = $u->membresia_estatus; // null si no tiene
+                      $badgeClass = match ($estatus) {
+                        'vigente'   => 'text-green-600',
+                        'vencida'   => 'text-red-600',
+                        'congelada' => 'text-[var(--gris-medio)]',
+                        default     => 'text-gray-500'
+                      };
+                      $badgeText = $estatus ? ucfirst($estatus) : '—';
+                    @endphp
                     <tr class="hover:bg-[#FAFAFA]">
-                    <td class="px-4 py-3">
-                        <p class="text-[#0460D9]">Juan Pérez Rodríguez</p>
-                    </td>
-                    <td class="px-4 py-3 text-gray-800">3141254879</td>
-                    <td class="px-4 py-3"><span class="text-green-600">Vigente</span></td>
+                      <td class="px-4 py-3">
+                        <p class="text-[#0460D9]">{{ $u->nombre_comp }}</p>
+                      </td>
+                      <td class="px-4 py-3 text-gray-800">{{ $u->telefono ?? '—' }}</td>
+                      <td class="px-4 py-3"><span class="{{ $badgeClass }}">{{ $badgeText }}</span></td>
                     </tr>
-
-                    <!-- Fila 2 -->
-                    <tr class="hover:bg-[#FAFAFA]">
-                    <td class="px-4 py-3"><p class="text-[#0460D9]">Juan Pérez Rodríguez</p></td>
-                    <td class="px-4 py-3 text-gray-800">3141254879</td>
-                    <td class="px-4 py-3"><span class="text-red-600">Vencida</span></td>
+                  @empty
+                    <tr>
+                      <td colspan="3" class="px-4 py-6 text-center text-gray-600">
+                        No hay usuarios nuevos en el último mes.
+                      </td>
                     </tr>
-
-                    <!-- Fila 3 -->
-                    <tr class="hover:bg-[#FAFAFA]">
-                    <td class="px-4 py-3"><p class="text-[#0460D9]">Juan Pérez Rodríguez</p></td>
-                    <td class="px-4 py-3 text-gray-800">3141254879</td>
-                    <td class="px-4 py-3"><span class="text-[var(--gris-medio)]">Congelada</span></td>
-                    </tr>
-
-                    <!-- Más filas dummy… copia/pega según necesites -->
-                    <tr class="hover:bg-[#FAFAFA]">
-                    <td class="px-4 py-3"><p class="text-[#0460D9]">Juan Pérez Rodríguez</p></td>
-                    <td class="px-4 py-3 text-gray-800">3141254879</td>
-                    <td class="px-4 py-3"><span class="text-green-600">Vigente</span></td>
-                    </tr>
+                  @endforelse
                 </tbody>
+
                 </table>
             </div>
           </div>
         </section>
       </main>
-
     </div>
   </div>
 </body>
