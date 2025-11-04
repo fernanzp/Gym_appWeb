@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Usuario;
 use App\Models\Membresia;
+use App\Models\RegistroAcceso;          
+use Illuminate\Support\Facades\Http; 
 
 class AccessController extends Controller
 {
@@ -15,27 +17,61 @@ class AccessController extends Controller
         $validatedData = $request->validate([
             'fingerprint_id' => 'required|integer',
         ]);
+        $fingerprintId = $validatedData['fingerprint_id'];
 
-        // Busca al usuario que tenga asignado ese ID de huella
-        $usuario = Usuario::where('fingerprint_id', $validatedData['fingerprint_id'])->first();
+        // --- Lógica de Validación (Tu código original) ---
+        $usuario = Usuario::where('fingerprint_id', $fingerprintId)->first();
 
-        // Si no se encuentra ningún usuario, deniega el acceso
+        $responseStatus = 'denied'; // Por defecto, es denegado
+        $responseReason = 'Unknown';
+        $isAllowed = false;
+        $userIdToLog = null;
+
         if (!$usuario) {
-            return response()->json(['status' => 'denied', 'reason' => 'Fingerprint not registered']);
-        }
-
-        // Verifica si el usuario tiene una membresía activa y vigente
-        $membresiaActiva = Membresia::where('usuario_id', $usuario->id)
-                                    ->where('estatus', 1) // 1 = vigente
-                                    ->where('fecha_fin', '>=', now()->toDateString())
-                                    ->exists();
-
-        if ($membresiaActiva) {
-            // Si todo está en orden, concede el acceso
-            return response()->json(['status' => 'allowed', 'user_name' => $usuario->nombre_comp]);
+            $responseReason = 'Fingerprint not registered';
         } else {
-            // Si la membresía está vencida o inactiva, deniega el acceso
-            return response()->json(['status' => 'denied', 'reason' => 'Membership expired or inactive']);
+            $userIdToLog = $usuario->id; // Encontramos un usuario, guardamos su ID para el log
+
+            // ✅ *** CORRECCIÓN DE BUG ***
+            // Tu BD usa 'vigente', no 1.
+            $membresiaActiva = Membresia::where('usuario_id', $usuario->id)
+                                        ->where('estatus', 'vigente') // <-- Corregido
+                                        ->where('fecha_fin', '>=', now()->toDateString())
+                                        ->exists();
+
+            if ($membresiaActiva) {
+                $responseStatus = 'allowed';
+                $responseReason = 'Access granted';
+                $isAllowed = true;
+            } else {
+                $responseReason = 'Membership expired or inactive';
+            }
         }
+        
+        // --- ✅ 3. Lógica Nueva: Registrar el Acceso en nuestra BD ---
+        RegistroAcceso::create([
+            'fecha' => now(),
+            'usuario_id' => $userIdToLog, // Será null si la huella no se encontró
+            'acceso' => $isAllowed,       // 1 (true) si fue permitido, 0 (false) si fue denegado
+            'observaciones' => $responseReason,
+            'direccion' => 1 // 1 = entrada
+        ]);
+
+        // --- ✅ 4. Lógica Nueva: Publicar la respuesta de regreso a la Photon ---
+        $dataParaPhoton = ['status' => $responseStatus];
+
+        Http::withToken(env('PARTICLE_ACCESS_TOKEN'))->post(
+            'https://api.particle.io/v1/devices/events',
+            [
+                'name' => 'gymflow-response', // El evento que la Photon está escuchando
+                'data' => json_encode($dataParaPhoton),
+                'private' => true,
+                // 'deviceid' => $request->input('coreid') // Opcional: para enviar a un dispositivo específico
+            ]
+        );
+
+        // --- 5. Respuesta final al Webhook ---
+        // Esto le dice a la Nube de Particle que "recibimos el webhook correctamente".
+        return response()->json(['status' => $responseStatus, 'reason' => $responseReason]);
     }
 }
