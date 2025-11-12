@@ -5,16 +5,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ActivacionController;
 
 //Ruta base
 Route::get('/', function () {
     return view('welcome');
 });
-
-// Ruta pública para activar cuenta
-Route::get('/activar-cuenta', function () {
-    return view('acountActivation');
-})->name('activarCuenta');
 
 //Rutas para el formulario del login
 Route::middleware('web')->group(function () {
@@ -34,4 +30,13 @@ Route::middleware(['auth','can:admin-or-staff'])->group(function () {
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
 });
+
+// Rutas para la activación de la cuenta
+Route::get('/activar-cuenta', [ActivacionController::class, 'show'])
+    ->name('activacion.show')
+    ->middleware('guest'); // Solo invitados pueden ver esto
+
+Route::post('/activar-cuenta', [ActivacionController::class, 'store'])
+    ->name('activacion.store')
+    ->middleware('guest');
 

@@ -46,12 +46,15 @@
     <div class="w-full max-w-[50%] mt-[5vh]">
         <h1 class="text-4xl font-bold text-center mb-8 istok-web-bold">Activa tu cuenta</h1>
 
-        <form action="{{ route('login.submit') }}" method="POST" class="space-y-4">
+        <form action="{{ route('activacion.store') }}" method="POST" class="space-y-4">
             @csrf
+
+            <input type="hidden" name="token" value="{{ $token }}">
+            <input type="hidden" name="email" value="{{ $email }}">
 
             <!-- Nota -->
             <div>
-                <span>Hola Charlie, tu cuenta ya fue registrada en recepción. Crea tu contraseña para comenzar a usar la app.</span>
+                <span>Hola {{ $email }}, tu cuenta ya fue registrada en recepción. Crea tu contraseña para comenzar a usar la app.</span>
             </div>
 
             <!-- Contraseña -->
