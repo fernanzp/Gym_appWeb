@@ -127,25 +127,6 @@
                 @error('plan_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <!-- Contraseña -->
-            <div>
-                <label class="block font-bold mb-1 istok-web-bold">Contraseña</label>
-                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    <input name="contrasena" type="password" placeholder="Contraseña"
-                        class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
-                </div>
-                @error('contrasena') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <!-- Confirmación de contraseña -->
-            <div>
-                <label class="block font-bold mb-1 istok-web-bold">Confirmar contraseña</label>
-                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    <input name="contrasena_confirmation" type="password" placeholder="Repite la contraseña"
-                        class="flex-1 bg-transparent outline-none placeholder-[var(--gris-oscuro)] istok-web-regular">
-                </div>
-            </div>
-
             <div class="flex gap-4">
                 <!-- Botón cancelar sin submit -->
                 <a href="{{ url()->previous() }}"
@@ -156,7 +137,7 @@
                 <!-- Botón registrar -->
                 <button type="submit"
                         class="w-full mt-2 bg-[var(--azul)] text-white istok-web-regular py-3 rounded-full hover:bg-[var(--azul-oscuro)] transition">
-                    Registrar cliente
+                    Registrar cliente y huella
                 </button>
             </div>
         </form>
