@@ -11,6 +11,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Ruta pública para activar cuenta
+Route::get('/activar-cuenta', function () {
+    return view('acountActivation');
+})->name('activarCuenta');
+
 //Rutas para el formulario del login
 Route::middleware('web')->group(function () {
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
