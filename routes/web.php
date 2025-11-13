@@ -36,6 +36,10 @@ Route::get('/activar-cuenta', [ActivacionController::class, 'show'])
     ->name('activacion.show')
     ->middleware('guest'); // Solo invitados pueden ver esto
 
+Route::get('/activacion-exitosa', function () {
+    return view('activationSuccessful'); // coincide con resources/views/activate.blade.php
+})->name('activationSuccessful');
+
 Route::post('/activar-cuenta', [ActivacionController::class, 'store'])
     ->name('activacion.store')
     ->middleware('guest');
