@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Mail; // Importar Mail
 use Illuminate\Support\Str;           // Importar Str para el token
 use App\Mail\ActivarCuentaMail;     // Importar el Mailable que crearemos
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http; // <-- Agregar esto arriba
+use Illuminate\Support\Facades\Log;  // Para depurar si quieres
 
 class ClienteController extends Controller
 {
@@ -23,81 +25,71 @@ class ClienteController extends Controller
     }
 
     public function store(Request $request)
-    {
-        // 1. VALIDACIÓN (sin contraseña)
-        $request->validate([
-            'nombre_comp'   => ['required','string','max:160'],
-            // Email ahora es OBLIGATORIO para enviar el enlace
-            'email'         => ['required','email','max:160','unique:usuarios,email'],
-            'telefono'      => ['nullable','regex:/^\d{10}$/'],
-            'fecha_nac'     => ['nullable','date'],
-            'plan_id'       => ['required','exists:planes,id'],
-            // 'contrasena' ya no se valida aquí
-        ],[
-            'telefono.regex' => 'El teléfono debe tener exactamente 10 dígitos.',
-            'email.required' => 'El email es obligatorio para enviar la activación.',
+{
+    $request->validate([
+        'nombre_comp'   => ['required','string','max:160'],
+        'email'         => ['required','email','max:160','unique:usuarios,email'],
+        'telefono'      => ['nullable','regex:/^\d{10}$/'],
+        'fecha_nac'     => ['nullable','date'],
+        'plan_id'       => ['required','exists:planes,id'],
+    ]);
+
+    $plan = Plan::findOrFail($request->plan_id);
+
+    DB::beginTransaction();
+    try {
+        $usuario = Usuario::create([
+            'nombre_comp' => $request->nombre_comp,
+            'email'       => $request->email,
+            'telefono'    => $request->telefono,
+            'fecha_nac'   => $request->fecha_nac,
+            'contrasena'  => null,
+            'estatus'     => 0,
         ]);
 
-        $plan = Plan::findOrFail($request->plan_id);
+        $inicio = Carbon::today();
+        $fin    = (clone $inicio)->addDays($plan->duracion_dias);
 
-        DB::beginTransaction();
-        try {
-            // 2. CREAR USUARIO (inactivo y sin contraseña)
-            $usuario = Usuario::create([
-                'nombre_comp' => $request->nombre_comp,
-                'email'       => $request->email,
-                'telefono'    => $request->telefono,
-                'fecha_nac'   => $request->fecha_nac,
-                'contrasena'  => null, // Contraseña nula
-                'estatus'     => 0, // 0 = inactivo
-            ]);
+        Membresia::create([
+            'usuario_id' => $usuario->id,
+            'plan_id'    => $plan->id,
+            'fecha_ini'  => $inicio->toDateString(),
+            'fecha_fin'  => $fin->toDateString(),
+            'estatus'    => 1,
+        ]);
 
-            // 3. CREAR MEMBRESÍA
-            $inicio = Carbon::today();
-            $fin    = (clone $inicio)->addDays($plan->duracion_dias);
+        $rolMember = Rol::firstOrCreate(['rol' => 'member']);
+        $usuario->roles()->syncWithoutDetaching([$rolMember->id]);
 
-            Membresia::create([
-                'usuario_id' => $usuario->id,
-                'plan_id'    => $plan->id,
-                'fecha_ini'  => $inicio->toDateString(),
-                'fecha_fin'  => $fin->toDateString(),
-                'estatus'    => 1, // 1 = vigente (según tu db.sql)
-            ]);
+        // Token para activar cuenta
+        $token = Str::random(64);
+        DB::table('password_resets')->updateOrInsert(
+            ['email' => $usuario->email],
+            ['token' => $token, 'created_at' => Carbon::now()]
+        );
 
-            // 4. ASIGNAR ROL
-            $rolMember = Rol::firstOrCreate(['rol' => 'member']);
-            $usuario->roles()->syncWithoutDetaching([$rolMember->id]);
+        $urlActivacion = route('activacion.show', ['token' => $token, 'email' => $usuario->email]);
+        Mail::to($usuario->email)->send(new ActivarCuentaMail($usuario, $urlActivacion));
 
-            // 5. GENERAR TOKEN Y ENVIAR EMAIL
-            $token = Str::random(64);
+        // 🔹 Aquí viene la nueva parte: enviar evento al Photon para registrar huella
+        $event = 'enroll-fingerprint'; // Este nombre lo usarás en tu firmware
+        $data = json_encode(['user_id' => $usuario->id]);
 
-            DB::table('password_resets')->updateOrInsert(
-                ['email' => $usuario->email],
-                ['token' => $token, 'created_at' => Carbon::now()]
-            );
+        Http::withHeaders([
+            'Authorization' => 'Bearer ' . env('PARTICLE_ACCESS_TOKEN'),
+        ])->post('https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/' . $event, [
+            'arg' => $data,
+        ]);
 
-            // Generamos la URL de activación
-            $urlActivacion = route('activacion.show', ['token' => $token, 'email' => $usuario->email]);
-            
-            // Enviamos el correo
-            Mail::to($usuario->email)->send(new ActivarCuentaMail($usuario, $urlActivacion));
+        DB::commit();
 
-            DB::commit();
-
-            return redirect()
-                ->route('dashboard') // O a donde quieras
-                ->with('success', 'Cliente registrado. Se ha enviado un correo de activación a ' . $usuario->email);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            report($e);
-
-            if (app()->environment('local')) {
-                throw $e;
-            }
-
-            return back()
-                ->withInput()
-                ->withErrors(['general' => 'Ocurrió un error al registrar al cliente. Intenta nuevamente.']);
-        }
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Cliente registrado. Se ha enviado correo de activación y el sensor está listo para registrar su huella.');
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        report($e);
+        return back()->withInput()->withErrors(['general' => 'Ocurrió un error al registrar al cliente.']);
     }
+}
 }
