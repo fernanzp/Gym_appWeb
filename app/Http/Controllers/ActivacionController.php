@@ -71,9 +71,6 @@ class ActivacionController extends Controller
         // Eliminamos el token para que no se reutilice
         DB::table('password_resets')->where('email', $request->email)->delete();
 
-        // (Opcional) Iniciar sesión automáticamente
-        Auth::login($usuario);
-
-        return redirect()->route('/')->with('success', '¡Tu cuenta ha sido activada y tu contraseña establecida con éxito!');
+        return redirect()->route('activacion.exitosa')->with('success', '¡Tu cuenta ha sido activada y tu contraseña establecida con éxito!');
     }
 }
