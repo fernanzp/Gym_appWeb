@@ -40,3 +40,8 @@ Route::post('/activar-cuenta', [ActivacionController::class, 'store'])
     ->name('activacion.store')
     ->middleware('guest');
 
+Route::get('/activacion-exitosa', function () {
+    return view('activationSuccessful');
+})->name('activacion.exitosa')
+->middleware('guest');
+

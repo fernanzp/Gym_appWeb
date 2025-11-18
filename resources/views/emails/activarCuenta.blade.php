@@ -31,10 +31,6 @@
         </p>
         <a href="{{ $urlActivacion }}" class="button">Activar mi Cuenta</a>
         <p>
-            Si el botón no funciona, copia y pega el siguiente enlace en tu navegador:
-        </p>
-        <p>{{ $urlActivacion }}</p>
-        <p>
             Si no te registraste, por favor ignora este correo.
         </p>
     </div>

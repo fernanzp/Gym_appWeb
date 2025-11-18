@@ -88,14 +88,6 @@
         <header class="h-16 flex items-center justify-between">
           <h1 class="text-3xl istok-web-bold">Usuarios</h1>
 
-          <form method="GET" action="{{ route('usuarios') }}" class="flex gap-2 items-center">
-              <input name="q" value="{{ $q ?? '' }}" placeholder="Buscar usuario..."
-                    class="px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--azul)]" />
-              <button class="px-3 py-2 rounded-md bg-[var(--azul)] text-white hover:bg-[var(--azul-oscuro)]">
-                  Buscar
-              </button>
-          </form>
-
             @php
             // Usa tu zona horaria real:
             $hoy = now('America/Mexico_City');
@@ -122,6 +114,17 @@
         </header>
 
         <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
+          <form method="GET" action="{{ route('usuarios') }}" class="rounded-2xl bg-[var(--gris-bajito)] h-12 mb-4 flex items-center gap-3 px-4 group ring-1 ring-black/10">
+            <!-- Icono de Búsqueda -->
+            <svg class="w-5 h-5 text-[var(--gris-medio)] transition-colors group-focus-within:text-[var(--azul)]" 
+              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+              <path d="M416 208c0 45.9-14.9 88.3-40 122.7L500 455.7c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 377c-34.4 25.2-76.8 40-122.7 40C93.1 417 0 323.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
+            </svg>
+            <!-- Input de búsqueda -->
+            <input name="q" value="{{ $q ?? '' }}" 
+              placeholder="Buscar por nombre o teléfono..."
+              class="flex-1 bg-transparent h-full focus:outline-none text-gray-800 placeholder:text-[var(--gris-medio)] istok-web-regular" />
+          </form>
           <div class="overflow-x-auto rounded-2xl bg-[var(--gris-bajito)] ring-1 ring-black/10">
             <table class="min-w-full">
               <thead class="bg-[var(--gris-bajito)] text-xl istok-web-bold">
@@ -159,6 +162,12 @@
                     </td>
                     <td class="px-2 py-2">
                       <div class="flex items-center justify-end gap-3 pr-2 text-[var(--gris-oscuro)]">
+                        <!-- Botón de Editar -->
+                        <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200/60" title="Editar" aria-label="Editar">
+                          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+                            <path d="M471.6 21.7c-21.9-21.9-57.3-21.9-79.2 0L368 46.1 465.9 144 490.3 119.6c21.9-21.9 21.9-57.3 0-79.2L471.6 21.7zm-299.2 220c-6.1 6.1-10.8 13.6-13.5 21.9l-29.6 88.8c-2.9 8.6-.6 18.1 5.8 24.6s15.9 8.7 24.6 5.8l88.8-29.6c8.2-2.7 15.7-7.4 21.9-13.5L432 177.9 334.1 80 172.4 241.7zM96 64C43 64 0 107 0 160L0 416c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-96c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 64z"/>
+                          </svg>
+                        </button>
                         <form method="POST" action="{{ route('usuarios.destroy', $u->id) }}"
                               onsubmit="return confirm('¿Seguro que deseas eliminar este usuario? Esta acción no se puede deshacer.');">
                           @csrf
@@ -173,7 +182,15 @@
                     </td>
                   </tr>
                 @empty
-                  <tr><td colspan="4" class="px-4 py-6 text-center text-gray-600">No hay usuarios</td></tr>
+                  <tr>
+                    <td colspan="4" class="px-4 py-6 text-center text-gray-600">
+                      @if (!empty($q))
+                        No se encontraron resultados para: <span class="font-semibold text-gray-700">"{{ $q }}"</span>
+                      @else
+                        Aún no hay usuarios registrados.
+                      @endif
+                    </td>
+                  </tr>
                 @endforelse
               </tbody>
             </table>
