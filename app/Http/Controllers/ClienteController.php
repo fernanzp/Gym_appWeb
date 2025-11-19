@@ -14,6 +14,7 @@ use App\Mail\ActivarCuentaMail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\CleanupIncompleteUser;
 
 class ClienteController extends Controller
 {
@@ -66,6 +67,14 @@ class ClienteController extends Controller
 
             // ✅ Confirmar cambios antes de tareas lentas
             DB::commit();
+            // ⬇️ ⭐️ IMPLEMENTACIÓN DEL TIMEOUT (Bug 2 - Parte 2) ⭐️ ⬇️
+
+            // Programar la limpieza de la DB si el registro de huella falla por timeout
+            // El Job se ejecutará en 60 segundos. Si en ese tiempo no llega el evento de éxito,
+            // y el campo fingerprint_id sigue null, el registro se eliminará.
+            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60)); 
+            
+            // ⬆️ ⭐️ FIN IMPLEMENTACIÓN DEL TIMEOUT ⭐️ ⬆️
 
             // 5️⃣ Generar token de activación
             $token = Str::random(64);
