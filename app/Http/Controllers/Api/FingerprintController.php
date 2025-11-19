@@ -45,17 +45,20 @@ class FingerprintController extends Controller
                 return response()->json(['success' => true, 'message' => 'Huella registrada exitosamente.']);
 
             } elseif ($status === 'error') {
-                // 2. REGISTRO FALLIDO: El Photon falló (ej. dedos diferentes)
-                
-                // *** ACCIÓN CRÍTICA PARA CONSISTENCIA ***
-                // El registro de usuario se creó en el dashboard (inicio del proceso),
-                // pero como la huella falló, debemos eliminarlo.
-                $usuario->delete(); 
-                
-                Log::warning("Registro de huella fallido para usuario #{$userId}. Usuario eliminado (ROLLBACK).", ['payload' => $data]);
-                
-                return response()->json(['success' => true, 'message' => 'Registro fallido, usuario eliminado (rollback).']);
-            }
+            // 2. REGISTRO FALLIDO (ERROR DE LECTURA)
+            
+            // ⚠️ ACCIÓN: Marcar como Error en Huella, NO ELIMINAR.
+            $usuario->estatus = 8; // Nuevo estatus para "Error de Huella"
+            $usuario->save(); 
+            
+            // Si el Photon publicó un slot, lo limpiamos para que el usuario no tenga un ID fallido.
+            $usuario->fingerprint_id = null;
+            $usuario->save();
+            
+            Log::warning("Registro de huella fallido para usuario #{$userId}. Estatus marcado como ERROR (8).");
+            
+            return response()->json(['success' => true, 'message' => 'Estatus de error registrado.']);
+        }
             // --- FIN LÓGICA DE MANEJO DE ESTADOS ---
 
             return response()->json(['error' => 'Status desconocido'], 400);

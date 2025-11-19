@@ -99,7 +99,33 @@
           </div>
         </header>
 
-        <!-- Contenido grande -->
+        @foreach($usuariosPendientes as $usuario)
+            @php
+                $isError = $usuario->estatus == 8;
+                $isTimeout = $usuario->estatus == 9;
+                $alertClass = $isError ? 'bg-red-100 border-red-500 text-red-700' : 'bg-yellow-100 border-yellow-500 text-yellow-700';
+                $title = $isError ? '🛑 Error de Huella' : '⏲️ Proceso de Huella Pendiente';
+                $message = $isError ? 
+                          'La huella para <strong>' . $usuario->nombre_comp . '</strong> no coincidió. Por favor, asegúrese de que el sensor esté listo.' :
+                          'El registro de huella para <strong>' . $usuario->nombre_comp . '</strong> ha expirado (timeout). Debe reintentarlo.' ;
+                $buttonColor = $isError ? 'bg-red-600 hover:bg-red-700' : 'bg-yellow-600 hover:bg-yellow-700';
+            @endphp
+
+            <div class="mt-6 p-4 border-l-4 rounded-lg {{ $alertClass }} flex items-center justify-between shadow-sm">
+                <div>
+                    <h4 class="text-xl istok-web-bold mb-1">{{ $title }}</h4>
+                    <p class="text-sm">{!! $message !!}</p>
+                </div>
+                
+                <form method="POST" action="{{ route('cliente.retry', $usuario->id) }}" class="flex-shrink-0">
+                    @csrf
+                    <button type="submit" class="istok-web-bold text-white py-2 px-4 rounded-lg {{ $buttonColor }}">
+                        Volver a Intentar Registro
+                    </button>
+                </form>
+            </div>
+
+        @endforeach
         <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Card 1 -->

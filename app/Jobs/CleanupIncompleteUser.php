@@ -33,18 +33,18 @@ class CleanupIncompleteUser implements ShouldQueue
      */
     public function handle(): void
     {
-        // 1. Buscar al usuario
         $usuario = Usuario::find($this->userId);
-
-        // 2. Comprobar si existe Y si el campo de huella sigue VACÍO
-        // Si el usuario ya fue completado por el webhook, fingerprint_id no será null.
-        // Si el usuario fue eliminado por el webhook de error, $usuario será null.
-        if ($usuario && is_null($usuario->fingerprint_id)) {
+        
+        // Si el usuario existe, el fingerprint_id es NULL, Y el estatus es el inicial (0), 
+        // significa que no hubo éxito ni fallo de huella (fue un timeout).
+        if ($usuario && is_null($usuario->fingerprint_id) && $usuario->estatus == 0) {
             
-            // 3. Ejecutar ROLLBACK: Eliminar registro (Bug 2 solucionado por timeout)
-            $usuario->delete();
+            // ⚠️ ACCIÓN: Marcar como Timeout, NO ELIMINAR.
+            $usuario->estatus = 9; // Nuevo estatus para "Timeout / Pendiente"
+            $usuario->save();
             
-            Log::warning("Usuario #{$this->userId} eliminado por TIMEOUT del registro de huella. No se recibió confirmación del Photon.");
+            Log::warning("Usuario #{$this->userId} marcado como TIMEOUT (9).");
         }
+        // Nota: Si el estatus es 8, fue fallo de huella. Si ya no existe, ya fue eliminado.
     }
 }

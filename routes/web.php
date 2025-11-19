@@ -45,3 +45,5 @@ Route::get('/activacion-exitosa', function () {
 })->name('activacion.exitosa')
 ->middleware('guest');
 
+Route::post('/cliente/retry-enroll/{userId}', [ClienteController::class, 'retryEnroll'])
+     ->name('cliente.retry');

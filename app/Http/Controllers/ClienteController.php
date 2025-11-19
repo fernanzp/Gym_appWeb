@@ -120,4 +120,35 @@ class ClienteController extends Controller
                 ->withErrors(['general' => 'Ocurrió un error al registrar al cliente.']);
         }
     }
+    public function retryEnroll(int $userId)
+    {
+        $usuario = Usuario::findOrFail($userId);
+
+        try {
+            // Opcional: Volver a poner el estatus en 0 (Inicial)
+            $usuario->estatus = 0; 
+            $usuario->save();
+            
+            // 1. Volver a llamar a la función de Particle para iniciar el sensor
+            $response = Http::asForm()->post(
+                'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/enroll-fingerprint',
+                [
+                    'access_token' => env('PARTICLE_ACCESS_TOKEN'),
+                    'args' => (string) $usuario->id,
+                ]
+            );
+
+            // 2. Volver a despachar el Job de limpieza (por si hay un nuevo timeout)
+            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60)); 
+
+            Log::info('Reintento de enroll exitoso.', ['user_id' => $usuario->id, 'body' => $response->body()]);
+
+            return back()->with('success', 'El proceso de registro de huella ha sido reiniciado. Por favor, coloque el dedo en el sensor.');
+
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->withErrors(['general' => 'Ocurrió un error al intentar reiniciar el proceso de huella.']);
+        }
+    }
 }
+
