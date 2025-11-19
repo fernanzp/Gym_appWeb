@@ -164,7 +164,7 @@ class UsuarioController extends Controller
             // Disparar el Job de Timeout para seguridad
             CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
 
-            return back()->with('success', 'Huella anterior eliminada. El sensor está listo: Coloca el nuevo dedo.');
+            return back()->with('success', '✅ ¡Proceso completado! La huella se actualizó correctamente.');
 
         } catch (\Throwable $e) {
             return back()->with('error', 'Error de conexión con el dispositivo IoT: ' . $e->getMessage());
