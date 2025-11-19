@@ -6,6 +6,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ActivacionController;
+use App\Http\Controllers\MembresiaController;
 
 // Ruta base
 Route::get('/', function () {
@@ -21,6 +22,10 @@ Route::middleware('web')->group(function () {
 // Rutas protegidas generales (Cualquier usuario logueado)
 Route::middleware('auth')->group(function () {
     Route::view('/membresias', 'membresias')->name('membresias');
+    Route::get('/membresias', [MembresiaController::class, 'index'])->name('membresias');
+    // Ruta para cambiar el estatus (Congelar/Reactivar)
+    Route::put('/membresias/{id}/toggle-status', [MembresiaController::class, 'toggleStatus'])
+        ->name('membresias.toggleStatus');
     Route::view('/accesos', 'accesos')->name('accesos');
 });
 
