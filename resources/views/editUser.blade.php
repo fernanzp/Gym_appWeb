@@ -59,7 +59,7 @@
 
     <div class="w-full max-w-[50%] mt-[5vh] mb-10 z-10">
         <h1 class="text-4xl font-bold text-center mb-8 istok-web-bold">
-            Editar Usuario: {{ $usuario->nombre_comp ?? 'Cargando...' }}
+            Editar Usuario "{{ $usuario->nombre_comp ?? 'Cargando...' }}":
         </h1>
 
         <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5">
@@ -112,7 +112,7 @@
         </form>
         
         <div class="mt-12 pt-6 border-t-2 border-[var(--gris-bajito)]">
-            <h2 class="text-2xl font-bold text-center mb-6 istok-web-bold text-[var(--azul)]">Gestión Biométrica</h2>
+            <h2 class="text-2xl font-bold text-center mb-6 istok-web-bold">Gestión Biométrica</h2>
             <div class="bg-[var(--gris-bajito)] rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     @if($usuario->fingerprint_id)

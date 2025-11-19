@@ -44,6 +44,11 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     // Clientes
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+
+    // Pagos (Vista Mockup)
+    Route::get('/pago-membresia', function () {
+        return view('payment');
+    })->name('pagos.show');
 });
 
 // Rutas de activación (Solo invitados)
