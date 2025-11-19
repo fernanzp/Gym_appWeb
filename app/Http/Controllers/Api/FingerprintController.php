@@ -12,14 +12,14 @@ class FingerprintController extends Controller
     public function store(Request $request)
     {
         try {
-            // El webhook de Particle enviará el JSON crudo en el cuerpo
             $data = json_decode($request->getContent(), true);
 
             $userId = $data['user_id'] ?? null;
             $slot   = $data['slot'] ?? null;
+            $status = $data['status'] ?? 'unknown'; // <-- CAPTURAR EL STATUS
 
-            if (!$userId || !$slot) {
-                Log::warning('Datos inválidos recibidos del Photon', ['payload' => $data]);
+            if (!$userId || $status === 'unknown') {
+                Log::warning('Datos inválidos recibidos del Photon (Falta user_id o status)', ['payload' => $data]);
                 return response()->json(['error' => 'Datos inválidos'], 400);
             }
 
@@ -29,18 +29,40 @@ class FingerprintController extends Controller
                 return response()->json(['error' => 'Usuario no encontrado'], 404);
             }
 
-            // Guardamos el slot (ID de la huella)
-            $usuario->fingerprint_id = $slot;
+            // --- LÓGICA DE MANEJO DE ESTADOS ---
+            if ($status === 'success') {
+                // 1. REGISTRO EXITOSO: El Photon lo guardó y nos dio el slot
+                if (!$slot) {
+                    Log::error('Status es Success pero falta Slot.', ['payload' => $data]);
+                    return response()->json(['error' => 'Falta slot en éxito'], 400);
+                }
+                
+                $usuario->fingerprint_id = $slot;
+                $usuario->save();
+
+                Log::info("Huella registrada exitosamente para usuario #{$userId}, slot #{$slot}");
+
+                return response()->json(['success' => true, 'message' => 'Huella registrada exitosamente.']);
+
+            } elseif ($status === 'error') {
+            // 2. REGISTRO FALLIDO (ERROR DE LECTURA)
+            
+            // ⚠️ ACCIÓN: Marcar como Error en Huella, NO ELIMINAR.
+            $usuario->estatus = 8; // Nuevo estatus para "Error de Huella"
+            $usuario->save(); 
+            
+            // Si el Photon publicó un slot, lo limpiamos para que el usuario no tenga un ID fallido.
+            $usuario->fingerprint_id = null;
             $usuario->save();
+            
+            Log::warning("Registro de huella fallido para usuario #{$userId}. Estatus marcado como ERROR (8).");
+            
+            return response()->json(['success' => true, 'message' => 'Estatus de error registrado.']);
+        }
+            // --- FIN LÓGICA DE MANEJO DE ESTADOS ---
 
-            Log::info("Huella registrada exitosamente para usuario #{$userId}, slot #{$slot}");
+            return response()->json(['error' => 'Status desconocido'], 400);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Huella registrada exitosamente.',
-                'user_id' => $userId,
-                'slot' => $slot,
-            ]);
         } catch (\Throwable $e) {
             Log::error('Error al registrar huella: '.$e->getMessage());
             return response()->json(['error' => 'Error interno del servidor'], 500);
