@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Usuario;
 
 class DashboardController extends Controller
 {
@@ -49,12 +50,18 @@ class DashboardController extends Controller
             ->whereDate('fecha_fin', '>=', $now->toDateString())
             ->whereDate('fecha_fin', '<=', $finDeSemana->toDateString())
             ->count();
+// ⭐️ AÑADIR CONSULTA PARA UX Y REINTENTO ⭐️
+        // Obtener todos los usuarios que tienen un estatus de error o timeout (8 o 9)
+        $usuariosPendientes = Usuario::whereIn('estatus', [8, 9])
+                                     ->orderBy('created_at', 'desc')
+                                     ->get();
 
         return view('dashboard', [
             'nuevosUsuariosCount' => $nuevosUsuariosCount,
             'porVencerCount'      => $porVencerCount,
             'nuevosUsuarios'      => $nuevosUsuarios,
             'todayHuman'          => $now->isoFormat('ddd, D MMM'),
+            'usuariosPendientes'  => $usuariosPendientes, // 👈 PASAR A LA VISTA
         ]);
     }
 }
