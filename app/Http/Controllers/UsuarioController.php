@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http; // 🔥 IMPORTANTE: Agrega esto para conectar con Particle
+use Illuminate\Support\Facades\Log;  // 🔥 Para logs de errores
 use App\Models\Usuario;
+use App\Jobs\CleanupIncompleteUser; // 🔥 Para el Job de timeout en el reset
 
 class UsuarioController extends Controller
 {
     public function index(Request $request)
     {
+        // ... (Tu código index se queda IGUAL, sin cambios) ...
         $q = trim($request->input('q', ''));
 
         $latest = DB::table('membresias as m1')
@@ -17,7 +21,7 @@ class UsuarioController extends Controller
             ->join(DB::raw('(SELECT usuario_id, MAX(fecha_ini) AS max_ini FROM membresias GROUP BY usuario_id) as mm'),
                 function ($join) {
                     $join->on('m1.usuario_id', '=', 'mm.usuario_id')
-                         ->on('m1.fecha_ini', '=', 'mm.max_ini');
+                             ->on('m1.fecha_ini', '=', 'mm.max_ini');
                 });
 
         $usuarios = DB::table('usuarios as u')
@@ -39,11 +43,10 @@ class UsuarioController extends Controller
 
     public function edit($id)
     {
-        // Usamos find() para obtener null si no existe, y no una excepción 404.
+        // ... (Tu código edit se queda IGUAL) ...
         $usuario = Usuario::find($id);
 
         if (!$usuario) {
-            // Manejo de error limpio: redirige al listado de usuarios con un mensaje de error.
             return redirect()->route('usuarios')->withErrors([
                 'general' => 'El usuario solicitado (ID: ' . $id . ') no fue encontrado.'
             ]);
@@ -54,17 +57,16 @@ class UsuarioController extends Controller
 
     public function update(Request $request, Usuario $usuario)
     {
-        // TODO: IMPLEMENTAR AQUÍ la lógica de validación y guardado de los cambios (backend).
-        
-        // Retorna un error temporal hasta que se implemente la funcionalidad de guardar
+        // ... (Tu código update se queda IGUAL por ahora) ...
         return back()->withErrors(['general' => 'La funcionalidad de guardar cambios está pendiente de implementación.']);
     }
 
+    // 👇👇👇 AQUÍ ESTÁ LA MODIFICACIÓN IMPORTANTE DEL PASO 2 👇👇👇
     public function destroy(Usuario $usuario)
     {
         $current = auth()->user();
 
-        // Permisos: solo admin o staff pueden eliminar
+        // Permisos
         $tienePermiso = $current->roles()
             ->whereIn('rol', ['admin','staff'])
             ->exists();
@@ -73,12 +75,10 @@ class UsuarioController extends Controller
             return back()->withErrors(['general' => 'No tienes permisos para eliminar usuarios.']);
         }
 
-        // No te puedes eliminar a ti mismo
         if ($usuario->id === $current->id) {
             return back()->withErrors(['general' => 'No puedes eliminar tu propia cuenta.']);
         }
 
-        // No se pueden eliminar usuarios con rol admin
         $esAdmin = DB::table('roles_usuarios as ru')
             ->join('roles as r','r.id','=','ru.rol_id')
             ->where('ru.usuario_id', $usuario->id)
@@ -91,7 +91,26 @@ class UsuarioController extends Controller
 
         DB::beginTransaction();
         try {
-            // Eliminar relaciones pivot y membresías primero (por si no hay ON DELETE CASCADE)
+            // 🔥 LÓGICA NUEVA: Borrar huella del sensor físico antes de borrar de BD
+            if ($usuario->fingerprint_id) {
+                try {
+                    // Llamada a la función 'delete-fingerprint' del Photon
+                    Http::asForm()->post(
+                        'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/delete-fingerprint',
+                        [
+                            'access_token' => env('PARTICLE_ACCESS_TOKEN'),
+                            'args' => (string) $usuario->fingerprint_id,
+                        ]
+                    );
+                    Log::info("Orden de borrado de huella enviada al sensor para usuario ID {$usuario->id}");
+                } catch (\Throwable $e) {
+                    // Solo registramos el error, NO detenemos la eliminación del usuario
+                    Log::error("Error al intentar borrar huella del sensor: " . $e->getMessage());
+                }
+            }
+            // 🔥 FIN LÓGICA NUEVA
+
+            // Eliminar relaciones
             DB::table('roles_usuarios')->where('usuario_id', $usuario->id)->delete();
             DB::table('membresias')->where('usuario_id', $usuario->id)->delete();
 
@@ -99,11 +118,56 @@ class UsuarioController extends Controller
             $usuario->delete();
 
             DB::commit();
-            return redirect()->route('usuarios')->with('success', 'Usuario eliminado correctamente.');
+            return redirect()->route('usuarios')->with('success', 'Usuario y datos biométricos eliminados correctamente.');
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
             return back()->withErrors(['general' => 'No se pudo eliminar el usuario. Revisa el log para más detalles.']);
+        }
+    }
+
+    // 👇👇👇 ESTA ES LA NUEVA FUNCIÓN PARA EL PASO 3 (Resetear Huella) 👇👇👇
+    public function resetFingerprint($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+
+        // 1. Borrar la huella vieja del sensor (si existe)
+        if ($usuario->fingerprint_id) {
+            try {
+                Http::asForm()->post(
+                    'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/delete-fingerprint',
+                    [
+                        'access_token' => env('PARTICLE_ACCESS_TOKEN'),
+                        'args' => (string) $usuario->fingerprint_id,
+                    ]
+                );
+            } catch (\Throwable $e) {
+                Log::error("Fallo al borrar huella antigua: " . $e->getMessage());
+            }
+        }
+
+        // 2. Limpiar la BD y preparar para nueva huella
+        $usuario->fingerprint_id = null;
+        $usuario->estatus = 0; // Reiniciar estatus para que salga del modo error/timeout
+        $usuario->save();
+
+        // 3. Iniciar Modo Registro en el Photon inmediatamente
+        try {
+            Http::asForm()->post(
+                'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/enroll-fingerprint',
+                [
+                    'access_token' => env('PARTICLE_ACCESS_TOKEN'),
+                    'args' => (string) $usuario->id,
+                ]
+            );
+
+            // Disparar el Job de Timeout para seguridad
+            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
+
+            return back()->with('success', 'Huella anterior eliminada. El sensor está listo: Coloca el nuevo dedo.');
+
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Error de conexión con el dispositivo IoT: ' . $e->getMessage());
         }
     }
 }

@@ -53,3 +53,6 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/cliente/retry-enroll/{userId}', [ClienteController::class, 'retryEnroll'])
      ->name('cliente.retry');
+
+Route::post('/usuario/{id}/reset-fingerprint', [UsuarioController::class, 'resetFingerprint'])
+    ->name('usuario.resetFingerprint');
