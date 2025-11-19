@@ -3,12 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Membresías</title>
+  <title>Gestión de Membresías</title>
 
-  <!--Logo-->
   <link rel="icon" href="{{ asset('images/logo_blue.png') }}" type="image/png">
 
-  <!--Fuentes-->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alumni+Sans+Pinstripe&family=Istok+Web:ital,wght@0,400;0,700;1,400;1,700&family=Poiret+One&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
@@ -29,39 +27,33 @@
 </head>
 <body class="antialiased istok-web-regular">
   <div class="min-h-screen p-6">
-    <!-- GRID PRINCIPAL: [Sidebar | Área principal] -->
     <div class="grid grid-cols-[84px_minmax(0,1fr)] gap-6 h-[calc(100vh-3rem)]">
       
-      <!-- SIDEBAR -->
-      <aside class="h-full flex flex-col items-center justify-center"> <!--bg-[#D9D9D9] rounded-2xlx-->
+      <aside class="h-full flex flex-col items-center justify-center">
         <nav class="flex flex-col items-center gap-6" role="navigation" aria-label="Sidebar">
           
-          <!-- Home (activo) -->
-          <a href="{{ route('dashboard') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Inicio"> <!--ring-2 ring-[var(--azul)]-->
+          <a href="{{ route('dashboard') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Inicio">
             <svg class="w-8 h-8" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272l16 0 0 176c0 35.3 28.7 64 64 64l288 0c35.3 0 64-28.7 64-64l0-176 16 0c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1l-224-208zM240 320l32 0c26.5 0 48 21.5 48 48l0 96-128 0 0-96c0-26.5 21.5-48 48-48z"/>
             </svg>
             <span class="sr-only">Inicio</span>
           </a>
 
-          <!-- Users -->
-          <a href="{{ route('usuarios') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Usuarios"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
+          <a href="{{ route('usuarios') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Usuarios">
             <svg class="w-8 h-8" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M320 16a104 104 0 1 1 0 208 104 104 0 1 1 0-208zM96 88a72 72 0 1 1 0 144 72 72 0 1 1 0-144zM0 416c0-70.7 57.3-128 128-128 12.8 0 25.2 1.9 36.9 5.4-32.9 36.8-52.9 85.4-52.9 138.6l0 16c0 11.4 2.4 22.2 6.7 32L32 480c-17.7 0-32-14.3-32-32l0-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32l0-16c0-53.2-20-101.8-52.9-138.6 11.7-3.5 24.1-5.4 36.9-5.4 70.7 0 128 57.3 128 128l0 32c0 17.7-14.3 32-32 32l-86.7 0zM472 160a72 72 0 1 1 144 0 72 72 0 1 1 -144 0zM160 432c0-88.4 71.6-160 160-160s160 71.6 160 160l0 16c0 17.7-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32l0-16z"/>
             </svg>
             <span class="sr-only">Usuarios</span>
           </a>
 
-          <!-- Membresías -->
-          <a href="{{ route('membresias') }}" class="p-2 rounded-xl text-[var(--azul)] hover:opacity-85" aria-current="page" title="Membresías"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
+          <a href="{{ route('membresias') }}" class="p-2 rounded-xl text-[var(--azul)]" aria-current="page" title="Membresías">
             <svg class="w-8 h-8" viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l448 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32zm80 256l64 0c44.2 0 80 35.8 80 80 0 8.8-7.2 16-16 16L80 384c-8.8 0-16-7.2-16-16 0-44.2 35.8-80 80-80zm-24-96a56 56 0 1 1 112 0 56 56 0 1 1 -112 0zm240-48l112 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-112 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 96l112 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-112 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/>
             </svg>
             <span class="sr-only">Membresías</span>
           </a>
 
-          <!-- Accesos -->
-          <a href="{{ route('accesos') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Accesos"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
+          <a href="{{ route('accesos') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Accesos">
             <svg class="w-8 h-8" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M48 256c0-114.9 93.1-208 208-208 63.1 0 119.6 28.1 157.8 72.5 8.6 10.1 23.8 11.2 33.8 2.6s11.2-23.8 2.6-33.8C403.3 34.6 333.7 0 256 0 114.6 0 0 114.6 0 256l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40zm458.5-52.9c-2.7-13-15.5-21.3-28.4-18.5s-21.3 15.5-18.5 28.4c2.9 13.9 4.5 28.3 4.5 43.1l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c0-18.1-1.9-35.8-5.5-52.9zM256 80c-19 0-37.4 3-54.5 8.6-15.2 5-18.7 23.7-8.3 35.9 7.1 8.3 18.8 10.8 29.4 7.9 10.6-2.9 21.8-4.4 33.4-4.4 70.7 0 128 57.3 128 128l0 24.9c0 25.2-1.5 50.3-4.4 75.3-1.7 14.6 9.4 27.8 24.2 27.8 11.8 0 21.9-8.6 23.3-20.3 3.3-27.4 5-55 5-82.7l0-24.9c0-97.2-78.8-176-176-176zM150.7 148.7c-9.1-10.6-25.3-11.4-33.9-.4-23.1 29.8-36.8 67.1-36.8 107.7l0 24.9c0 24.2-2.6 48.4-7.8 71.9-3.4 15.6 7.9 31.1 23.9 31.1 10.5 0 19.9-7 22.2-17.3 6.4-28.1 9.7-56.8 9.7-85.8l0-24.9c0-27.2 8.5-52.4 22.9-73.1 7.2-10.4 8-24.6-.2-34.2zM256 160c-53 0-96 43-96 96l0 24.9c0 35.9-4.6 71.5-13.8 106.1-3.8 14.3 6.7 29 21.5 29 9.5 0 17.9-6.2 20.4-15.4 10.5-39 15.9-79.2 15.9-119.7l0-24.9c0-28.7 23.3-52 52-52s52 23.3 52 52l0 24.9c0 36.3-3.5 72.4-10.4 107.9-2.7 13.9 7.7 27.2 21.8 27.2 10.2 0 19-7 21-17 7.7-38.8 11.6-78.3 11.6-118.1l0-24.9c0-53-43-96-96-96zm24 96c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 24.9c0 59.9-11 119.3-32.5 175.2l-5.9 15.3c-4.8 12.4 1.4 26.3 13.8 31s26.3-1.4 31-13.8l5.9-15.3C267.9 411.9 280 346.7 280 280.9l0-24.9z"/>
             </svg>
@@ -70,20 +62,15 @@
         </nav>
       </aside>
 
-      <!-- ÁREA PRINCIPAL -->
       <main class="h-full min-h-0 flex flex-col overflow-hidden">
-        <!-- Cabecera -->
-        <header class="h-16 flex items-center justify-between"> <!--bg-[#D9D9D9] rounded-2xl-->
+        <header class="h-16 flex items-center justify-between">
           @php
-            // Usa tu zona horaria real:
             $hoy = now('America/Mexico_City');
-
             $dias  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
             $meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
             $fechaCorta = $dias[$hoy->dayOfWeek] . ', ' . $hoy->format('j') . ' ' . $meses[$hoy->month - 1];
           @endphp
-          <h1 class="text-3xl istok-web-bold">Membresías</h1>
+          <h1 class="text-3xl istok-web-bold">Gestión de Membresías</h1>
           <div class="flex items-center gap-3">
             <div class="text-right leading-tight">
               <p class="istok-web-bold">
@@ -99,14 +86,267 @@
           </div>
         </header>
 
-        <!-- Contenido grande -->
-        <section class="mt-6 bg-[#D9D9D9] rounded-2xl flex-1 p-6 min-h-0 overflow-auto no-scrollbar grid place-content-center text-center">
-          <!-- Aquí va tu contenido de la vista membresías (widgets, tablas, etc.) -->
-           <p class="text-3xl">Esta vista se encuentra en desarrollo. Pronto podrás administrar membresías desde aquí.</p>
+        <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
+              <h3 class="text-xl font-bold text-center">Membresías Activas</h3>
+              <div class="w-full h-full flex items-center justify-center">
+                <p class="text-6xl istok-web-bold">{{ $totalActivas }}</p>
+              </div>
+            </article>
+
+            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
+              <h3 class="text-xl font-bold text-center">Próximas a Vencer</h3>
+              <div class="w-full h-full flex items-center justify-center">
+                <p class="text-6xl istok-web-bold">{{ $totalPorVencer }}</p>
+              </div>
+            </article>
+
+            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
+              <h3 class="text-xl font-bold text-center">Vencidas</h3>
+              <div class="w-full h-full flex items-center justify-center">
+                <p class="text-6xl istok-web-bold">{{ $totalVencidas }}</p>
+              </div>
+            </article>
+
+            <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
+              <h3 class="text-xl font-bold text-center">Congeladas</h3>
+              <div class="w-full h-full flex items-center justify-center">
+                <p class="text-6xl istok-web-bold">{{ $totalCongeladas }}</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="mt-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+                <div class="flex-grow w-full md:w-auto">
+                    <h2 class="text-3xl istok-web-bold mb-2">Listado de Membresías</h2>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        @php
+                            $baseClass = "px-4 py-1.5 text-sm rounded-lg shadow-sm ring-1 ring-black/10 transition-colors";
+                            $activeClass = "bg-[var(--azul)] text-white";
+                            $inactiveClass = "bg-white hover:bg-gray-50 text-gray-700";
+                        @endphp
+
+                        <a href="{{ route('membresias', ['filter' => 'todas', 'search' => request('search')]) }}" 
+                           class="{{ $baseClass }} {{ $filtro == 'todas' ? $activeClass : $inactiveClass }}">Todas</a>
+                        
+                        <a href="{{ route('membresias', ['filter' => 'vigentes', 'search' => request('search')]) }}" 
+                           class="{{ $baseClass }} {{ $filtro == 'vigentes' ? $activeClass : $inactiveClass }}">Vigentes</a>
+                        
+                        <a href="{{ route('membresias', ['filter' => 'por_vencer', 'search' => request('search')]) }}" 
+                           class="{{ $baseClass }} {{ $filtro == 'por_vencer' ? $activeClass : $inactiveClass }}">Por Vencer</a>
+
+                        <a href="{{ route('membresias', ['filter' => 'vencidas', 'search' => request('search')]) }}" 
+                           class="{{ $baseClass }} {{ $filtro == 'vencidas' ? $activeClass : $inactiveClass }}">Vencidas</a>
+
+                        <a href="{{ route('membresias', ['filter' => 'congeladas', 'search' => request('search')]) }}" 
+                           class="{{ $baseClass }} {{ $filtro == 'congeladas' ? $activeClass : $inactiveClass }}">Congeladas</a>
+                    </div>
+                </div>
+                
+                <form action="{{ route('membresias') }}" method="GET" class="flex gap-2 w-full md:w-auto">
+                    <input type="hidden" name="filter" value="{{ $filtro }}">
+                    <input type="text" name="search" value="{{ request('search') }}" 
+                           placeholder="Buscar usuario..." 
+                           class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-[var(--azul)] w-full">
+                    <button type="submit" class="bg-[var(--azul)] text-white px-4 py-2 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                </form>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl bg-[var(--gris-bajito)] ring-1 ring-black/10">
+                <table class="min-w-full">
+                <thead class="bg-gray-200/50 istok-web-bold">
+                    <tr class="border-b border-[var(--gris-medio)]">
+                        <th class="px-4 py-3 text-left text-xs uppercase text-gray-600">Usuario</th>
+                        <th class="px-4 py-3 text-left text-xs uppercase text-gray-600">Plan</th>
+                        <th class="px-4 py-3 text-left text-xs uppercase text-gray-600">Fecha Inicio</th>
+                        <th class="px-4 py-3 text-left text-xs uppercase text-gray-600">Fecha Fin</th>
+                        <th class="px-4 py-3 text-left text-xs uppercase text-gray-600">Días Restantes</th>
+                        <th class="px-4 py-3 text-left text-xs uppercase text-gray-600">Estatus</th>
+                        <th class="px-4 py-3 text-left text-xs uppercase text-gray-600">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--gris-medio)] istok-web-regular">
+                    @forelse($membresias as $m)
+                        @php
+                            // Lógica de presentación
+                            $diasRestantes = now()->diffInDays($m->fecha_fin, false); 
+                            // false permite negativos (dias pasados)
+                            
+                            $estatusTexto = '';
+                            $estatusClase = '';
+                            $diasClase = 'font-semibold';
+
+                            if ($m->estatus === 'vigente') {
+                                $estatusTexto = 'Vigente';
+                                $estatusClase = 'bg-green-100 text-green-700';
+                                
+                                if ($diasRestantes < 0) {
+                                    // Caso raro: Estatus dice activo pero fecha ya pasó
+                                    $diasClase = 'text-red-600'; 
+                                } elseif ($diasRestantes <= 5) {
+                                    $diasClase = 'text-orange-600';
+                                } else {
+                                    $diasClase = 'text-green-600';
+                                }
+                            } elseif ($m->estatus === 'congelada') {
+                                $estatusTexto = 'Congelada';
+                                $estatusClase = 'bg-blue-100 text-blue-700';
+                                $diasClase = 'text-gray-500';
+                            } else {
+                                $estatusTexto = 'Vencida';
+                                $estatusClase = 'bg-red-100 text-red-700';
+                                $diasClase = 'text-red-600';
+                            }
+                        @endphp
+
+                        <tr class="hover:bg-[#FAFAFA]">
+                            <td class="px-4 py-3">
+                                <p class="font-semibold text-gray-900">{{ $m->usuario->nombre_comp ?? 'Usuario Eliminado' }}</p>
+                                <p class="text-sm text-gray-600">{{ $m->usuario->email ?? '' }}</p>
+                            </td>
+                            <td class="px-4 py-3 text-gray-800">{{ $m->plan->nombre ?? 'Sin Plan' }}</td>
+                            <td class="px-4 py-3 text-gray-800">{{ $m->fecha_ini ? $m->fecha_ini->format('d/m/Y') : '-' }}</td>
+                            <td class="px-4 py-3 text-gray-800">{{ $m->fecha_fin ? $m->fecha_fin->format('d/m/Y') : '-' }}</td>
+                            
+                            <td class="px-4 py-3 {{ $diasClase }}">
+                                {{ round($diasRestantes) }} días
+                            </td>
+                            
+                            <td class="px-4 py-3">
+                                <span class="px-3 py-0.5 rounded-full text-xs font-semibold {{ $estatusClase }}">
+                                    {{ $estatusTexto }}
+                                </span>
+                            </td>
+                            
+                            <td class="px-4 py-3">
+                                <div class="flex gap-1">
+                                  @if($m->estatus === 'vencida')
+                                    <button type="button" class="p-1.5 rounded-lg text-[var(--gris-oscuro)] font-semibold hover:bg-gray-200/60" title="Renovar">
+                                      Renovar
+                                    </button>
+                                    @elseif($m->estatus === 'vigente')
+                                        <button type="button" onclick="abrirModal({{ $m->id }}, '{{ $m->usuario->nombre_comp }}', 'congelar')" class="p-1.5 rounded-lg text-[var(--gris-oscuro)] font-semibold hover:bg-gray-200/60" title="Congelar">
+                                          Congelar
+                                        </button>
+                                    @elseif($m->estatus === 'congelada')
+                                        <button type="button" onclick="abrirModal({{ $m->id }}, '{{ $m->usuario->nombre_comp }}', 'reactivar')" class="p-1.5 rounded-lg text-[var(--gris-oscuro)] font-semibold hover:bg-gray-200/60" title="Reactivar">
+                                          Reactivar
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                No se encontraron membresías con los criterios seleccionados.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                </table>
+                
+                <div class="p-4">
+                    {{ $membresias->appends(['search' => request('search'), 'filter' => $filtro])->links() }}
+                </div>
+            </div>
+          </div>
         </section>
       </main>
-
     </div>
   </div>
+<div id="statusModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="cerrarModal()"></div>
+
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </div>
+                        
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-xl font-semibold leading-6 text-gray-900 istok-web-bold" id="modal-title">
+                                Confirmar acción
+                            </h3>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-600 istok-web-regular">
+                                    ¿Estás seguro de que deseas <span id="modalActionText" class="font-bold"></span> la membresía de:
+                                </p>
+                                <p class="text-lg text-[var(--azul)] font-bold mt-2" id="modalUserName">
+                                    </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                    <form id="statusForm" method="POST" action="">
+                        @csrf
+                        @method('PUT')
+                        <button type="submit" id="confirmButton" class="inline-flex w-full justify-center rounded-lg bg-[var(--azul)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 sm:ml-3 sm:w-auto">
+                            Confirmar
+                        </button>
+                    </form>
+                    
+                    <button type="button" onclick="cerrarModal()" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirModal(id, nombre, accion) {
+        const modal = document.getElementById('statusModal');
+        const form = document.getElementById('statusForm');
+        const userNameText = document.getElementById('modalUserName');
+        const actionText = document.getElementById('modalActionText');
+        const confirmBtn = document.getElementById('confirmButton');
+
+        // 1. Actualizar la URL del formulario
+        // Usamos una ruta base y reemplazamos el ID placeholder
+        let url = "{{ route('membresias.toggleStatus', ':id') }}";
+        url = url.replace(':id', id);
+        form.action = url;
+
+        // 2. Actualizar textos
+        userNameText.textContent = nombre;
+        actionText.textContent = accion.toUpperCase();
+
+        // 3. Cambiar color del botón según acción (Opcional, visualmente útil)
+        if(accion === 'congelar') {
+            confirmBtn.classList.remove('bg-green-600', 'hover:bg-green-500');
+            confirmBtn.classList.add('bg-blue-600', 'hover:bg-blue-500'); // Azul para congelar
+            confirmBtn.textContent = "Sí, Congelar";
+        } else {
+            confirmBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+            confirmBtn.classList.add('bg-green-600', 'hover:bg-green-500'); // Verde para reactivar
+            confirmBtn.textContent = "Sí, Reactivar";
+        }
+
+        // 4. Mostrar modal
+        modal.classList.remove('hidden');
+    }
+
+    function cerrarModal() {
+        const modal = document.getElementById('statusModal');
+        modal.classList.add('hidden');
+    }
+</script>
 </body>
 </html>
