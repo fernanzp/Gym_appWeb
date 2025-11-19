@@ -37,6 +37,29 @@ class UsuarioController extends Controller
         return view('usuarios', compact('usuarios', 'q'));
     }
 
+    public function edit($id)
+    {
+        // Usamos find() para obtener null si no existe, y no una excepción 404.
+        $usuario = Usuario::find($id);
+
+        if (!$usuario) {
+            // Manejo de error limpio: redirige al listado de usuarios con un mensaje de error.
+            return redirect()->route('usuarios')->withErrors([
+                'general' => 'El usuario solicitado (ID: ' . $id . ') no fue encontrado.'
+            ]);
+        }
+        
+        return view('editUser', compact('usuario'));
+    }
+
+    public function update(Request $request, Usuario $usuario)
+    {
+        // TODO: IMPLEMENTAR AQUÍ la lógica de validación y guardado de los cambios (backend).
+        
+        // Retorna un error temporal hasta que se implemente la funcionalidad de guardar
+        return back()->withErrors(['general' => 'La funcionalidad de guardar cambios está pendiente de implementación.']);
+    }
+
     public function destroy(Usuario $usuario)
     {
         $current = auth()->user();
