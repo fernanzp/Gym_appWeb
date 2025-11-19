@@ -181,6 +181,59 @@
             </div>
         </div>
         </div>
+        
+        <div id="modalEsperaHuella" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl text-center transform scale-95 transition-transform duration-300" id="modalContent">
+        
+        <div class="relative w-24 h-24 mx-auto mb-6">
+            <div class="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-[var(--azul)] rounded-full border-t-transparent animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-[var(--azul)] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                </svg>
+            </div>
+        </div>
 
+        <h3 class="text-2xl istok-web-bold text-[var(--azul)] mb-2">Sensor Activado</h3>
+        <p class="text-gray-600 mb-6 istok-web-regular text-lg">
+            Indique al usuario que siga las instrucciones en el sensor físico.
+        </p>
+
+        <div class="bg-gray-50 rounded-xl p-4 text-left space-y-3 text-sm text-gray-700 border border-gray-200">
+            <div class="flex items-center gap-3">
+                <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                <span>Colocar dedo en el sensor.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                <span>Retirar dedo cuando se indique.</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                <span>Colocar el <strong>mismo dedo</strong> otra vez.</span>
+            </div>
+        </div>
+        
+        <p class="mt-6 text-xs text-gray-400 animate-pulse">Esperando confirmación del dispositivo...</p>
+    </div>
+</div>
+
+<script>
+    function activarModoEspera() {
+        const modal = document.getElementById('modalEsperaHuella');
+        const content = document.getElementById('modalContent');
+        
+        // Mostrar el modal
+        modal.classList.remove('hidden');
+        
+        // Pequeño delay para permitir que el navegador renderice y la animación CSS funcione
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 10);
+    }
+</script>
 </body>
 </html>
