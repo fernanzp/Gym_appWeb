@@ -33,9 +33,17 @@
             font-weight: 700;
             font-style: normal;
         }
+        
+        /* --- LOADER ESTILO WINDOWS (Agregado) --- */
+        .windows-loader {
+            width: 50px; height: 50px; margin: 0 auto;
+            border: 5px solid #f3f3f3; border-top: 5px solid var(--azul); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="flex flex-col items-center justify-between min-h-screen bg-white text-black">
+<body class="flex flex-col items-center justify-between min-h-screen bg-white text-black relative">
 
     <!-- Logo -->
     <div class="absolute top-[-15px] left-1">
@@ -46,7 +54,11 @@
     <div class="w-full max-w-[50%] mt-[5vh]">
         <h1 class="text-4xl font-bold text-center mb-8 istok-web-bold">Registrar cliente</h1>
 
-        <form action="{{ route('clientes.store') }}" method="POST" class="space-y-4">
+        <!-- 
+             🔥 FORMULARIO CON TRIGGER DEL MODAL 
+             Se agrega onsubmit="activarLoader()"
+        -->
+        <form action="{{ route('clientes.store') }}" method="POST" class="space-y-4" onsubmit="activarLoader()">
             @csrf
 
             @if (session('success'))
@@ -148,5 +160,43 @@
     <p class="text-center istok-web-regular text-[var(--gris-oscuro)] my-4">
         Al registrar al cliente se generará el cálculo automático de pago y promociones.
     </p>
+
+    <!-- 
+        🛠 MODAL OVERLAY DE CARGA (Nuevo)
+        Tiene posición fixed para flotar sobre todo y botón X para cerrar.
+    -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/70 z-[9999] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative">
+             
+             <!-- Botón X para cancelar si se arrepiente o se traba -->
+             <button type="button" onclick="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl transition-colors">&times;</button>
+
+            <div class="flex justify-center mb-6"><div class="windows-loader"></div></div>
+            
+            <h3 class="text-2xl istok-web-bold text-[var(--azul)] mb-2">Creando Registro...</h3>
+            <p class="text-gray-600 mb-4 text-sm">Estamos guardando los datos e iniciando el sensor.</p>
+            
+            <div class="text-left bg-gray-50 p-4 rounded-lg border border-gray-100 mb-4">
+                <p class="text-sm text-gray-700 mb-2"><strong>Siguientes pasos:</strong></p>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-2">
+                    <li>El usuario se creará en la base de datos.</li>
+                    <li>El sensor biométrico se activará.</li>
+                    <li>Serás redirigido para confirmar la huella.</li>
+                </ul>
+            </div>
+            <p class="text-xs text-gray-400 animate-pulse">Conectando con dispositivo IoT...</p>
+        </div>
+    </div>
+
+    <script>
+        function activarLoader() {
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+        }
+    </script>
+
 </body>
 </html>
