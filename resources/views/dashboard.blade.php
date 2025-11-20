@@ -127,7 +127,7 @@
 
         @endforeach
         <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <!-- Card 1 -->
             <article class="h-[180px] rounded-2xl bg-gradient-to-br from-[var(--azul)] to-[#023373] text-white shadow-sm flex flex-col">
               <a href="{{ route('clientRegister') }}" class="p-4">
@@ -141,6 +141,25 @@
             </article>
 
             <!-- Card 2 -->
+            <div class="h-[180px] flex flex-col gap-6">
+                <!-- Botón Abrir Entrada -->
+                <form action="" method="POST" class="flex-1">
+                    @csrf
+                    <button type="submit" class="w-full h-full rounded-2xl bg-[var(--azul)] hover:bg-[var(--azul-oscuro)] text-white shadow-sm flex items-center justify-center gap-3 transition-colors group">
+                        <span class="text-xl font-bold group-hover:scale-105 transition-transform">Abrir entrada</span>
+                    </button>
+                </form>
+
+                <!-- Botón Abrir Salida -->
+                <form action="" method="POST" class="flex-1">
+                    @csrf
+                    <button type="submit" class="w-full h-full rounded-2xl bg-[var(--azul)] hover:bg-[var(--azul-oscuro)] text-white shadow-sm flex items-center justify-center gap-3 transition-colors group">
+                        <span class="text-xl font-bold group-hover:scale-105 transition-transform">Abrir salida</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Card 3 -->
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
               <h3 class="text-xl font-bold text-center">Ocupación actual</h3>
               <div class="w-full h-full flex items-center justify-center">
@@ -149,7 +168,7 @@
               <!--<p class="text-sm text-black/80">Proximamente</p>-->
             </article>
 
-            <!-- Card 3 -->
+            <!-- Card 4 -->
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
               <h3 class="text-xl font-bold text-center">Membresías por vencer esta semana</h3>
               <div class="w-full h-full flex items-center justify-center">
@@ -157,7 +176,7 @@
               </div>
             </article>
 
-            <!-- Card 4 -->
+            <!-- Card 5 -->
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
               <h3 class="text-xl font-bold text-center">Nuevos usuarios en el último mes</h3>
               <div class="w-full h-full flex items-center justify-center">
