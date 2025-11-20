@@ -13,7 +13,7 @@
         .istok-web-regular { font-family: "Istok Web", sans-serif; font-weight: 400; }
         .istok-web-bold { font-family: "Istok Web", sans-serif; font-weight: 700; }
 
-        /* LOADER WINDOWS */
+        /* --- ESTILOS DEL MODAL --- */
         .windows-loader { width: 50px; height: 50px; margin: 0 auto; border: 5px solid #f3f3f3; border-top: 5px solid var(--azul); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -79,10 +79,37 @@
             @error('general') <div class="p-3 rounded-md bg-red-100 text-red-800">{{ $message }}</div> @enderror
 
             <!-- Campos -->
-            <div><label class="block font-bold mb-1 istok-web-bold">Nombre completo</label><div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3"><input name="nombre_comp" type="text" value="{{ old('nombre_comp', $usuario->nombre_comp ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular"></div></div>
-            <div><label class="block font-bold mb-1 istok-web-bold">Correo electrónico</label><div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3"><input name="email" type="email" value="{{ old('email', $usuario->email ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular"></div></div>
-            <div><label class="block font-bold mb-1 istok-web-bold">Teléfono</label><div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3"><input name="telefono" type="tel" value="{{ old('telefono', $usuario->telefono ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular"></div></div>
-            <div><label class="block font-bold mb-1 istok-web-bold">Estatus</label><div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3"><select name="estatus" class="flex-1 bg-transparent outline-none istok-web-regular"><option value="activo" @selected($currentStatus == 'activo')>Activo</option><option value="inactivo" @selected($currentStatus == 'inactivo')>Inactivo</option></select></div></div>
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Nombre completo</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
+                    <input name="nombre_comp" type="text" value="{{ old('nombre_comp', $usuario->nombre_comp ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular">
+                </div>
+            </div>
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Correo electrónico</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
+                    <input name="email" type="email" value="{{ old('email', $usuario->email ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular">
+                </div>
+            </div>
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Teléfono</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
+                    <input name="telefono" type="tel" value="{{ old('telefono', $usuario->telefono ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular">
+                </div>
+            </div>
+            
+            <!-- SELECT ESTATUS CORREGIDO (SIN VARIABLE INTERMEDIA) -->
+            <div>
+                <label class="block font-bold mb-1 istok-web-bold">Estatus</label>
+                <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
+                    <select name="estatus" class="flex-1 bg-transparent outline-none istok-web-regular appearance-none cursor-pointer">
+                        <!-- Si estatus es 1, selecciona Activo -->
+                        <option value="1" @selected(old('estatus', $usuario->estatus) == 1)>Activo</option>
+                        <!-- Si estatus es 0, 8 o 9, selecciona Inactivo por defecto -->
+                        <option value="0" @selected(old('estatus', $usuario->estatus) != 1)>Inactivo</option>
+                    </select>
+                </div>
+            </div>
 
             <div class="flex gap-4 pt-4">
                 <a href="{{ route('usuarios') }}" class="w-full text-center border-2 border-[var(--gris-oscuro)] text-[var(--gris-oscuro)] py-3 rounded-full font-bold hover:bg-[var(--gris-oscuro)] hover:text-white transition">Cancelar</a>
@@ -133,7 +160,7 @@
     <!-- 🛠 MODAL OVERLAY -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/70 z-[9999] hidden flex items-center justify-center backdrop-blur-sm">
         
-        <!-- 1. CARGANDO (DISEÑO DETALLADO RESTAURADO) -->
+        <!-- 1. CARGANDO -->
         <div id="estadoCargando" class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-6"><div class="windows-loader"></div></div>
             
@@ -178,11 +205,9 @@
             <h3 class="text-2xl istok-web-bold text-red-600 mb-2">¡Error de Huella!</h3>
             <p id="msgError" class="text-gray-600 text-sm mb-6">Las huellas no coincidieron o hubo un error.</p>
             
-            <!-- Botón reintentar -->
             <button onclick="activarLoader(); document.getElementById('formRetryModal').submit();" class="bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 w-full">
                 Intentar de Nuevo
             </button>
-            <!-- Formulario oculto -->
             <form id="formRetryModal" action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="hidden">@csrf</form>
             
             <button onclick="document.getElementById('modalOverlay').classList.add('hidden')" class="mt-3 text-gray-500 text-sm hover:underline">
@@ -237,6 +262,7 @@
                         exito.classList.remove('hidden');
                         setTimeout(() => { location.reload(); }, 2000);
                     }
+
                     if (intentos > 60) clearInterval(pollingInterval);
                 } catch (e) { console.error(e); }
             }, 1000);
