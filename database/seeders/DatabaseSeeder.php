@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
         PlanesSeeder::class,
         RolesSeeder::class,
+        AdminUserSeeder::class,
         // Aquí puedes agregar más seeders en el futuro
     
     

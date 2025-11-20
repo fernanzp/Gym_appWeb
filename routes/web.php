@@ -27,7 +27,8 @@ Route::middleware('auth')->group(function () {
     // Ruta para cambiar el estatus (Congelar/Reactivar)
     Route::put('/membresias/{id}/toggle-status', [MembresiaController::class, 'toggleStatus'])
         ->name('membresias.toggleStatus');
-    Route::view('/accesos', 'accesos')->name('accesos');
+
+    Route::view('/entradas-salidas', 'entradasSalidas')->name('entradas-salidas');
 });
 
 // Rutas administrativas (Admin o Staff)
@@ -45,6 +46,11 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     // Clientes
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+
+    // Pagos (Vista Mockup)
+    Route::get('/pago-membresia', function () {
+        return view('payment');
+    })->name('pagos.show');
 });
 
 // Rutas de activación (Solo invitados)
