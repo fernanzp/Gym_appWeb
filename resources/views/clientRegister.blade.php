@@ -141,7 +141,7 @@
             try {
                 // NOTA: Asegúrate de que la ruta en web.php sea 'cliente.store' o 'clientes.store'
                 // Aquí uso 'cliente.store' basado en tus códigos anteriores.
-                const response = await fetch("{{ route('cliente.store') }}", {
+                const response = await fetch("{{ route('clientes.store') }}", {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
