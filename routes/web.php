@@ -26,7 +26,8 @@ Route::middleware('auth')->group(function () {
     // Ruta para cambiar el estatus (Congelar/Reactivar)
     Route::put('/membresias/{id}/toggle-status', [MembresiaController::class, 'toggleStatus'])
         ->name('membresias.toggleStatus');
-    Route::view('/accesos', 'accesos')->name('accesos');
+
+    Route::view('/entradas-salidas', 'entradasSalidas')->name('entradas-salidas');
 });
 
 // Rutas administrativas (Admin o Staff)
