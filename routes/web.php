@@ -7,6 +7,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ActivacionController;
 use App\Http\Controllers\MembresiaController;
+use App\Http\Controllers\PasswordResetController;
 
 // Ruta base
 Route::get('/', function () {
@@ -50,7 +51,13 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
 Route::middleware('guest')->group(function () {
     Route::get('/activar-cuenta', [ActivacionController::class, 'show'])->name('activacion.show');
     Route::post('/activar-cuenta', [ActivacionController::class, 'store'])->name('activacion.store');
-    
+
+    Route::get('/olvide-contrasena', [PasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/olvide-contrasena', [PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/restablecer-contrasena/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/restablecer-contrasena', [PasswordResetController::class, 'reset'])->name('password.update');
+
+    Route::view('/contrasena-restablecida', 'auth.passwordResetSuccess')->name('password.success');
     Route::get('/activacion-exitosa', function () {
         return view('activationSuccessful');
     })->name('activacion.exitosa');

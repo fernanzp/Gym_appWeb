@@ -174,9 +174,11 @@
                 <tbody class="divide-y divide-[var(--gris-medio)] istok-web-regular">
                     @forelse($membresias as $m)
                         @php
-                            // Lógica de presentación
-                            $diasRestantes = now()->diffInDays($m->fecha_fin, false); 
-                            // false permite negativos (dias pasados)
+                        if ($m->fecha_fin < now()){
+                              $diasRestantes = 0;
+                        }else {
+                          $diasRestantes = now()->diffInDays($m->fecha_fin);
+                        }
                             
                             $estatusTexto = '';
                             $estatusClase = '';
