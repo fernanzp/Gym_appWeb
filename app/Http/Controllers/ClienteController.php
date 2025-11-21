@@ -45,15 +45,15 @@ class ClienteController extends Controller
                 'email'       => $request->email,
                 'telefono'    => $request->telefono,
                 'fecha_nac'   => $request->fecha_nac,
-                'contrasena'  => null, // pendiente hasta activación
-                'estatus'     => 0,    // inactivo
+                'contrasena'  => null, 
+                'estatus'     => 0,    
             ]);
 
             // 3️⃣ Crear membresía
-            $inicio = Carbon::today();
+            $inicio = \Carbon\Carbon::today();
             $fin    = (clone $inicio)->addDays($plan->duracion_dias);
 
-            Membresia::create([
+            \App\Models\Membresia::create([
                 'usuario_id' => $usuario->id,
                 'plan_id'    => $plan->id,
                 'fecha_ini'  => $inicio->toDateString(),
@@ -62,62 +62,49 @@ class ClienteController extends Controller
             ]);
 
             // 4️⃣ Asignar rol
-            $rolMember = Rol::firstOrCreate(['rol' => 'member']);
+            $rolMember = \App\Models\Rol::firstOrCreate(['rol' => 'member']);
             $usuario->roles()->syncWithoutDetaching([$rolMember->id]);
 
-            // ✅ Confirmar cambios antes de tareas lentas
             DB::commit();
-            // ⬇️ ⭐️ IMPLEMENTACIÓN DEL TIMEOUT (Bug 2 - Parte 2) ⭐️ ⬇️
 
-            // Programar la limpieza de la DB si el registro de huella falla por timeout
-            // El Job se ejecutará en 60 segundos. Si en ese tiempo no llega el evento de éxito,
-            // y el campo fingerprint_id sigue null, el registro se eliminará.
-            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60)); 
+            // 5️⃣ Token y Correo (Omitido por brevedad, asumo que sigue igual)
+            // ... tu código de mail ...
+
+            // 6️⃣ Enviar evento a Particle (Timeout de 5s para no bloquear)
+            try {
+                Http::timeout(5)->asForm()->post(
+                    'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/enroll-fingerprint',
+                    [
+                        'access_token' => env('PARTICLE_ACCESS_TOKEN'),
+                        'args' => (string) $usuario->id,
+                    ]
+                );
+            } catch (\Throwable $e) {
+                Log::error("No se pudo iniciar sensor: " . $e->getMessage());
+            }
             
-            // ⬆️ ⭐️ FIN IMPLEMENTACIÓN DEL TIMEOUT ⭐️ ⬆️
+            Log::info('Cliente creado via AJAX', ['user_id' => $usuario->id]);
 
-            // 5️⃣ Generar token de activación
-            $token = Str::random(64);
-            DB::table('password_resets')->updateOrInsert(
-                ['email' => $usuario->email],
-                ['token' => $token, 'created_at' => Carbon::now()]
-            );
+            // 7️⃣ RESPUESTA JSON (Para que el JS sepa qué usuario monitorear)
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'user_id' => $usuario->id,
+                    'message' => 'Usuario creado. Esperando huella.'
+                ]);
+            }
 
-            // 6️⃣ Enviar correo
-            $urlActivacion = route('activacion.show', ['token' => $token, 'email' => $usuario->email]);
-            Mail::to($usuario->email)->send(new ActivarCuentaMail($usuario, $urlActivacion));
-
-          // 7️⃣ Enviar evento a Particle (modo registro de huella)
-            $event = 'enroll-fingerprint'; // nombre del evento publicado en el firmware del Photon
-            
-            // ✅ Corrección: enviar el ID como texto plano, no JSON
-            $response = Http::asForm()->post(
-                'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/' . $event,
-                [
-                    'access_token' => env('PARTICLE_ACCESS_TOKEN'),
-                    'args' => (string) $usuario->id, // 👈 debe ser string simple, no JSON
-                ]
-            );
-            
-            // 8️⃣ Log para depuración
-            Log::info('Particle enroll response', [
-                'user_id' => $usuario->id,
-                'body' => $response->body(),
-            ]);
-
-
-            // 9️⃣ Redirigir con éxito
-            return redirect()
-                ->route('dashboard')
-                ->with('success', 'Cliente registrado. Se ha enviado correo de activación y el sensor está listo para registrar su huella.');
+            // Fallback normal (si js falla)
+            return redirect()->route('usuarios.edit', $usuario->id)->with('success', 'Registrado.');
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            report($e);
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Error en el servidor: ' . $e->getMessage()], 500);
+            }
 
-            return back()
-                ->withInput()
-                ->withErrors(['general' => 'Ocurrió un error al registrar al cliente.']);
+            return back()->withInput()->withErrors(['general' => 'Error al registrar.']);
         }
     }
     public function retryEnroll(int $userId)

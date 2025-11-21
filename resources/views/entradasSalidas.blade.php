@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Accesos</title>
+  <title>Entradas y salidas</title>
 
   <!--Logo-->
   <link rel="icon" href="{{ asset('images/logo_blue.png') }}" type="image/png">
@@ -60,12 +60,12 @@
             <span class="sr-only">Membresías</span>
           </a>
 
-          <!-- Accesos -->
-          <a href="{{ route('accesos') }}" class="p-2 rounded-xl text-[var(--azul)] hover:opacity-85" aria-current="page" title="Accesos"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
+          <!-- Entradas y salidas -->
+          <a href="{{ route('entradas-salidas') }}" class="p-2 rounded-xl text-[var(--azul)] hover:opacity-85" aria-current="page" title="Entradas y salidas"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
             <svg class="w-8 h-8" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
               <path fill="currentColor" d="M48 256c0-114.9 93.1-208 208-208 63.1 0 119.6 28.1 157.8 72.5 8.6 10.1 23.8 11.2 33.8 2.6s11.2-23.8 2.6-33.8C403.3 34.6 333.7 0 256 0 114.6 0 0 114.6 0 256l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40zm458.5-52.9c-2.7-13-15.5-21.3-28.4-18.5s-21.3 15.5-18.5 28.4c2.9 13.9 4.5 28.3 4.5 43.1l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c0-18.1-1.9-35.8-5.5-52.9zM256 80c-19 0-37.4 3-54.5 8.6-15.2 5-18.7 23.7-8.3 35.9 7.1 8.3 18.8 10.8 29.4 7.9 10.6-2.9 21.8-4.4 33.4-4.4 70.7 0 128 57.3 128 128l0 24.9c0 25.2-1.5 50.3-4.4 75.3-1.7 14.6 9.4 27.8 24.2 27.8 11.8 0 21.9-8.6 23.3-20.3 3.3-27.4 5-55 5-82.7l0-24.9c0-97.2-78.8-176-176-176zM150.7 148.7c-9.1-10.6-25.3-11.4-33.9-.4-23.1 29.8-36.8 67.1-36.8 107.7l0 24.9c0 24.2-2.6 48.4-7.8 71.9-3.4 15.6 7.9 31.1 23.9 31.1 10.5 0 19.9-7 22.2-17.3 6.4-28.1 9.7-56.8 9.7-85.8l0-24.9c0-27.2 8.5-52.4 22.9-73.1 7.2-10.4 8-24.6-.2-34.2zM256 160c-53 0-96 43-96 96l0 24.9c0 35.9-4.6 71.5-13.8 106.1-3.8 14.3 6.7 29 21.5 29 9.5 0 17.9-6.2 20.4-15.4 10.5-39 15.9-79.2 15.9-119.7l0-24.9c0-28.7 23.3-52 52-52s52 23.3 52 52l0 24.9c0 36.3-3.5 72.4-10.4 107.9-2.7 13.9 7.7 27.2 21.8 27.2 10.2 0 19-7 21-17 7.7-38.8 11.6-78.3 11.6-118.1l0-24.9c0-53-43-96-96-96zm24 96c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 24.9c0 59.9-11 119.3-32.5 175.2l-5.9 15.3c-4.8 12.4 1.4 26.3 13.8 31s26.3-1.4 31-13.8l5.9-15.3C267.9 411.9 280 346.7 280 280.9l0-24.9z"/>
             </svg>
-            <span class="sr-only">Accesos</span>
+            <span class="sr-only">Entradas y salidas</span>
           </a>
         </nav>
       </aside>
@@ -83,7 +83,7 @@
 
             $fechaCorta = $dias[$hoy->dayOfWeek] . ', ' . $hoy->format('j') . ' ' . $meses[$hoy->month - 1];
           @endphp
-          <h1 class="text-3xl istok-web-bold">Accesos</h1>
+          <h1 class="text-3xl istok-web-bold">Entradas y salidas</h1>
           <div class="flex items-center gap-3">
             <div class="text-right leading-tight">
               <p class="istok-web-bold">
@@ -100,9 +100,96 @@
         </header>
 
         <!-- Contenido grande -->
-        <section class="mt-6 bg-[#D9D9D9] rounded-2xl flex-1 p-6 min-h-0 overflow-auto no-scrollbar grid place-content-center text-center">
-          <!-- Aquí va tu contenido de la vista accesos (widgets, tablas, etc.) -->
-           <p class="text-3xl">Esta vista se encuentra en desarrollo. Pronto podrás visualizar los accesos desde aquí.</p>
+        <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
+          <form method="" action="" class="rounded-2xl bg-[var(--gris-bajito)] h-12 mb-4 flex items-center gap-3 px-4 group ring-1 ring-black/10">
+            <!-- Icono de Búsqueda -->
+            <svg class="w-5 h-5 text-[var(--gris-medio)] transition-colors group-focus-within:text-[var(--azul)]" 
+              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+              <path d="M416 208c0 45.9-14.9 88.3-40 122.7L500 455.7c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 377c-34.4 25.2-76.8 40-122.7 40C93.1 417 0 323.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
+            </svg>
+            <!-- Input de búsqueda -->
+            <input name="" value="" 
+              placeholder="Buscar por nombre o tipo..."
+              class="flex-1 bg-transparent h-full focus:outline-none text-gray-800 placeholder:text-[var(--gris-medio)] istok-web-regular" />
+          </form>
+          <div class="overflow-x-auto rounded-2xl bg-[var(--gris-bajito)] ring-1 ring-black/10">
+            <table class="min-w-full">
+              <thead class="bg-[var(--gris-bajito)] text-xl istok-web-bold">
+                <tr class="border-b border-[var(--gris-medio)]">
+                  <th class="px-4 py-3 text-left">Nombre completo</th>
+                  <th class="px-4 py-3 text-left">Acción</th>
+                  <th class="px-4 py-3 text-left">Hora</th>
+                  <th class="px-4 py-3 text-right w-28">Membresía</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[var(--gris-medio)] istok-web-regular">
+                  <tr class="hover:bg-[#FAFAFA]">
+                    <td class="px-4 py-3">
+                      <p class="text-[#0460D9]">Juan</p>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-500 text-white text-xs font-bold tracking-wide shadow-sm"> 
+                        Salida
+                      </span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="">11:53 AM</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="">Mensual</span>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-[#FAFAFA]">
+                    <td class="px-4 py-3">
+                      <p class="text-[#0460D9]">María</p>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-500 text-white text-xs font-bold tracking-wide shadow-sm"> 
+                        Entrada
+                      </span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="">11:24 AM</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="">Anual</span>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-[#FAFAFA]">
+                    <td class="px-4 py-3">
+                      <p class="text-[#0460D9]">Ángel</p>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-500 text-white text-xs font-bold tracking-wide shadow-sm"> 
+                        Entrada
+                      </span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="">10:53 AM</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="">Mensual</span>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-[#FAFAFA]">
+                    <td class="px-4 py-3">
+                      <p class="text-[#0460D9]">Juan</p>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-500 text-white text-xs font-bold tracking-wide shadow-sm">
+                        Entrada
+                      </span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="">10:45 AM</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="">Mensual</span>
+                    </td>
+                  </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
       </main>
 

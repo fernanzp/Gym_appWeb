@@ -17,6 +17,7 @@ return new class extends Migration
         $table->unsignedInteger('plan_id');
         $table->date('fecha_ini');
         $table->date('fecha_fin');
+        $table->integer('dias_congelados')->nullable();
         $table->enum('estatus', ['vigente', 'vencida', 'congelada'])->default('congelada');
         $table->timestamps();
 

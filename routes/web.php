@@ -6,6 +6,8 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ActivacionController;
+use App\Http\Controllers\MembresiaController;
+use App\Http\Controllers\PasswordResetController;
 
 // Ruta base
 Route::get('/', function () {
@@ -21,7 +23,12 @@ Route::middleware('web')->group(function () {
 // Rutas protegidas generales (Cualquier usuario logueado)
 Route::middleware('auth')->group(function () {
     Route::view('/membresias', 'membresias')->name('membresias');
-    Route::view('/accesos', 'accesos')->name('accesos');
+    Route::get('/membresias', [MembresiaController::class, 'index'])->name('membresias');
+    // Ruta para cambiar el estatus (Congelar/Reactivar)
+    Route::put('/membresias/{id}/toggle-status', [MembresiaController::class, 'toggleStatus'])
+        ->name('membresias.toggleStatus');
+
+    Route::view('/entradas-salidas', 'entradasSalidas')->name('entradas-salidas');
 });
 
 // Rutas administrativas (Admin o Staff)
@@ -39,13 +46,24 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     // Clientes
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+
+    // Pagos (Vista Mockup)
+    Route::get('/pago-membresia', function () {
+        return view('payment');
+    })->name('pagos.show');
 });
 
 // Rutas de activación (Solo invitados)
 Route::middleware('guest')->group(function () {
     Route::get('/activar-cuenta', [ActivacionController::class, 'show'])->name('activacion.show');
     Route::post('/activar-cuenta', [ActivacionController::class, 'store'])->name('activacion.store');
-    
+
+    Route::get('/olvide-contrasena', [PasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/olvide-contrasena', [PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/restablecer-contrasena/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/restablecer-contrasena', [PasswordResetController::class, 'reset'])->name('password.update');
+
+    Route::view('/contrasena-restablecida', 'auth.passwordResetSuccess')->name('password.success');
     Route::get('/activacion-exitosa', function () {
         return view('activationSuccessful');
     })->name('activacion.exitosa');
@@ -53,3 +71,6 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/cliente/retry-enroll/{userId}', [ClienteController::class, 'retryEnroll'])
      ->name('cliente.retry');
+
+Route::post('/usuario/{id}/reset-fingerprint', [UsuarioController::class, 'resetFingerprint'])
+    ->name('usuario.resetFingerprint');
