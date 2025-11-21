@@ -178,7 +178,7 @@
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
               <h3 class="text-xl font-bold text-center">Ocupación actual</h3>
               <div class="w-full h-full flex items-center justify-center">
-                <p class="text-6xl istok-web-bold">-%</p>
+                <p id="txt-aforo" class="text-6xl istok-web-bold">-</p>
               </div>
               <!--<p class="text-sm text-black/80">Proximamente</p>-->
             </article>
@@ -247,5 +247,30 @@
       </main>
     </div>
   </div>
+
+  <!-- SCRIPT DE AFORO AUTOMÁTICO -->
+  <script>
+    async function actualizarAforo() {
+        try {
+            // Usamos 'url()' para generar la dirección completa y evitar errores
+            const res = await fetch("{{ url('/api/aforo-live') }}");
+            const data = await res.json();
+            
+            const elemento = document.getElementById('txt-aforo');
+            if(elemento) {
+                // Solo ponemos el número, sin el %
+                elemento.innerText = data.total; 
+            }
+        } catch (e) {
+            console.error("Error aforo:", e);
+        }
+    }
+
+    // Iniciar al cargar y repetir cada 5 segundos
+    document.addEventListener("DOMContentLoaded", function() {
+        actualizarAforo();
+        setInterval(actualizarAforo, 5000);
+    });
+  </script>
 </body>
 </html>
