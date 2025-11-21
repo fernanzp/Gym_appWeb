@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         PlanesSeeder::class,
         RolesSeeder::class,
         AdminUserSeeder::class,
+        VisitaUsuarioSeeder::class,
         // Aquí puedes agregar más seeders en el futuro
     
     
