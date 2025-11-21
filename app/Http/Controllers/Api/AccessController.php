@@ -74,7 +74,7 @@ class AccessController extends Controller
         // Enviar respuesta al Photon (Webhook response o evento)
         // Nota: Si estás usando Webhooks de Particle, la respuesta JSON al final es lo que importa.
         // Si necesitas publicar un evento de vuelta, descomenta lo siguiente:
-        /*
+        
         Http::withToken(env('PARTICLE_ACCESS_TOKEN'))->post(
             'https://api.particle.io/v1/devices/events',
             [
@@ -83,7 +83,7 @@ class AccessController extends Controller
                 'private' => true,
             ]
         );
-        */
+        
 
         return response()->json([
             'status' => $responseStatus,
