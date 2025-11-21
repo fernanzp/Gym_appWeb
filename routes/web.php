@@ -8,7 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ActivacionController;
 use App\Http\Controllers\MembresiaController;
 use App\Http\Controllers\PasswordResetController;
-use App\Http\Controllers\Api\AccessController; // 🔥 IMPORTANTE: Necesario para las visitas
+use App\Http\Controllers\Api\AccessController;
 
 // Ruta base
 Route::get('/', function () {
@@ -21,18 +21,10 @@ Route::middleware('web')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->name('login.submit');
 });
 
-// Rutas protegidas generales (Cualquier usuario logueado)
+// Rutas protegidas generales
 Route::middleware('auth')->group(function () {
     Route::view('/membresias', 'membresias')->name('membresias');
     Route::get('/membresias', [MembresiaController::class, 'index'])->name('membresias');
-    // Paso 1: Del Modal a la Vista de Pago
-    Route::post('/membresias/renovar/preparar', [MembresiaController::class, 'prepararRenovacion'])
-        ->name('membresias.prepararRenovacion');
-
-    // Paso 2: De la Vista de Pago a la Base de Datos
-    Route::post('/membresias/renovar/procesar', [MembresiaController::class, 'procesarRenovacion'])
-        ->name('membresias.procesarRenovacion');
-    // Ruta para cambiar el estatus (Congelar/Reactivar)
     Route::put('/membresias/{id}/toggle-status', [MembresiaController::class, 'toggleStatus'])
         ->name('membresias.toggleStatus');
 
@@ -55,22 +47,40 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
 
-    // Pagos (Vista Mockup)
+    // Pagos
     Route::get('/pago-membresia', function () {
         return view('payment');
     })->name('pagos.show');
 
-    // 🔥 RUTA NUEVA: Botones de Visita (Entrada/Salida)
+    // Visitas
     Route::post('/access/visita', [AccessController::class, 'registrarVisitaManual'])
          ->name('access.visita');
 
-    // 🔥 Movidmos estas rutas aquí adentro para protegerlas con seguridad (auth)
+    // Gestión Biométrica
     Route::post('/cliente/retry-enroll/{userId}', [ClienteController::class, 'retryEnroll'])
          ->name('cliente.retry');
 
     Route::post('/usuario/{id}/reset-fingerprint', [UsuarioController::class, 'resetFingerprint'])
         ->name('usuario.resetFingerprint');
 });
+
+// 🔥 RUTAS API MANUALES (Definidas aquí para asegurar que funcionen en el hosting)
+// -----------------------------------------------------------------------------
+
+// 1. Ruta para el Aforo en Vivo (Dashboard)
+Route::get('/api/aforo-live', [DashboardController::class, 'getAforoEnVivo']);
+
+// 2. Ruta para el estado del modal de huella (EditUser / ClientRegister)
+use App\Models\Usuario;
+Route::get('/api/user-status/{id}', function ($id) {
+    $usuario = Usuario::find($id);
+    return response()->json([
+        'estatus' => $usuario->estatus,
+        'fingerprint_id' => $usuario->fingerprint_id
+    ]);
+});
+
+// -----------------------------------------------------------------------------
 
 // Rutas de activación (Solo invitados)
 Route::middleware('guest')->group(function () {
@@ -86,4 +96,10 @@ Route::middleware('guest')->group(function () {
     Route::get('/activacion-exitosa', function () {
         return view('activationSuccessful');
     })->name('activacion.exitosa');
+});
+
+// 🔥 RUTA DE EMERGENCIA PARA LIMPIAR CACHÉ (Úsala una vez si sigue fallando)
+Route::get('/clear-cache', function() {
+    \Illuminate\Support\Facades\Artisan::call('route:clear');
+    return 'Rutas limpiadas';
 });
