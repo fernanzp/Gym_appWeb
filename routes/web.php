@@ -21,10 +21,21 @@ Route::middleware('web')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->name('login.submit');
 });
 
-// Rutas protegidas generales
+// Rutas protegidas generales (Cualquier usuario logueado)
 Route::middleware('auth')->group(function () {
     Route::view('/membresias', 'membresias')->name('membresias');
     Route::get('/membresias', [MembresiaController::class, 'index'])->name('membresias');
+
+    // 🔥 RUTAS DE RENOVACIÓN (Agregadas del segundo documento)
+    // Paso 1: Del Modal a la Vista de Pago
+    Route::post('/membresias/renovar/preparar', [MembresiaController::class, 'prepararRenovacion'])
+        ->name('membresias.prepararRenovacion');
+
+    // Paso 2: De la Vista de Pago a la Base de Datos
+    Route::post('/membresias/renovar/procesar', [MembresiaController::class, 'procesarRenovacion'])
+        ->name('membresias.procesarRenovacion');
+
+    // Ruta para cambiar el estatus (Congelar/Reactivar)
     Route::put('/membresias/{id}/toggle-status', [MembresiaController::class, 'toggleStatus'])
         ->name('membresias.toggleStatus');
 
