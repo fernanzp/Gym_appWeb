@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ActivacionController;
 use App\Http\Controllers\MembresiaController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\Api\AccessController; // 🔥 IMPORTANTE: Necesario para las visitas
 
 // Ruta base
 Route::get('/', function () {
@@ -39,8 +40,8 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
 
     // Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
-    Route::get('/usuarios/{usuario}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit');   // Corregido: Apunta al Controller
-    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');     // Agregado: Necesario para el formulario
+    Route::get('/usuarios/{usuario}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit'); 
+    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update'); 
     Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
 
     // Clientes
@@ -51,6 +52,17 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     Route::get('/pago-membresia', function () {
         return view('payment');
     })->name('pagos.show');
+
+    // 🔥 RUTA NUEVA: Botones de Visita (Entrada/Salida)
+    Route::post('/access/visita', [AccessController::class, 'registrarVisitaManual'])
+         ->name('access.visita');
+
+    // 🔥 Movidmos estas rutas aquí adentro para protegerlas con seguridad (auth)
+    Route::post('/cliente/retry-enroll/{userId}', [ClienteController::class, 'retryEnroll'])
+         ->name('cliente.retry');
+
+    Route::post('/usuario/{id}/reset-fingerprint', [UsuarioController::class, 'resetFingerprint'])
+        ->name('usuario.resetFingerprint');
 });
 
 // Rutas de activación (Solo invitados)
@@ -68,9 +80,3 @@ Route::middleware('guest')->group(function () {
         return view('activationSuccessful');
     })->name('activacion.exitosa');
 });
-
-Route::post('/cliente/retry-enroll/{userId}', [ClienteController::class, 'retryEnroll'])
-     ->name('cliente.retry');
-
-Route::post('/usuario/{id}/reset-fingerprint', [UsuarioController::class, 'resetFingerprint'])
-    ->name('usuario.resetFingerprint');
