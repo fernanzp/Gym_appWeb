@@ -230,7 +230,7 @@
                             <td class="px-4 py-3">
                                 <div class="flex gap-1">
                                   @if($m->estatus === 'vencida')
-                                    <button type="button" class="p-1.5 rounded-lg text-[var(--gris-oscuro)] font-semibold hover:bg-gray-200/60" title="Renovar">
+                                    <button type="button" onclick="abrirModalRenovacion({{ $m->id }}, '{{ $m->usuario->nombre_comp }}', {{ $m->plan_id }})" class="p-1.5 rounded-lg text-[var(--gris-oscuro)] font-semibold hover:bg-gray-200/60" title="Renovar">
                                       Renovar
                                     </button>
                                     @elseif($m->estatus === 'vigente')
@@ -313,6 +313,56 @@
     </div>
 </div>
 
+<!-- MODAL DE RENOVACIÓN -->
+<div id="renewModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="cerrarModalRenovacion()"></div>
+
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                
+                <form action="{{ route('membresias.prepararRenovacion') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="membresia_id" id="renewMembresiaId">
+
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-[var(--azul)]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                <h3 class="text-xl font-semibold leading-6 text-gray-900 istok-web-bold">Renovar Membresía</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500 mb-4">Selecciona el plan para renovar a <span id="renewUserName" class="font-bold text-[var(--azul)]"></span>.</p>
+                                    
+                                    <label for="planSelect" class="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                                    <select name="plan_id" id="planSelect" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-[var(--azul)] sm:text-sm sm:leading-6">
+                                        @foreach($planes as $plan)
+                                            <option value="{{ $plan->id }}" data-precio="{{ $plan->precio }}">
+                                                {{ $plan->nombre }} - ${{ number_format($plan->precio, 0) }} ({{ $plan->duracion_dias }} días)
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                        <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-[var(--azul)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 sm:ml-3 sm:w-auto">
+                            Continuar al Pago
+                        </button>
+                        <button type="button" onclick="cerrarModalRenovacion()" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function abrirModal(id, nombre, accion) {
         const modal = document.getElementById('statusModal');
@@ -349,6 +399,21 @@
     function cerrarModal() {
         const modal = document.getElementById('statusModal');
         modal.classList.add('hidden');
+    }
+
+    function abrirModalRenovacion(id, nombre, planIdActual) {
+        document.getElementById('renewMembresiaId').value = id;
+        document.getElementById('renewUserName').textContent = nombre;
+        
+        // Seleccionar por defecto el plan que ya tenía
+        const select = document.getElementById('planSelect');
+        select.value = planIdActual;
+
+        document.getElementById('renewModal').classList.remove('hidden');
+    }
+
+    function cerrarModalRenovacion() {
+        document.getElementById('renewModal').classList.add('hidden');
     }
 </script>
 </body>

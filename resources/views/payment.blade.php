@@ -58,11 +58,11 @@
             <!-- Fechas -->
             <div class="flex justify-between">
                 <span>Fecha de inicio:</span>
-                <span>{{ $fecha_inicio ?? '30/08/2025' }}</span>
+                <span>{{ $fecha_inicio->format('d/m/Y') }}</span>
             </div>
             <div class="flex justify-between">
                 <span>Fecha de vencimiento:</span>
-                <span>{{ $fecha_fin ?? '30/09/2025' }}</span>
+                <span>{{ $fecha_fin->format('d/m/Y') }}</span>
             </div>
 
             <!-- Divisor -->
@@ -70,21 +70,14 @@
 
             <!-- Costos -->
             <div class="flex justify-between items-center">
-                <span>Costo base:</span>
-                <span>${{ number_format($costo_base ?? 700, 2) }} MXN</span>
-            </div>
-            
-            <!-- Promoción (Mostrada solo si existe) -->
-            <div class="flex justify-between items-center">
-                <span>Promoción aplicada:</span>
-                {{-- Asumimos un valor negativo visualmente --}}
-                <span>-${{ number_format($descuento ?? 100, 2) }} MXN</span>
+                <span>Costo:</span>
+                <span>${{ number_format($costo_base, 2) }} MXN</span>
             </div>
 
             <!-- Total -->
             <div class="flex justify-between items-center mt-6 text-2xl istok-web-bold">
                 <span>Total:</span>
-                <span>${{ number_format($total ?? 600, 2) }} MXN</span>
+                <span>${{ number_format($total, 2) }} MXN</span>
             </div>
 
         </div>
@@ -99,14 +92,20 @@
             
             <!-- Opción 1: Pagar después (Redirección o Submit diferente) -->
             <!-- Usamos <a> si solo redirige, o <button> si envía form -->
-            <a href="{{ route('usuarios') }}" 
+            <a href="{{ route('membresias') }}" 
                class="w-full text-center border-2 border-[var(--gris-oscuro)] text-[var(--gris-oscuro)] istok-web-bold py-3 rounded-full hover:bg-gray-100 transition-colors text-lg cursor-pointer flex items-center justify-center">
-                Pagará después
+                Cancelar
             </a>
 
             <!-- Opción 2: Confirmar Pago -->
-            <form action="{{-- route('pagos.store') --}}" method="POST" class="w-full">
+            <form action="{{ route('membresias.procesarRenovacion') }}" method="POST" class="w-full">
                 @csrf
+                <!-- Datos ocultos necesarios para el procesamiento -->
+                <input type="hidden" name="membresia_id" value="{{ $membresia->id }}">
+                <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                <input type="hidden" name="fecha_ini" value="{{ $fecha_inicio->format('Y-m-d') }}">
+                <input type="hidden" name="fecha_fin" value="{{ $fecha_fin->format('Y-m-d') }}">
+                
                 <!-- Aquí irían inputs hidden con los datos de la transacción si es necesario -->
                 <button type="submit"
                         class="w-full bg-[var(--azul)] text-white istok-web-bold py-3 rounded-full hover:bg-[var(--azul-oscuro)] transition shadow-md hover:shadow-lg text-lg">
