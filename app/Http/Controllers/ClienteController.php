@@ -159,4 +159,43 @@ class ClienteController extends Controller
             return back()->withErrors(['general' => 'Ocurrió un error al conectar con el sensor.']);
         }
     }
+
+    // 1. Muestra la vista de pago con datos del registro reciente
+    public function vistaPagoRegistro($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        // Buscamos la membresía que se creó en el método store
+        $membresia = Membresia::where('usuario_id', $usuario->id)->latest()->firstOrFail();
+        $plan = $membresia->plan; // Asumiendo relación en el modelo Membresia
+
+        // Retornamos la misma vista 'payment', pero con una bandera 'contexto'
+        return view('payment', [
+            'membresia'     => $membresia,
+            'plan'          => $plan,
+            'fecha_inicio'  => $membresia->fecha_ini->format('Y-m-d'),
+            'fecha_fin'     => $membresia->fecha_fin->format('Y-m-d'),
+            'costo_base'    => $plan->precio,
+            'total'         => $plan->precio,
+            'contexto'      => 'registro_nuevo' // <--- Esto es clave para la vista
+        ]);
+    }
+
+    // 2. El usuario pagó, simplemente redirigimos al dashboard
+    public function finalizarRegistro($id)
+    {
+        // Opcional: Aquí podrías cambiar un estatus de "pendiente_pago" a "pagado" si tuvieras esa columna
+        return redirect()->route('dashboard')->with('success', 'Cliente registrado y pago confirmado.');
+    }
+
+    // 3. El usuario canceló en la pantalla de pago: Borramos todo
+    public function cancelarRegistro($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        // Al borrar el usuario, la BD debería borrar la membresía en cascada (onDelete cascade)
+        $usuario->delete();
+
+        return redirect()->route('dashboard')->with('info', 'El registro del cliente ha sido cancelado.');
+    }
 }

@@ -54,6 +54,18 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
 
+    // Ruta para mostrar la vista de pago tras el registro
+    Route::get('/usuarios/{id}/pago-inicial', [ClienteController::class, 'vistaPagoRegistro'])
+        ->name('clientes.pagoInicial');
+
+    // Ruta para finalizar el proceso (botón "Pago Recibido")
+    Route::get('/usuarios/{id}/finalizar-registro', [ClienteController::class, 'finalizarRegistro'])
+        ->name('clientes.finalizarRegistro');
+
+    // Ruta para cancelar el registro (eliminar usuario recién creado)
+    Route::delete('/usuarios/{id}/cancelar-registro', [ClienteController::class, 'cancelarRegistro'])
+        ->name('clientes.cancelarRegistro');
+
     // Pagos (Vista Mockup)
     Route::get('/pago-membresia', function () {
         return view('payment');
