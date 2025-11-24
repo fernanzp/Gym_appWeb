@@ -11,7 +11,7 @@
             padding: 12px 25px;
             margin: 20px 0;
             background-color: #0460D9; /* Tu color --azul */
-            color: #000;
+            color: #fff !important;
             text-decoration: none;
             border-radius: 5px;
             font-weight: bold;
