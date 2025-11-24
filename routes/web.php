@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ActivacionController;
 use App\Http\Controllers\MembresiaController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\Api\AccessController;
 
 // Ruta base
 Route::get('/', function () {
@@ -24,6 +25,8 @@ Route::middleware('web')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::view('/membresias', 'membresias')->name('membresias');
     Route::get('/membresias', [MembresiaController::class, 'index'])->name('membresias');
+
+    // 🔥 RUTAS DE RENOVACIÓN (Agregadas del segundo documento)
     // Paso 1: Del Modal a la Vista de Pago
     Route::post('/membresias/renovar/preparar', [MembresiaController::class, 'prepararRenovacion'])
         ->name('membresias.prepararRenovacion');
@@ -31,6 +34,7 @@ Route::middleware('auth')->group(function () {
     // Paso 2: De la Vista de Pago a la Base de Datos
     Route::post('/membresias/renovar/procesar', [MembresiaController::class, 'procesarRenovacion'])
         ->name('membresias.procesarRenovacion');
+
     // Ruta para cambiar el estatus (Congelar/Reactivar)
     Route::put('/membresias/{id}/toggle-status', [MembresiaController::class, 'toggleStatus'])
         ->name('membresias.toggleStatus');
@@ -44,21 +48,65 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Análisis y Reportes (Vista de Diseño)
+    Route::view('/analisis-reportes', 'analytics')->name('analytics');
+
     // Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
-    Route::get('/usuarios/{usuario}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit');   // Corregido: Apunta al Controller
-    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');     // Agregado: Necesario para el formulario
+    Route::get('/usuarios/{usuario}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit'); 
+    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update'); 
     Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
 
     // Clientes
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
 
+    // Ruta para mostrar la vista de pago tras el registro
+    Route::get('/usuarios/{id}/pago-inicial', [ClienteController::class, 'vistaPagoRegistro'])
+        ->name('clientes.pagoInicial');
+
+    // Ruta para finalizar el proceso (botón "Pago Recibido")
+    Route::get('/usuarios/{id}/finalizar-registro', [ClienteController::class, 'finalizarRegistro'])
+        ->name('clientes.finalizarRegistro');
+
+    // Ruta para cancelar el registro (eliminar usuario recién creado)
+    Route::delete('/usuarios/{id}/cancelar-registro', [ClienteController::class, 'cancelarRegistro'])
+        ->name('clientes.cancelarRegistro');
+
     // Pagos (Vista Mockup)
     Route::get('/pago-membresia', function () {
         return view('payment');
     })->name('pagos.show');
+
+    // Visitas
+    Route::post('/access/visita', [AccessController::class, 'registrarVisitaManual'])
+         ->name('access.visita');
+
+    // Gestión Biométrica
+    Route::post('/cliente/retry-enroll/{userId}', [ClienteController::class, 'retryEnroll'])
+         ->name('cliente.retry');
+
+    Route::post('/usuario/{id}/reset-fingerprint', [UsuarioController::class, 'resetFingerprint'])
+        ->name('usuario.resetFingerprint');
 });
+
+// 🔥 RUTAS API MANUALES (Definidas aquí para asegurar que funcionen en el hosting)
+// -----------------------------------------------------------------------------
+
+// 1. Ruta para el Aforo en Vivo (Dashboard)
+Route::get('/api/aforo-live', [DashboardController::class, 'getAforoEnVivo']);
+
+// 2. Ruta para el estado del modal de huella (EditUser / ClientRegister)
+use App\Models\Usuario;
+Route::get('/api/user-status/{id}', function ($id) {
+    $usuario = Usuario::find($id);
+    return response()->json([
+        'estatus' => $usuario->estatus,
+        'fingerprint_id' => $usuario->fingerprint_id
+    ]);
+});
+
+// -----------------------------------------------------------------------------
 
 // Rutas de activación (Solo invitados)
 Route::middleware('guest')->group(function () {
@@ -76,8 +124,8 @@ Route::middleware('guest')->group(function () {
     })->name('activacion.exitosa');
 });
 
-Route::post('/cliente/retry-enroll/{userId}', [ClienteController::class, 'retryEnroll'])
-     ->name('cliente.retry');
-
-Route::post('/usuario/{id}/reset-fingerprint', [UsuarioController::class, 'resetFingerprint'])
-    ->name('usuario.resetFingerprint');
+// 🔥 RUTA DE EMERGENCIA PARA LIMPIAR CACHÉ (Úsala una vez si sigue fallando)
+Route::get('/clear-cache', function() {
+    \Illuminate\Support\Facades\Artisan::call('route:clear');
+    return 'Rutas limpiadas';
+});

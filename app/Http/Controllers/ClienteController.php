@@ -159,4 +159,82 @@ class ClienteController extends Controller
             return back()->withErrors(['general' => 'Ocurrió un error al conectar con el sensor.']);
         }
     }
+
+    // 1. Muestra la vista de pago con datos del registro reciente
+    public function vistaPagoRegistro($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        // Buscamos la membresía que se creó en el método store
+        $membresia = Membresia::where('usuario_id', $usuario->id)->latest()->firstOrFail();
+        $plan = $membresia->plan; // Asumiendo relación en el modelo Membresia
+
+        // Retornamos la misma vista 'payment', pero con una bandera 'contexto'
+        return view('payment', [
+            'membresia'     => $membresia,
+            'plan'          => $plan,
+            'fecha_inicio'  => $membresia->fecha_ini->format('Y-m-d'),
+            'fecha_fin'     => $membresia->fecha_fin->format('Y-m-d'),
+            'costo_base'    => $plan->precio,
+            'total'         => $plan->precio,
+            'contexto'      => 'registro_nuevo' // <--- Esto es clave para la vista
+        ]);
+    }
+
+    // 2. El usuario pagó, simplemente redirigimos al dashboard
+    public function finalizarRegistro($id)
+    {
+        // Opcional: Aquí podrías cambiar un estatus de "pendiente_pago" a "pagado" si tuvieras esa columna
+        return redirect()->route('dashboard')->with('success', 'Cliente registrado y pago confirmado.');
+    }
+
+    // 3. El usuario canceló en la pantalla de pago: Borramos todo
+    public function cancelarRegistro($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        // ---------------------------------------------------------
+        // 1. ELIMINAR HUELLA DEL SENSOR FÍSICO (Lógica importada)
+        // ---------------------------------------------------------
+        if ($usuario->fingerprint_id) {
+            $deviceId = env('PARTICLE_DEVICE_ID');
+            $token = env('PARTICLE_ACCESS_TOKEN');
+
+            try {
+                // Enviamos la petición a Particle para liberar el slot de memoria
+                $response = Http::timeout(5)->asForm()->post(
+                    "https://api.particle.io/v1/devices/{$deviceId}/delete-fingerprint",
+                    [
+                        'access_token' => $token,
+                        'args' => (string) $usuario->fingerprint_id,
+                    ]
+                );
+
+                if ($response->successful()) {
+                    Log::info("Huella ID {$usuario->fingerprint_id} eliminada del sensor correctamente al cancelar registro.");
+                } else {
+                    Log::warning("El sensor respondió con error al intentar borrar huella: " . $response->body());
+                }
+
+            } catch (\Throwable $e) {
+                // Usamos try/catch para que, si el sensor está desconectado, 
+                // NO impida que se borre el usuario de la base de datos.
+                Log::warning("No se pudo borrar huella del sensor (posiblemente offline): " . $e->getMessage());
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 2. ELIMINAR USUARIO DE LA BASE DE DATOS
+        // ---------------------------------------------------------
+        try {
+            // Al borrar el usuario, la BD borrará la membresía en cascada
+            $usuario->delete();
+            
+            return redirect()->route('dashboard')->with('info', 'El registro y la huella han sido eliminados.');
+            
+        } catch (\Exception $e) {
+            Log::error("Error al eliminar usuario de BD: " . $e->getMessage());
+            return redirect()->route('dashboard')->with('error', 'Error crítico al eliminar el usuario de la base de datos.');
+        }
+    }
 }

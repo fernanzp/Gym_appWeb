@@ -106,16 +106,25 @@
 
         <!-- 3. ERROR -->
         <div id="estadoError" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
-            <div class="flex justify-center mb-4"><div class="cross-circle"><div class="background"></div><div class="cross-line one"></div><div class="cross-line two"></div></div></div>
-            <h3 class="text-2xl istok-web-bold text-red-600 mb-2">¡Error de Huella!</h3>
-            <p id="msgError" class="text-gray-600 text-sm mb-6">No se pudo registrar la huella.</p>
+            <div class="flex justify-center mb-4">
+                <div class="cross-circle">
+                    <div class="background"></div>
+                    <div class="cross-line one"></div>
+                    <div class="cross-line two"></div>
+                </div>
+            </div>
+            <h3 class="text-2xl istok-web-bold text-red-600 mb-2">Atención</h3>
             
-            <!-- Aquí damos opción de ir a editar para reintentar, o cerrar -->
+            <p class="text-gray-600 text-sm mb-4">
+                El usuario se creó correctamente, pero <strong>no se pudo registrar la huella</strong>.
+                <br><br>
+                Puedes continuar al pago y registrar la huella después en la sección de Usuarios.
+            </p>
+            
             <div class="flex flex-col gap-2 justify-center">
-                <a id="btnIrAEditar" href="#" class="bg-red-600 text-white px-4 py-2 rounded-full font-bold hover:bg-red-700 text-sm text-center w-full">
-                    Reintentar en Perfil
-                </a>
-                <button onclick="cerrarModal()" class="text-gray-500 text-sm hover:underline mt-2">Cerrar y continuar después</button>
+                <button id="btnContinuarPagoError" type="button" class="bg-[var(--azul)] text-white px-4 py-2 rounded-full font-bold hover:bg-[var(--azul-oscuro)] text-sm w-full">
+                    Continuar al Pago
+                </button>
             </div>
         </div>
     </div>
@@ -152,20 +161,25 @@
 
                 const data = await response.json();
 
+                let urlPago = "";
+
                 if (response.ok && data.success) {
-                    // Usuario creado, comenzamos a monitorear la huella
                     currentUserId = data.user_id;
-                    // Actualizar el link de reintento por si falla
-                    document.getElementById('btnIrAEditar').href = `/usuarios/${currentUserId}/editar`;
+                    
+                    // Generamos la ruta de pago reemplazando el ID
+                    // Asegúrate de que 'clientes.pagoInicial' exista en tus rutas, usa un placeholder temporal
+                    urlPago = "{{ route('clientes.pagoInicial', ':id') }}".replace(':id', currentUserId);
+                    
+                    // Configurar botón del Modal de Éxito
+                    const btnExito = document.querySelector('#estadoExito button');
+                    btnExito.innerText = "Ir a Pagar Membresía";
+                    btnExito.onclick = function() { window.location.href = urlPago; };
+
+                    // Configurar botón del Modal de Error
+                    const btnError = document.getElementById('btnContinuarPagoError');
+                    btnError.onclick = function() { window.location.href = urlPago; };
+
                     iniciarPolling(currentUserId);
-                } else {
-                    // Error de validación o servidor
-                    cerrarModal();
-                    errorDiv.classList.remove('hidden');
-                    errorDiv.innerText = data.message || 'Error al procesar la solicitud.';
-                    if(data.errors) {
-                        errorDiv.innerText = Object.values(data.errors).flat().join('\n');
-                    }
                 }
             } catch (error) {
                 console.error(error);
@@ -210,8 +224,6 @@
                     if (data.estatus == 8 || data.estatus == 9) {
                         clearInterval(pollingInterval);
                         mostrarModal('error');
-                        if(data.estatus == 9) document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
-                        else document.getElementById('msgError').innerText = "Error de lectura o huella duplicada.";
                     } 
                     // Si hay éxito (huella asignada)
                     else if (data.fingerprint_id != null) {
