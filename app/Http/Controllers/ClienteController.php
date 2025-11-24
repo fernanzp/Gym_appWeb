@@ -193,9 +193,48 @@ class ClienteController extends Controller
     {
         $usuario = Usuario::findOrFail($id);
         
-        // Al borrar el usuario, la BD debería borrar la membresía en cascada (onDelete cascade)
-        $usuario->delete();
+        // ---------------------------------------------------------
+        // 1. ELIMINAR HUELLA DEL SENSOR FÍSICO (Lógica importada)
+        // ---------------------------------------------------------
+        if ($usuario->fingerprint_id) {
+            $deviceId = env('PARTICLE_DEVICE_ID');
+            $token = env('PARTICLE_ACCESS_TOKEN');
 
-        return redirect()->route('dashboard')->with('info', 'El registro del cliente ha sido cancelado.');
+            try {
+                // Enviamos la petición a Particle para liberar el slot de memoria
+                $response = Http::timeout(5)->asForm()->post(
+                    "https://api.particle.io/v1/devices/{$deviceId}/delete-fingerprint",
+                    [
+                        'access_token' => $token,
+                        'args' => (string) $usuario->fingerprint_id,
+                    ]
+                );
+
+                if ($response->successful()) {
+                    Log::info("Huella ID {$usuario->fingerprint_id} eliminada del sensor correctamente al cancelar registro.");
+                } else {
+                    Log::warning("El sensor respondió con error al intentar borrar huella: " . $response->body());
+                }
+
+            } catch (\Throwable $e) {
+                // Usamos try/catch para que, si el sensor está desconectado, 
+                // NO impida que se borre el usuario de la base de datos.
+                Log::warning("No se pudo borrar huella del sensor (posiblemente offline): " . $e->getMessage());
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 2. ELIMINAR USUARIO DE LA BASE DE DATOS
+        // ---------------------------------------------------------
+        try {
+            // Al borrar el usuario, la BD borrará la membresía en cascada
+            $usuario->delete();
+            
+            return redirect()->route('dashboard')->with('info', 'El registro y la huella han sido eliminados.');
+            
+        } catch (\Exception $e) {
+            Log::error("Error al eliminar usuario de BD: " . $e->getMessage());
+            return redirect()->route('dashboard')->with('error', 'Error crítico al eliminar el usuario de la base de datos.');
+        }
     }
 }

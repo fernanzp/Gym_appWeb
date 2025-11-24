@@ -96,12 +96,18 @@
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
                     <input name="email" type="email" value="{{ old('email', $usuario->email ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular">
                 </div>
+                @error('email')
+                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+                @enderror
             </div>
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Teléfono</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
                     <input name="telefono" type="tel" value="{{ old('telefono', $usuario->telefono ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular">
                 </div>
+                @error('telefono')
+                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+                @enderror
             </div>
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Estatus</label>

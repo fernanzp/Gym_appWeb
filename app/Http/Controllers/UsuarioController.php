@@ -55,8 +55,37 @@ class UsuarioController extends Controller
 
     public function update(Request $request, Usuario $usuario)
     {
-        // Aquí iría tu lógica de actualización de datos personales...
-        return back()->withErrors(['general' => 'La funcionalidad de guardar cambios está pendiente de implementación.']);
+        // 1. Validación de datos
+        // Usamos $usuario->id para ignorar el email/teléfono del propio usuario al verificar "unique"
+        $validatedData = $request->validate([
+            'nombre_comp' => 'required|string|max:255',
+            'email'       => 'required|email|max:255|unique:usuarios,email,' . $usuario->id,
+            'telefono'    => 'required|numeric|digits_between:10,15|unique:usuarios,telefono,' . $usuario->id,
+            'estatus'     => 'required|in:0,1', // Asegura que solo reciba 1 (Activo) o 0 (Inactivo)
+        ], [
+            // Mensajes personalizados (opcional)
+            'email.unique'    => 'Este correo ya está registrado por otro usuario.',
+            'telefono.unique' => 'Este teléfono ya pertenece a otro usuario.',
+            'telefono.numeric'=> 'El teléfono solo debe contener números.',
+        ]);
+
+        try {
+            // 2. Actualizar el usuario
+            // Como definiste $fillable en el modelo Usuario, podemos usar update() directo.
+            $usuario->update($validatedData);
+
+            // 3. Retornar éxito
+            // Tu JS busca la sesión 'success'. Al no contener "Instrucción enviada",
+            // mostrará el modal de éxito con la palomita verde.
+            return back()->with('success', 'Información actualizada correctamente.');
+
+        } catch (\Exception $e) {
+            // Log del error para depuración interna
+            Log::error("Error al actualizar usuario ID {$usuario->id}: " . $e->getMessage());
+
+            // Retornar error general para mostrar la alerta roja
+            return back()->withErrors(['general' => 'Ocurrió un error al guardar los cambios en la base de datos.']);
+        }
     }
 
     public function destroy(Usuario $usuario)
