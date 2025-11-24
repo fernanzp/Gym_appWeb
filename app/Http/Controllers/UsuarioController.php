@@ -55,22 +55,35 @@ class UsuarioController extends Controller
 
     public function update(Request $request, Usuario $usuario)
     {
+        // 1. Validación de datos
+        // Usamos $usuario->id para ignorar el email/teléfono del propio usuario al verificar "unique"
         $validatedData = $request->validate([
             'nombre_comp' => 'required|string|max:255',
             'email'       => 'required|email|max:255|unique:usuarios,email,' . $usuario->id,
             'telefono'    => 'required|numeric|digits_between:10,15|unique:usuarios,telefono,' . $usuario->id,
-            'estatus'     => 'required|in:0,1',
+            'estatus'     => 'required|in:0,1', // Asegura que solo reciba 1 (Activo) o 0 (Inactivo)
         ], [
+            // Mensajes personalizados (opcional)
             'email.unique'    => 'Este correo ya está registrado por otro usuario.',
             'telefono.unique' => 'Este teléfono ya pertenece a otro usuario.',
             'telefono.numeric'=> 'El teléfono solo debe contener números.',
         ]);
 
         try {
+            // 2. Actualizar el usuario
+            // Como definiste $fillable en el modelo Usuario, podemos usar update() directo.
             $usuario->update($validatedData);
+
+            // 3. Retornar éxito
+            // Tu JS busca la sesión 'success'. Al no contener "Instrucción enviada",
+            // mostrará el modal de éxito con la palomita verde.
             return back()->with('success', 'Información actualizada correctamente.');
+
         } catch (\Exception $e) {
+            // Log del error para depuración interna
             Log::error("Error al actualizar usuario ID {$usuario->id}: " . $e->getMessage());
+
+            // Retornar error general para mostrar la alerta roja
             return back()->withErrors(['general' => 'Ocurrió un error al guardar los cambios en la base de datos.']);
         }
     }
@@ -106,10 +119,10 @@ class UsuarioController extends Controller
             $deviceId = env('PARTICLE_DEVICE_ID');
             $token = env('PARTICLE_ACCESS_TOKEN');
             
+            // Intentamos borrar del sensor sin bloquearnos por el estado "connected"
             if ($usuario->fingerprint_id) {
                 try {
-                    // ACTUALIZADO: Se agrega timeout(3) del codigo nuevo
-                    Http::timeout(3)->asForm()->post(
+                    Http::asForm()->post(
                         "https://api.particle.io/v1/devices/{$deviceId}/delete-fingerprint",
                         [
                             'access_token' => $token,
@@ -135,17 +148,19 @@ class UsuarioController extends Controller
         }
     }
 
-    // 👇 LÓGICA BLINDADA CONTRA DESCONEXIONES (Traída de codigo nuevo.txt) 👇
+    // 👇 ESTA ES LA FUNCIÓN CORREGIDA PARA EL BUG DE "FALSA DESCONEXIÓN" 👇
     public function resetFingerprint($id)
     {
         $usuario = Usuario::findOrFail($id);
         $deviceId = env('PARTICLE_DEVICE_ID');
         $token = env('PARTICLE_ACCESS_TOKEN');
 
+        // BLOQUE DE INTENTO: Pedir perdón, no permiso.
         try {
-            // PASO 1: Intentar contactar al Photon (Con Timeout de 5 segundos)
-            // Si está desconectado, esto lanzará una excepción en 5s y saltará al catch.
-            $responseEnroll = Http::timeout(5)->asForm()->post(
+            
+            // 1. Intentar iniciar el modo "Enroll" PRIMERO.
+            // Si esto falla (timeout o error 400), salta al catch y NO toca la base de datos.
+            $responseEnroll = Http::asForm()->post(
                 "https://api.particle.io/v1/devices/{$deviceId}/enroll-fingerprint",
                 [
                     'access_token' => $token,
@@ -153,44 +168,43 @@ class UsuarioController extends Controller
                 ]
             );
 
-            // Verificar si la API respondió con error (ej. 400 o 408)
+            // Verificar si la API de Particle dio error real
             if ($responseEnroll->failed()) {
-                throw new \Exception("El sensor no respondió a la solicitud.");
+                throw new \Exception("El sensor no respondió. Verifique que esté conectado.");
             }
 
-            // --- SI PASAMOS AQUÍ, EL SENSOR ESTÁ VIVO ---
+            // --- SI LLEGAMOS AQUÍ, EL DISPOSITIVO ESTÁ VIVO Y TRABAJANDO ---
 
-            // PASO 2: Borrar huella vieja (si existe)
+            // 2. Borrar la huella vieja (si existe)
             if ($usuario->fingerprint_id) {
                 try {
-                    // Se agrega timeout(3) aquí también
-                    Http::timeout(3)->asForm()->post(
+                    Http::asForm()->post(
                         "https://api.particle.io/v1/devices/{$deviceId}/delete-fingerprint",
                         ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
                     );
                 } catch (\Throwable $e) {
-                    Log::warning("No se pudo borrar la huella anterior (no crítico).");
+                    Log::warning("No se pudo borrar la huella anterior (posiblemente ya no existía).");
                 }
             }
 
-            // PASO 3: Actualizar BD (Solo ahora es seguro)
+            // 3. Actualizar la Base de Datos
+            // Ahora es seguro borrar el ID local porque sabemos que el proceso físico inició exitosamente.
             $usuario->fingerprint_id = null;
             $usuario->estatus = 0; // 0 = Esperando huella
             $usuario->save();
 
-            // PASO 4: Job de Timeout
+            // 4. Disparar Job de seguridad (Timeout)
             CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
 
-            // Éxito: Esto activará el modal de carga en el frontend
             return back()->with('success', '✅ Instrucción enviada. Siga las indicaciones en el sensor.');
 
         } catch (\Exception $e) {
-            // 🛑 CATCH: Si falló el Paso 1 (Timeout/Error), caemos aquí.
-            // La base de datos NO SE TOCÓ. El usuario sigue con su huella vieja.
+            // 🛑 CATCH DE SEGURIDAD
+            // Si falla la conexión en el paso 1, caemos aquí.
+            // La BD no se tocó, así que el usuario NO pierde su huella anterior.
             Log::error("Error al intentar actualizar huella: " . $e->getMessage());
-           
-            // Devolvemos 'error' para que el modal muestre la X Roja inmediatamente
-            return back()->with('error', '❌ No se pudo conectar con el sensor. Verifique que esté conectado a internet.');
+            
+            return back()->with('error', '❌ No se pudo conectar con el sensor. Inténtelo de nuevo en unos segundos.');
         }
     }
 }
