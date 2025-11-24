@@ -149,19 +149,34 @@
             </article>
 
             <!-- Card 2 -->
-            <div class="h-[180px] flex flex-col gap-6">
+                <div class="h-[180px] flex flex-col gap-6">
                 <!-- Botón Abrir Entrada -->
-                <form action="" method="POST" class="flex-1">
+                <!-- 🔥 Conectado a la ruta 'access.visita' -->
+                <form action="{{ route('access.visita') }}" method="POST" class="flex-1">
                     @csrf
+                    <!-- 🔥 Input oculto para decirle al controlador que es ENTRADA -->
+                    <input type="hidden" name="direction" value="entry">
+                    
                     <button type="submit" class="w-full h-full rounded-2xl bg-[var(--azul)] hover:bg-[var(--azul-oscuro)] text-white shadow-sm flex items-center justify-center gap-3 transition-colors group">
+                        <!-- Icono opcional para UX -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                        </svg>
                         <span class="text-xl font-bold group-hover:scale-105 transition-transform">Abrir entrada</span>
                     </button>
                 </form>
 
                 <!-- Botón Abrir Salida -->
-                <form action="" method="POST" class="flex-1">
+                <!-- 🔥 Conectado a la ruta 'access.visita' -->
+                <form action="{{ route('access.visita') }}" method="POST" class="flex-1">
                     @csrf
+                    <!-- 🔥 Input oculto para decirle al controlador que es SALIDA -->
+                    <input type="hidden" name="direction" value="exit">
+                    
                     <button type="submit" class="w-full h-full rounded-2xl bg-[var(--azul)] hover:bg-[var(--azul-oscuro)] text-white shadow-sm flex items-center justify-center gap-3 transition-colors group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 01-3-3h4a3 3 0 013 3v1" />
+                        </svg>
                         <span class="text-xl font-bold group-hover:scale-105 transition-transform">Abrir salida</span>
                     </button>
                 </form>
@@ -171,7 +186,7 @@
             <article class="h-[180px] rounded-2xl bg-[var(--gris-bajito)] p-4 shadow-sm flex flex-col justify-between">
               <h3 class="text-xl font-bold text-center">Ocupación actual</h3>
               <div class="w-full h-full flex items-center justify-center">
-                <p class="text-6xl istok-web-bold">-%</p>
+                <p id="txt-aforo" class="text-6xl istok-web-bold">-</p>
               </div>
               <!--<p class="text-sm text-black/80">Proximamente</p>-->
             </article>
@@ -240,5 +255,30 @@
       </main>
     </div>
   </div>
+
+  <!-- SCRIPT DE AFORO AUTOMÁTICO -->
+  <script>
+    async function actualizarAforo() {
+        try {
+            // Usamos 'url()' para generar la dirección completa y evitar errores
+            const res = await fetch("{{ url('/api/aforo-live') }}");
+            const data = await res.json();
+            
+            const elemento = document.getElementById('txt-aforo');
+            if(elemento) {
+                // Solo ponemos el número, sin el %
+                elemento.innerText = data.total; 
+            }
+        } catch (e) {
+            console.error("Error aforo:", e);
+        }
+    }
+
+    // Iniciar al cargar y repetir cada 5 segundos
+    document.addEventListener("DOMContentLoaded", function() {
+        actualizarAforo();
+        setInterval(actualizarAforo, 5000);
+    });
+  </script>
 </body>
 </html>

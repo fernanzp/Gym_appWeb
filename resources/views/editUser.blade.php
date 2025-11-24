@@ -13,12 +13,8 @@
         .istok-web-regular { font-family: "Istok Web", sans-serif; font-weight: 400; }
         .istok-web-bold { font-family: "Istok Web", sans-serif; font-weight: 700; }
 
-        /* LOADER WINDOWS */
-        .windows-loader {
-            width: 50px; height: 50px; margin: 0 auto;
-            border: 5px solid #f3f3f3; border-top: 5px solid var(--azul); border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+        /* --- ESTILOS DEL MODAL --- */
+        .windows-loader { width: 50px; height: 50px; margin: 0 auto; border: 5px solid #f3f3f3; border-top: 5px solid var(--azul); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* PALOMITA (Success) */
@@ -28,7 +24,7 @@
         .checkmark-circle .checkmark.draw:after { animation: checkmark 800ms ease forwards; transform: scaleX(-1) rotate(135deg); }
         .checkmark-circle .checkmark:after { opacity: 1; height: 30px; width: 15px; transform-origin: left top; border-right: 4px solid white; border-top: 4px solid white; content: ''; left: 15px; top: 30px; position: absolute; }
         @keyframes checkmark { 0% { height: 0; width: 0; opacity: 1; } 20% { height: 0; width: 15px; opacity: 1; } 40% { height: 30px; width: 15px; opacity: 1; } 100% { height: 30px; width: 15px; opacity: 1; } }
-
+        
         /* TACHE (Error) */
         .cross-circle { width: 60px; height: 60px; position: relative; display: inline-block; vertical-align: top; margin: 0 auto; }
         .cross-circle .background { width: 60px; height: 60px; border-radius: 50%; background: #e74c3c; position: absolute; }
@@ -45,13 +41,10 @@
 
     <div class="w-full max-w-[50%] mt-[5vh] mb-10 z-10">
         <h1 class="text-4xl font-bold text-center mb-8 istok-web-bold">
-            Editar Usuario "{{ $usuario->nombre_comp ?? 'Cargando...' }}":
+            Editar Usuario: {{ $usuario->nombre_comp ?? 'Cargando...' }}
         </h1>
 
-        <!-- 
-            🚨 ALERTAS PERSISTENTES (Igual que en Dashboard)
-            Esto asegura que veas el error incluso si cierras el modal.
-        -->
+        <!-- ALERTAS SUPERIORES -->
         @if ($usuario->estatus == 8)
             <div class="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded-r shadow-sm flex items-center justify-between">
                 <div>
@@ -81,8 +74,9 @@
             </div>
         @endif
 
-        <!-- Formulario Principal -->
-        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5">
+        <!-- FORMULARIO PRINCIPAL -->
+        <!-- 🔥 MODIFICADO: Se agrega onsubmit="activarLoader()" para mostrar modal al guardar datos -->
+        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5" onsubmit="activarLoader()">
             @csrf @method('PUT')
             @if (session('success') && $usuario->estatus != 8 && $usuario->estatus != 9) 
                 <div class="p-3 rounded-md bg-green-100 text-green-800 border border-green-200 text-center font-bold">{{ session('success') }}</div> 
@@ -112,10 +106,9 @@
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Estatus</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
-                    @php $currentStatus = old('estatus', $usuario->estatus ?? 'activo'); @endphp
                     <select name="estatus" class="flex-1 bg-transparent outline-none istok-web-regular appearance-none cursor-pointer">
-                        <option value="activo" @selected($currentStatus == 'activo')>Activo</option>
-                        <option value="inactivo" @selected($currentStatus == 'inactivo')>Inactivo</option>
+                        <option value="1" @selected(old('estatus', $usuario->estatus) == 1)>Activo</option>
+                        <option value="0" @selected(old('estatus', $usuario->estatus) != 1)>Inactivo</option>
                     </select>
                 </div>
             </div>
@@ -128,7 +121,7 @@
         
         <!-- SECCIÓN BIOMÉTRICA -->
         <div class="mt-12 pt-6 border-t-2 border-[var(--gris-bajito)]">
-            <h2 class="text-2xl font-bold text-center mb-6 istok-web-bold">Gestión Biométrica</h2>
+            <h2 class="text-2xl font-bold text-center mb-6 istok-web-bold text-[var(--azul)]">Gestión Biométrica</h2>
             <div class="bg-[var(--gris-bajito)] rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     @if($usuario->fingerprint_id)
@@ -158,66 +151,73 @@
                     @endif
                 </div>
 
+                <!-- Formulario con llamada a JS -->
                 <form action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="w-full sm:w-auto" onsubmit="activarLoader()">
                     @csrf
                     @if($usuario->fingerprint_id)
                         <button type="submit" onclick="return confirm('¿Actualizar huella?');" class="w-full sm:w-auto px-6 py-3 bg-white border-2 border-[var(--azul)] text-[var(--azul)] istok-web-bold rounded-full hover:bg-[var(--azul)] hover:text-white transition-all flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                             Actualizar Huella
                         </button>
                     @else
                         <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-[var(--azul)] text-white istok-web-bold rounded-full hover:bg-[var(--azul-oscuro)] transition-all flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                             {{ $usuario->estatus == 8 ? 'Reintentar Registro' : 'Registrar Huella' }}
                         </button>
                     @endif
                 </form>
             </div>
         </div>
-    </div> 
+    </div>
 
-    <!-- 
-        🛠 MODAL OVERLAY
-    -->
+    <!-- 🛠 MODAL OVERLAY -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/70 z-[9999] hidden flex items-center justify-center backdrop-blur-sm">
         
-        <!-- ESTADO 1: CARGANDO -->
-        <div id="estadoCargando" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
-            <div class="flex justify-center mb-6">
-                <div class="windows-loader"></div>
+        <!-- 1. CARGANDO (Con "X" de cerrar y Pasos visuales) -->
+        <div id="estadoCargando" class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative hidden">
+            <!-- 🔥 Botón X para cancelar -->
+            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+
+            <div class="flex justify-center mb-6"><div class="windows-loader"></div></div>
+            
+            <h3 class="text-2xl istok-web-bold text-[var(--azul)] mb-2">Procesando...</h3>
+            <p class="text-gray-600 mb-6 istok-web-regular text-lg">
+                Si el sensor se activa, siga las instrucciones:
+            </p>
+
+            <!-- Pasos visuales -->
+            <div class="bg-gray-50 rounded-xl p-4 text-left space-y-3 text-sm text-gray-700 border border-gray-200">
+                <div class="flex items-center gap-3">
+                    <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                    <span>Colocar dedo en el sensor.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                    <span>Retirar dedo cuando se indique.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                    <span>Colocar el <strong>mismo dedo</strong> otra vez.</span>
+                </div>
             </div>
-            <h3 class="text-2xl istok-web-bold text-[var(--azul)] mb-2">Sensor Activado</h3>
-            <p class="text-gray-600 mb-4 text-sm">Siga las instrucciones en pantalla:</p>
-            <div class="text-left bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-100 mb-4">
-                <p class="text-sm text-gray-700">1. Coloque dedo.</p>
-                <p class="text-sm text-gray-700">2. Retire y coloque nuevamente.</p>
-            </div>
-            <p class="text-xs text-gray-400 animate-pulse">Procesando...</p>
+            
+            <p class="mt-6 text-xs text-gray-400 animate-pulse">Esperando confirmación del dispositivo...</p>
         </div>
 
-        <!-- ESTADO 2: ÉXITO -->
+        <!-- 2. ÉXITO -->
         <div id="estadoExito" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-4">
-                <div class="checkmark-circle">
-                    <div class="background"></div>
-                    <div class="checkmark draw"></div>
-                </div>
+                <div class="checkmark-circle"><div class="background"></div><div class="checkmark draw"></div></div>
             </div>
-            <h3 class="text-2xl istok-web-bold text-green-600 mb-2">¡Huella Actualizada!</h3>
-            <p class="text-gray-600 text-sm">El registro se completó correctamente.</p>
+            <h3 class="text-2xl istok-web-bold text-green-600 mb-2">¡Operación Exitosa!</h3>
+            <p class="text-gray-600 text-sm">Los cambios se guardaron correctamente.</p>
         </div>
 
-        <!-- ESTADO 3: ERROR (NUEVO) -->
+        <!-- 3. ERROR -->
         <div id="estadoError" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-4">
-                <div class="cross-circle">
-                    <div class="background"></div>
-                    <div class="cross-line one"></div>
-                    <div class="cross-line two"></div>
-                </div>
+                <div class="cross-circle"><div class="background"></div><div class="cross-line one"></div><div class="cross-line two"></div></div>
             </div>
-            <h3 class="text-2xl istok-web-bold text-red-600 mb-2">¡Error de Huella!</h3>
-            <p class="text-gray-600 text-sm mb-6">Las huellas no coincidieron o hubo un error de lectura.</p>
+            <h3 class="text-2xl istok-web-bold text-red-600 mb-2">¡Error!</h3>
+            <p id="msgError" class="text-gray-600 text-sm mb-6">Ocurrió un problema con la huella o la conexión.</p>
             
             <!-- Botón reintentar desde el modal -->
             <button onclick="activarLoader(); document.getElementById('formRetryModal').submit();" class="bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 w-full">
@@ -226,13 +226,17 @@
             <!-- Formulario oculto para el reintento -->
             <form id="formRetryModal" action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="hidden">@csrf</form>
             
-            <button onclick="document.getElementById('modalOverlay').classList.add('hidden')" class="mt-3 text-gray-500 text-sm hover:underline">
+            <button onclick="cerrarModal()" class="mt-3 text-gray-500 text-sm hover:underline">
                 Cerrar
             </button>
         </div>
     </div>
 
+    <!-- SCRIPT -->
     <script>
+        let pollingInterval;
+        const userId = "{{ $usuario->id }}";
+
         function activarLoader() {
             const overlay = document.getElementById('modalOverlay');
             const cargando = document.getElementById('estadoCargando');
@@ -247,40 +251,64 @@
             // Mostrar loader
             overlay.classList.remove('hidden');
             cargando.classList.remove('hidden');
+
+            // Iniciar Polling inmediato
+            iniciarPolling();
         }
 
+        function cerrarModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+            clearInterval(pollingInterval); // Detener polling para no gastar recursos
+        }
+
+        function iniciarPolling() {
+            clearInterval(pollingInterval); // Limpiar cualquier anterior
+            let intentos = 0;
+            pollingInterval = setInterval(async () => {
+                intentos++;
+                try {
+                    const res = await fetch(`/api/user-status/${userId}`);
+                    const data = await res.json();
+
+                    const cargando = document.getElementById('estadoCargando');
+                    const exito = document.getElementById('estadoExito');
+                    const error = document.getElementById('estadoError');
+
+                    // CASO ERROR (8=Error, 9=Timeout)
+                    if (data.estatus == 8 || data.estatus == 9) {
+                        clearInterval(pollingInterval);
+                        cargando.classList.add('hidden');
+                        error.classList.remove('hidden');
+                        if(data.estatus == 9) document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
+                        else document.getElementById('msgError').innerText = "Las huellas no coincidieron o hubo error.";
+                    } 
+                    // CASO ÉXITO (Ya tiene huella)
+                    else if (data.fingerprint_id != null) {
+                        clearInterval(pollingInterval);
+                        cargando.classList.add('hidden');
+                        exito.classList.remove('hidden');
+                        setTimeout(() => { location.reload(); }, 2000);
+                    }
+
+                    if (intentos > 60) clearInterval(pollingInterval);
+                } catch (e) { console.error(e); }
+            }, 1000);
+        }
+        
         document.addEventListener("DOMContentLoaded", function() {
-            // Leemos el ESTATUS REAL del usuario (inyectado desde PHP)
-            const status = {{ $usuario->estatus }}; 
-            const successMsg = "{{ session('success') }}";
-            
-            // Solo mostramos modal si venimos de una redirección "exitosa" del controlador (submit enviado)
-            if (successMsg && (successMsg.includes('huella') || successMsg.includes('Huella') || successMsg.includes('Biométrica') || successMsg.includes('completado'))) {
-                
-                const overlay = document.getElementById('modalOverlay');
-                const cargando = document.getElementById('estadoCargando');
-                const exito = document.getElementById('estadoExito');
-                const error = document.getElementById('estadoError');
-
-                overlay.classList.remove('hidden');
-                cargando.classList.add('hidden');
-
-                // LÓGICA INTELIGENTE:
-                if (status == 8) {
-                    // CASO ERROR (Huella no coincide)
-                    error.classList.remove('hidden');
-                    // No lo ocultamos automático para que el usuario lea y reintente
-                } else if (status == 9) {
-                     // CASO TIMEOUT (Podríamos usar el mismo de error o uno amarillo, usaremos error por ahora)
-                     error.querySelector('h3').innerText = "Tiempo Agotado";
-                     error.querySelector('p').innerText = "Se acabó el tiempo de espera.";
-                     error.classList.remove('hidden');
+            const msg = "{{ session('success') }}";
+            // Si venimos de un éxito normal (guardar nombre, etc) mostramos solo la palomita brevemente
+            // Si venimos de "Instrucción enviada" (Huella), activamos el loader completo
+            if (msg) {
+                if (msg.includes('Instrucción enviada')) {
+                    activarLoader();
                 } else {
-                    // CASO ÉXITO (Normal)
+                    // Éxito normal (datos personales)
+                    const overlay = document.getElementById('modalOverlay');
+                    const exito = document.getElementById('estadoExito');
+                    overlay.classList.remove('hidden');
                     exito.classList.remove('hidden');
-                    setTimeout(() => {
-                        overlay.classList.add('hidden');
-                    }, 2500);
+                    setTimeout(() => { overlay.classList.add('hidden'); }, 2000);
                 }
             }
         });

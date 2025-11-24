@@ -65,72 +65,85 @@ class ClienteController extends Controller
             $rolMember = Rol::firstOrCreate(['rol' => 'member']);
             $usuario->roles()->syncWithoutDetaching([$rolMember->id]);
 
-            // ✅ Confirmar cambios antes de tareas lentas
+            // ✅ Confirmar cambios en BD antes de procesos externos
             DB::commit();
-            // ⬇️ ⭐️ IMPLEMENTACIÓN DEL TIMEOUT (Bug 2 - Parte 2) ⭐️ ⬇️
 
-            // Programar la limpieza de la DB si el registro de huella falla por timeout
-            // El Job se ejecutará en 60 segundos. Si en ese tiempo no llega el evento de éxito,
-            // y el campo fingerprint_id sigue null, el registro se eliminará.
+            // ⬇️ PROTECCIÓN TIMEOUT (Job de limpieza)
             CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60)); 
-            
-            // ⬆️ ⭐️ FIN IMPLEMENTACIÓN DEL TIMEOUT ⭐️ ⬆️
 
-            // 5️⃣ Generar token de activación
+            // 5️⃣ Generar token y ENVIAR CORREO
+            // (Lo hacemos aquí para asegurar que se envíe antes de cualquier respuesta JSON)
             $token = Str::random(64);
             DB::table('password_resets')->updateOrInsert(
                 ['email' => $usuario->email],
                 ['token' => $token, 'created_at' => Carbon::now()]
             );
 
-            // 6️⃣ Enviar correo
             $urlActivacion = route('activacion.show', ['token' => $token, 'email' => $usuario->email]);
-            Mail::to($usuario->email)->send(new ActivarCuentaMail($usuario, $urlActivacion));
-
-          // 7️⃣ Enviar evento a Particle (modo registro de huella)
-            $event = 'enroll-fingerprint'; // nombre del evento publicado en el firmware del Photon
             
-            // ✅ Corrección: enviar el ID como texto plano, no JSON
-            $response = Http::asForm()->post(
-                'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/' . $event,
-                [
-                    'access_token' => env('PARTICLE_ACCESS_TOKEN'),
-                    'args' => (string) $usuario->id, // 👈 debe ser string simple, no JSON
-                ]
-            );
+            try {
+                Mail::to($usuario->email)->send(new ActivarCuentaMail($usuario, $urlActivacion));
+            } catch (\Throwable $e) {
+                Log::error("Error enviando correo de activación: " . $e->getMessage());
+                // No detenemos el proceso, pero queda registrado el fallo del mail
+            }
+
+            // 6️⃣ Enviar evento a Particle (Con Timeout de 5s)
+            try {
+                Http::timeout(5)->asForm()->post(
+                    'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/enroll-fingerprint',
+                    [
+                        'access_token' => env('PARTICLE_ACCESS_TOKEN'),
+                        'args' => (string) $usuario->id,
+                    ]
+                );
+            } catch (\Throwable $e) {
+                Log::error("No se pudo iniciar sensor automáticamente: " . $e->getMessage());
+            }
             
-            // 8️⃣ Log para depuración
-            Log::info('Particle enroll response', [
-                'user_id' => $usuario->id,
-                'body' => $response->body(),
-            ]);
+            Log::info('Cliente creado via AJAX', ['user_id' => $usuario->id]);
 
+            // 7️⃣ RESPUESTA FINAL
+            // Si la petición viene del formulario con JS (AJAX), devolvemos JSON para el modal.
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'user_id' => $usuario->id,
+                    'message' => 'Usuario creado. Correo enviado y esperando huella.'
+                ]);
+            }
 
-            // 9️⃣ Redirigir con éxito
-            return redirect()
-                ->route('dashboard')
-                ->with('success', 'Cliente registrado. Se ha enviado correo de activación y el sensor está listo para registrar su huella.');
+            // Fallback normal (si falla el JS o es petición normal)
+            // Redirigimos a la edición para que pueda intentar la huella ahí
+            return redirect()->route('usuarios.edit', $usuario->id)->with('success', 'Registrado correctamente. Instrucción enviada.');
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            report($e);
+            
+            // Manejo de error para AJAX
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Error en el servidor: ' . $e->getMessage()], 500);
+            }
 
+            // Manejo de error normal
+            report($e);
             return back()
                 ->withInput()
                 ->withErrors(['general' => 'Ocurrió un error al registrar al cliente.']);
         }
     }
+    
+    // Método retryEnroll (para reintentos manuales)
     public function retryEnroll(int $userId)
     {
         $usuario = Usuario::findOrFail($userId);
 
         try {
-            // Opcional: Volver a poner el estatus en 0 (Inicial)
             $usuario->estatus = 0; 
             $usuario->save();
-            
-            // 1. Volver a llamar a la función de Particle para iniciar el sensor
-            $response = Http::asForm()->post(
+
+            // Timeout de 5s también aquí
+            Http::timeout(5)->asForm()->post(
                 'https://api.particle.io/v1/devices/' . env('PARTICLE_DEVICE_ID') . '/enroll-fingerprint',
                 [
                     'access_token' => env('PARTICLE_ACCESS_TOKEN'),
@@ -138,17 +151,51 @@ class ClienteController extends Controller
                 ]
             );
 
-            // 2. Volver a despachar el Job de limpieza (por si hay un nuevo timeout)
             CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60)); 
 
-            Log::info('Reintento de enroll exitoso.', ['user_id' => $usuario->id, 'body' => $response->body()]);
-
-            return back()->with('success', 'El proceso de registro de huella ha sido reiniciado. Por favor, coloque el dedo en el sensor.');
+            return back()->with('success', 'El proceso de registro de huella ha sido reiniciado.');
 
         } catch (\Throwable $e) {
-            report($e);
-            return back()->withErrors(['general' => 'Ocurrió un error al intentar reiniciar el proceso de huella.']);
+            return back()->withErrors(['general' => 'Ocurrió un error al conectar con el sensor.']);
         }
     }
-}
 
+    // 1. Muestra la vista de pago con datos del registro reciente
+    public function vistaPagoRegistro($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        // Buscamos la membresía que se creó en el método store
+        $membresia = Membresia::where('usuario_id', $usuario->id)->latest()->firstOrFail();
+        $plan = $membresia->plan; // Asumiendo relación en el modelo Membresia
+
+        // Retornamos la misma vista 'payment', pero con una bandera 'contexto'
+        return view('payment', [
+            'membresia'     => $membresia,
+            'plan'          => $plan,
+            'fecha_inicio'  => $membresia->fecha_ini->format('Y-m-d'),
+            'fecha_fin'     => $membresia->fecha_fin->format('Y-m-d'),
+            'costo_base'    => $plan->precio,
+            'total'         => $plan->precio,
+            'contexto'      => 'registro_nuevo' // <--- Esto es clave para la vista
+        ]);
+    }
+
+    // 2. El usuario pagó, simplemente redirigimos al dashboard
+    public function finalizarRegistro($id)
+    {
+        // Opcional: Aquí podrías cambiar un estatus de "pendiente_pago" a "pagado" si tuvieras esa columna
+        return redirect()->route('dashboard')->with('success', 'Cliente registrado y pago confirmado.');
+    }
+
+    // 3. El usuario canceló en la pantalla de pago: Borramos todo
+    public function cancelarRegistro($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        // Al borrar el usuario, la BD debería borrar la membresía en cascada (onDelete cascade)
+        $usuario->delete();
+
+        return redirect()->route('dashboard')->with('info', 'El registro del cliente ha sido cancelado.');
+    }
+}
