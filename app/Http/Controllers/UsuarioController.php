@@ -112,8 +112,6 @@ class UsuarioController extends Controller
             $token = env('PARTICLE_ACCESS_TOKEN');
             
             // Intentamos borrar del sensor sin bloquearnos por el estado "connected"
-            // Aquí NO usamos validación estricta porque si ya vamos a borrar al usuario,
-            // no queremos detener el proceso si el sensor está apagado.
             if ($usuario->fingerprint_id) {
                 try {
                     Http::asForm()->post(
@@ -142,7 +140,7 @@ class UsuarioController extends Controller
         }
     }
 
-    // 👇 ESTA ES LA FUNCIÓN COMPLETAMENTE CORREGIDA 👇
+    // 👇 ESTA ES LA VERSIÓN DEFINITIVA (CORREGIDA PARA RECONEXIÓN RÁPIDA) 👇
     public function resetFingerprint($id)
     {
         $usuario = Usuario::findOrFail($id);
@@ -150,26 +148,28 @@ class UsuarioController extends Controller
         $token = env('PARTICLE_ACCESS_TOKEN');
 
         try {
-            // 1. PING DE ESTADO (SEGURIDAD)
-            // Verificamos si la nube de Particle ve al dispositivo "connected".
-            // Usamos timeout corto (5s) para esta verificación.
-            $responseStatus = Http::timeout(5)->get(
-                "https://api.particle.io/v1/devices/{$deviceId}?access_token={$token}"
-            );
-
-            if ($responseStatus->successful()) {
-                $isConnected = $responseStatus->json()['connected'] ?? false;
-                if (!$isConnected) {
-                    // Si Particle dice que está desconectado, paramos aquí.
-                    throw new \Exception("El dispositivo aparece desconectado (OFFLINE).");
+            // 1. PING DE ESTADO (NO BLOQUEANTE)
+            // Intentamos ver si está conectado, pero si la API dice "offline" (falso positivo),
+            // solo registramos la advertencia y seguimos adelante.
+            try {
+                $responseStatus = Http::timeout(3)->get(
+                    "https://api.particle.io/v1/devices/{$deviceId}?access_token={$token}"
+                );
+                
+                if ($responseStatus->successful()) {
+                    $isConnected = $responseStatus->json()['connected'] ?? false;
+                    if (!$isConnected) {
+                        Log::warning("UsuarioController: La API de Particle dice que el dispositivo está OFFLINE, pero intentaremos enviar el comando de todos modos.");
+                    }
                 }
-            } else {
-                // Si ni siquiera podemos consultar el estado, hay problema de red o token.
-                throw new \Exception("No se pudo verificar el estado del sensor.");
+            } catch (\Exception $e) {
+                // Si falla la conexión al consultar estado, solo logueamos y seguimos.
+                Log::warning("UsuarioController: No se pudo verificar estado previo (Ping): " . $e->getMessage());
             }
 
-            // 2. Intentar iniciar el modo "Enroll"
-            // Usamos timeout(15) para dar tiempo a que la señal viaje y vuelva.
+            // 2. INTENTO DE COMANDO "ENROLL" (PRUEBA DE FUEGO)
+            // Aquí es donde realmente validamos.
+            // Timeout de 15s: Si el cable está desconectado, esto fallará aquí.
             $responseEnroll = Http::timeout(15)->asForm()->post(
                 "https://api.particle.io/v1/devices/{$deviceId}/enroll-fingerprint",
                 [
@@ -178,20 +178,20 @@ class UsuarioController extends Controller
                 ]
             );
 
-            // 3. VALIDACIÓN DE RESPUESTA REAL
             $data = $responseEnroll->json();
             
-            // Si la petición HTTP falló O si no viene el valor de retorno del firmware
+            // 3. VALIDACIÓN ESTRICTA DE LA RESPUESTA
+            // Si la petición falló (timeout o red) O si el JSON no trae 'return_value'...
             if ($responseEnroll->failed() || !isset($data['return_value'])) {
-                throw new \Exception("El sensor no confirmó la recepción del comando.");
+                throw new \Exception("El sensor no confirmó la recepción del comando (Posiblemente desconectado).");
             }
 
-            // Si el firmware devolvió un código de error (ej. -1)
+            // Si el firmware del Photon devolvió error explícito (ej. -1)
             if ($data['return_value'] == -1) {
-                throw new \Exception("El sensor reportó un error interno.");
+                throw new \Exception("El sensor reportó un error interno al iniciar el registro.");
             }
 
-            // --- SI LLEGAMOS AQUÍ, TODO ESTÁ OK ---
+            // --- SI LLEGAMOS AQUÍ, EL DISPOSITIVO ESTÁ VIVO Y CONECTADO ---
 
             // 4. Borrar la huella vieja (si existe)
             if ($usuario->fingerprint_id) {
@@ -210,17 +210,17 @@ class UsuarioController extends Controller
             $usuario->estatus = 0; // 0 = Esperando huella
             $usuario->save();
 
-            // 6. Disparar Job de seguridad (Timeout)
+            // 6. Job de seguridad (Timeout)
             CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
 
             return back()->with('success', '✅ Instrucción enviada. Siga las indicaciones en el sensor.');
 
         } catch (\Exception $e) {
-            // 🛑 CATCH DE SEGURIDAD
-            // Si el dispositivo está desconectado, caerá aquí y NO modificará la BD.
-            Log::error("Error al intentar actualizar huella: " . $e->getMessage());
+            // 🛑 CATCH FINAL
+            // Si falló el paso 2 (timeout de 15s), caemos aquí.
+            Log::error("Error crítico al actualizar huella: " . $e->getMessage());
             
-            return back()->with('error', '❌ Error de conexión: ' . $e->getMessage());
+            return back()->with('error', '❌ Error de conexión: El dispositivo no responde.');
         }
     }
 }
