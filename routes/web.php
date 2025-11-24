@@ -36,6 +36,9 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Análisis y Reportes (Vista de Diseño)
+    Route::view('/analisis-reportes', 'analytics')->name('analytics');
+
     // Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
     Route::get('/usuarios/{usuario}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit');   // Corregido: Apunta al Controller

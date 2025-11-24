@@ -99,9 +99,9 @@
             
             <!-- Opción 1: Pagar después (Redirección o Submit diferente) -->
             <!-- Usamos <a> si solo redirige, o <button> si envía form -->
-            <a href="{{ route('usuarios') }}" 
+            <a href="{{ route('dashboard') }}" 
                class="w-full text-center border-2 border-[var(--gris-oscuro)] text-[var(--gris-oscuro)] istok-web-bold py-3 rounded-full hover:bg-gray-100 transition-colors text-lg cursor-pointer flex items-center justify-center">
-                Pagará después
+                Cancelar 
             </a>
 
             <!-- Opción 2: Confirmar Pago -->
