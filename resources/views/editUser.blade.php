@@ -239,7 +239,7 @@
     </div>
 
     <!-- SCRIPT -->
-    <script>
+<script>
         let pollingInterval;
         const userId = "{{ $usuario->id }}";
 
@@ -264,7 +264,7 @@
 
         function cerrarModal() {
             document.getElementById('modalOverlay').classList.add('hidden');
-            clearInterval(pollingInterval); // Detener polling para no gastar recursos
+            clearInterval(pollingInterval); // Detener polling
         }
 
         function iniciarPolling() {
@@ -302,14 +302,30 @@
         }
         
         document.addEventListener("DOMContentLoaded", function() {
-            const msg = "{{ session('success') }}";
-            // Si venimos de un éxito normal (guardar nombre, etc) mostramos solo la palomita brevemente
-            // Si venimos de "Instrucción enviada" (Huella), activamos el loader completo
-            if (msg) {
-                if (msg.includes('Instrucción enviada')) {
+            // 🔥 CAPTURAMOS AMBOS MENSAJES (ÉXITO Y ERROR)
+            const successMsg = "{{ session('success') }}";
+            const errorMsg = "{{ session('error') }}"; 
+
+            // 1. PRIORIDAD: SI HAY ERROR, MOSTRAR MODAL ROJO
+            if (errorMsg) {
+                const overlay = document.getElementById('modalOverlay');
+                const errorModal = document.getElementById('estadoError');
+                const txtError = document.getElementById('msgError');
+
+                // Ponemos el texto que envió el controlador
+                txtError.innerText = errorMsg;
+
+                // Mostramos el modal
+                overlay.classList.remove('hidden');
+                errorModal.classList.remove('hidden');
+            }
+            // 2. SI HAY ÉXITO
+            else if (successMsg) {
+                if (successMsg.includes('Instrucción enviada')) {
+                    // Si es el inicio del proceso de huella, mostramos loader
                     activarLoader();
                 } else {
-                    // Éxito normal (datos personales)
+                    // Éxito normal (datos personales guardados)
                     const overlay = document.getElementById('modalOverlay');
                     const exito = document.getElementById('estadoExito');
                     overlay.classList.remove('hidden');
