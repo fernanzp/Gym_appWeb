@@ -44,7 +44,6 @@
             Editar Usuario: {{ $usuario->nombre_comp ?? 'Cargando...' }}
         </h1>
 
-        <!-- ALERTAS SUPERIORES -->
         @if ($usuario->estatus == 8)
             <div class="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded-r shadow-sm flex items-center justify-between">
                 <div>
@@ -69,16 +68,15 @@
             </div>
         @endif
 
-        <!-- Formulario Principal -->
-        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5">
+        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5" onsubmit="activarLoader()">
             @csrf @method('PUT')
+            
             @if (session('success') && $usuario->estatus != 8 && $usuario->estatus != 9) 
                 <div class="p-3 rounded-md bg-green-100 text-green-800 border border-green-200 text-center font-bold">{{ session('success') }}</div> 
             @endif
             @if (session('error')) <div class="p-3 rounded-md bg-red-100 text-red-800 border border-red-200 text-center font-bold">{{ session('error') }}</div> @endif
             @error('general') <div class="p-3 rounded-md bg-red-100 text-red-800">{{ $message }}</div> @enderror
 
-            <!-- Campos -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Nombre completo</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
@@ -98,14 +96,11 @@
                 </div>
             </div>
             
-            <!-- SELECT ESTATUS CORREGIDO (SIN VARIABLE INTERMEDIA) -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Estatus</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3">
                     <select name="estatus" class="flex-1 bg-transparent outline-none istok-web-regular appearance-none cursor-pointer">
-                        <!-- Si estatus es 1, selecciona Activo -->
                         <option value="1" @selected(old('estatus', $usuario->estatus) == 1)>Activo</option>
-                        <!-- Si estatus es 0, 8 o 9, selecciona Inactivo por defecto -->
                         <option value="0" @selected(old('estatus', $usuario->estatus) != 1)>Inactivo</option>
                     </select>
                 </div>
@@ -117,7 +112,6 @@
             </div>
         </form>
         
-        <!-- SECCIÓN BIOMÉTRICA -->
         <div class="mt-12 pt-6 border-t-2 border-[var(--gris-bajito)]">
             <h2 class="text-2xl font-bold text-center mb-6 istok-web-bold text-[var(--azul)]">Gestión Biométrica</h2>
             <div class="bg-[var(--gris-bajito)] rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -140,7 +134,6 @@
                     @endif
                 </div>
 
-                <!-- Formulario con llamada a JS -->
                 <form action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="w-full sm:w-auto" onsubmit="activarLoader()">
                     @csrf
                     @if($usuario->fingerprint_id)
@@ -157,11 +150,11 @@
         </div>
     </div>
 
-    <!-- 🛠 MODAL OVERLAY -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/70 z-[9999] hidden flex items-center justify-center backdrop-blur-sm">
         
-        <!-- 1. CARGANDO -->
-        <div id="estadoCargando" class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl hidden">
+        <div id="estadoCargando" class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl hidden relative">
+            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+
             <div class="flex justify-center mb-6"><div class="windows-loader"></div></div>
             
             <h3 class="text-2xl istok-web-bold text-[var(--azul)] mb-2">Sensor Activado</h3>
@@ -169,7 +162,6 @@
                 Indique al usuario que siga las instrucciones en el sensor físico.
             </p>
 
-            <!-- Pasos visuales -->
             <div class="bg-gray-50 rounded-xl p-4 text-left space-y-3 text-sm text-gray-700 border border-gray-200">
                 <div class="flex items-center gap-3">
                     <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
@@ -188,35 +180,32 @@
             <p class="mt-6 text-xs text-gray-400 animate-pulse">Esperando confirmación del dispositivo...</p>
         </div>
 
-        <!-- 2. ÉXITO -->
         <div id="estadoExito" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-4">
                 <div class="checkmark-circle"><div class="background"></div><div class="checkmark draw"></div></div>
             </div>
-            <h3 class="text-2xl istok-web-bold text-green-600 mb-2">¡Huella Actualizada!</h3>
-            <p class="text-gray-600 text-sm">El registro se completó correctamente.</p>
+            <h3 class="text-2xl istok-web-bold text-green-600 mb-2">¡Operación Exitosa!</h3>
+            <p class="text-gray-600 text-sm">Los cambios se guardaron correctamente.</p>
         </div>
 
-        <!-- 3. ERROR -->
         <div id="estadoError" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-4">
                 <div class="cross-circle"><div class="background"></div><div class="cross-line one"></div><div class="cross-line two"></div></div>
             </div>
-            <h3 class="text-2xl istok-web-bold text-red-600 mb-2">¡Error de Huella!</h3>
-            <p id="msgError" class="text-gray-600 text-sm mb-6">Las huellas no coincidieron o hubo un error.</p>
+            <h3 class="text-2xl istok-web-bold text-red-600 mb-2">¡Error!</h3>
+            <p id="msgError" class="text-gray-600 text-sm mb-6">Ocurrió un problema.</p>
             
             <button onclick="activarLoader(); document.getElementById('formRetryModal').submit();" class="bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 w-full">
                 Intentar de Nuevo
             </button>
             <form id="formRetryModal" action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="hidden">@csrf</form>
             
-            <button onclick="document.getElementById('modalOverlay').classList.add('hidden')" class="mt-3 text-gray-500 text-sm hover:underline">
+            <button onclick="cerrarModal()" class="mt-3 text-gray-500 text-sm hover:underline">
                 Cerrar
             </button>
         </div>
     </div>
 
-    <!-- SCRIPT -->
     <script>
         let pollingInterval;
         const userId = "{{ $usuario->id }}";
@@ -237,7 +226,13 @@
             iniciarPolling();
         }
 
+        function cerrarModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+            clearInterval(pollingInterval);
+        }
+
         function iniciarPolling() {
+            clearInterval(pollingInterval);
             let intentos = 0;
             pollingInterval = setInterval(async () => {
                 intentos++;
@@ -255,6 +250,7 @@
                         cargando.classList.add('hidden');
                         error.classList.remove('hidden');
                         if(data.estatus == 9) document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
+                        else document.getElementById('msgError').innerText = "Las huellas no coincidieron o hubo error.";
                     } 
                     else if (data.fingerprint_id != null) {
                         clearInterval(pollingInterval);
@@ -269,9 +265,32 @@
         }
         
         document.addEventListener("DOMContentLoaded", function() {
-            const msg = "{{ session('success') }}";
-            if (msg && msg.includes('Instrucción enviada')) {
-                activarLoader();
+            const successMsg = "{{ session('success') }}";
+            const errorMsg = "{{ session('error') }}"; // 🔥 CAPTURAMOS ERROR
+
+            // 1. SI HAY ERROR (Ej. Desconexión de cable)
+            if (errorMsg) {
+                const overlay = document.getElementById('modalOverlay');
+                const errorModal = document.getElementById('estadoError');
+                const txtError = document.getElementById('msgError');
+                
+                txtError.innerText = errorMsg; // Ponemos el texto del controlador
+                
+                overlay.classList.remove('hidden');
+                errorModal.classList.remove('hidden');
+            }
+            // 2. SI HAY ÉXITO (Inicio de huella o guardado normal)
+            else if (successMsg) {
+                if (successMsg.includes('Instrucción enviada')) {
+                    activarLoader();
+                } else {
+                    // Guardado normal (nombre, email...) muestra palomita rápida
+                    const overlay = document.getElementById('modalOverlay');
+                    const exito = document.getElementById('estadoExito');
+                    overlay.classList.remove('hidden');
+                    exito.classList.remove('hidden');
+                    setTimeout(() => { overlay.classList.add('hidden'); }, 1500);
+                }
             }
         });
     </script>
