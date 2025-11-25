@@ -113,91 +113,89 @@ class UsuarioController extends Controller
         }
     }
 
-    // Reemplaza tu función resetFingerprint actual por esta:
-    public function resetFingerprint($id)
-    {
-        $usuario = Usuario::findOrFail($id);
-        $deviceId = env('PARTICLE_DEVICE_ID');
-        $token = env('PARTICLE_ACCESS_TOKEN');
+// En app/Http/Controllers/UsuarioController.php
 
-        // URL Base de Particle
-        $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
+public function resetFingerprint($id)
+{
+    $usuario = Usuario::findOrFail($id);
+    $deviceId = env('PARTICLE_DEVICE_ID');
+    $token = env('PARTICLE_ACCESS_TOKEN');
+    
+    // URL base para no repetirla
+    $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
 
-        try {
-            // ---------------------------------------------------------
-            // PASO 1: VERIFICAR CONEXIÓN (Ping rápido 3s)
-            // ---------------------------------------------------------
+    try {
+        // ---------------------------------------------------------
+        // PASO 1: LIMPIEZA PREVIA (Borrar huella vieja si existe)
+        // ---------------------------------------------------------
+        if ($usuario->fingerprint_id) {
             try {
-                $responseStatus = Http::timeout(3)->get("{$baseUrl}?access_token={$token}");
-                if ($responseStatus->successful()) {
-                    $connected = $responseStatus->json()['connected'] ?? false;
-                    if (!$connected) {
-                        return back()->with('error', 'El sensor parece estar desconectado (Offline).');
-                    }
-                }
-            } catch (\Exception $e) {
-                // Si falla el ping, asumimos riesgo y continuamos, o lanzamos error.
-                // Recomendable: Continuar por si es un falso negativo.
+                // Intentamos borrar. Timeout corto (4s) para no atorarnos.
+                Http::timeout(4)->asForm()->post(
+                    "{$baseUrl}/delete-fingerprint",
+                    ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
+                );
+                
+                // 🔥 EL SECRETO: Una pausa de 1 segundo.
+                // Esto deja que el Photon termine de borrar antes de pedirle que enrole.
+                sleep(1); 
+                
+            } catch (\Throwable $e) {
+                // Si falla el borrado (ej. sensor desconectado), seguimos.
+                // No queremos detener el flujo por esto.
+                Log::warning("No se pudo borrar huella previa o ya no existía.");
             }
-
-            // ---------------------------------------------------------
-            // PASO 2: LIMPIEZA PREVIA (Borrar huella anterior si existe)
-            // ---------------------------------------------------------
-            // Hacemos esto ANTES de pedir la nueva para evitar conflictos en el dispositivo.
-            if ($usuario->fingerprint_id) {
-                try {
-                    Http::timeout(5)->asForm()->post(
-                        "{$baseUrl}/delete-fingerprint",
-                        ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
-                    );
-                    
-                    // IMPORTANTE: Darle un respiro al Photon tras borrar
-                    sleep(1); 
-                    
-                } catch (\Throwable $e) {
-                    Log::warning("No se pudo borrar huella vieja, intentando sobreescribir...");
-                }
-            }
-
-            // ---------------------------------------------------------
-            // PASO 3: INICIAR ENROLAMIENTO
-            // ---------------------------------------------------------
-            // Enviamos la orden. NO esperamos a que el usuario ponga el dedo.
-            // Con timeout(5) solo esperamos a que el Photon diga "Recibido, entrando en modo enroll".
-            
-            $responseEnroll = Http::timeout(5)->asForm()->post(
-                "{$baseUrl}/enroll-fingerprint",
-                [
-                    'access_token' => $token,
-                    'args' => (string) $usuario->id, // Enviamos ID de usuario al Photon
-                ]
-            );
-
-            // Verificamos si el Photon aceptó el COMANDO (no la huella, el comando)
-            if ($responseEnroll->failed()) {
-                throw new \Exception("El dispositivo no aceptó la orden de inicio.");
-            }
-
-            // ---------------------------------------------------------
-            // PASO 4: ACTUALIZAR DB Y RESPONDER A VISTA
-            // ---------------------------------------------------------
-            // Ponemos al usuario en modo "espera" y borramos su ID de huella en DB
-            // para que el polling de JS sepa que estamos esperando.
-            
-            $usuario->fingerprint_id = null;
-            $usuario->estatus = 0; // Inactivo/Esperando
-            $usuario->save();
-
-            // Despachamos job de limpieza por si el usuario se arrepiente y se va (60s)
-            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
-
-            // Retornamos ÉXITO INMEDIATO. 
-            // La vista leerá este mensaje, activará el loader y el Polling hará el resto.
-            return back()->with('success', 'Instrucción enviada. Coloque su dedo en el sensor.');
-
-        } catch (\Exception $e) {
-            Log::error("Fallo Flow Fingerprint: " . $e->getMessage());
-            return back()->with('error', 'Error de comunicación con el sensor. Intente de nuevo.');
         }
+
+        // ---------------------------------------------------------
+        // PASO 2: PREPARAR EL ESTADO EN BASE DE DATOS
+        // ---------------------------------------------------------
+        // Ponemos estatus 0 (Inactivo/Esperando) y borramos el ID de huella.
+        // Tu Javascript (polling) verá esto y sabrá que estamos "Cargando".
+        $usuario->fingerprint_id = null;
+        $usuario->estatus = 0; 
+        $usuario->save();
+
+        // ---------------------------------------------------------
+        // PASO 3: ENVIAR LA ORDEN DE "ENROLL"
+        // ---------------------------------------------------------
+        // OJO: Aquí NO esperamos a que el usuario ponga el dedo.
+        // Solo esperamos a que el Photon diga "Recibido, voy a encender el LED".
+        $response = Http::timeout(5)->asForm()->post(
+            "{$baseUrl}/enroll-fingerprint",
+            [
+                'access_token' => $token,
+                'args' => (string) $usuario->id, // Le pasamos el ID para que el Webhook sepa quién es
+            ]
+        );
+
+        if ($response->failed()) {
+            throw new \Exception("El sensor rechazó la conexión (¿Está offline?).");
+        }
+
+        // ---------------------------------------------------------
+        // PASO 4: RED DE SEGURIDAD
+        // ---------------------------------------------------------
+        // Si el usuario se arrepiente y cierra la página, este Job limpiará 
+        // el estado "zombie" en 60 segundos.
+        CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
+
+        // ---------------------------------------------------------
+        // PASO 5: RESPUESTA INMEDIATA
+        // ---------------------------------------------------------
+        // Regresamos al navegador de inmediato.
+        // El modal de "Cargando" se quedará ahí hasta que el Photon avise (vía Webhook) que terminó.
+        return back()->with('success', 'Instrucción enviada. Coloque su dedo en el sensor.');
+
+    } catch (\Exception $e) {
+        Log::error("Fallo en resetFingerprint: " . $e->getMessage());
+        
+        // IMPORTANTE: Marcamos estatus 8 (Error) en la BD.
+        // Tu Javascript detectará este '8' y mostrará el Modal Rojo automáticamente.
+        $usuario->estatus = 8; 
+        $usuario->save();
+
+        return back()->with('error', 'No se pudo conectar con el sensor. Verifique que esté encendido.');
     }
+}
 }
