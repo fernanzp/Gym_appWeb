@@ -126,16 +126,16 @@
                                         <path d="M136 24c0-13.3 10.7-24 24-24s24 10.7 24 24l0 40 56 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-114.9 0c-24.9 0-45.1 20.2-45.1 45.1 0 22.5 16.5 41.5 38.7 44.7l91.6 13.1c53.8 7.7 93.7 53.7 93.7 108 0 60.3-48.9 109.1-109.1 109.1l-10.9 0 0 40c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-40-72 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l130.9 0c24.9 0 45.1-20.2 45.1-45.1 0-22.5-16.5-41.5-38.7-44.7l-91.6-13.1C55.9 273.5 16 227.4 16 173.1 16 112.9 64.9 64 125.1 64l10.9 0 0-40z"/>
                                     </svg>
                                 </div>
-                                <div class="flex items-center text-emerald-500 text-sm font-bold">
+                                <div class="flex items-center {{ $porcentajeIngresos >= 0 ? 'text-emerald-500' : 'text-red-500' }} text-sm font-bold">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
-                                    <span>+8.1%</span>
+                                    <span>{{ $porcentajeIngresos >= 0 ? '+' : '' }}{{ number_format($porcentajeIngresos, 1) }}%</span>
                                 </div>
                             </div>
                             <div class="mt-4">
                                 <p class="text-[var(--gris-oscuro)] text-sm">Ingresos Mensuales</p>
-                                <h3 class="text-3xl istok-web-bold text-black mt-1">$94,250</h3>
+                                <h3 class="text-3xl istok-web-bold text-black mt-1">${{ number_format($ingresosMes, 2) }}</h3>
                             </div>
                         </div>
 
@@ -147,16 +147,16 @@
                                         <path d="M320 16a104 104 0 1 1 0 208 104 104 0 1 1 0-208zM96 88a72 72 0 1 1 0 144 72 72 0 1 1 0-144zM0 416c0-70.7 57.3-128 128-128 12.8 0 25.2 1.9 36.9 5.4-32.9 36.8-52.9 85.4-52.9 138.6l0 16c0 11.4 2.4 22.2 6.7 32L32 480c-17.7 0-32-14.3-32-32l0-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32l0-16c0-53.2-20-101.8-52.9-138.6 11.7-3.5 24.1-5.4 36.9-5.4 70.7 0 128 57.3 128 128l0 32c0 17.7-14.3 32-32 32l-86.7 0zM472 160a72 72 0 1 1 144 0 72 72 0 1 1 -144 0zM160 432c0-88.4 71.6-160 160-160s160 71.6 160 160l0 16c0 17.7-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32l0-16z"/>
                                     </svg>
                                 </div>
-                                <div class="flex items-center text-emerald-500 text-sm font-bold">
+                                <div class="flex items-center {{ $porcentajeMiembros >= 0 ? 'text-emerald-500' : 'text-red-500' }} text-sm font-bold">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
-                                    <span>+12.3%</span>
+                                    <span>{{ $porcentajeMiembros >= 0 ? '+' : '' }}{{ number_format($porcentajeMiembros, 1) }}%</span>
                                 </div>
                             </div>
                             <div class="mt-4">
                                 <p class="text-[var(--gris-oscuro)] text-sm">Miembros Activos</p>
-                                <h3 class="text-3xl istok-web-bold text-black mt-1">447</h3>
+                                <h3 class="text-3xl istok-web-bold text-black mt-1">{{ number_format($miembrosActivos) }}</h3>
                             </div>
                         </div>
 
@@ -168,16 +168,16 @@
                                         <path d="M286 304c98.5 0 178.3 79.8 178.3 178.3 0 16.4-13.3 29.7-29.7 29.7L78 512c-16.4 0-29.7-13.3-29.7-29.7 0-98.5 79.8-178.3 178.3-178.3l59.4 0zM585.7 105.9c7.8-10.7 22.8-13.1 33.5-5.3s13.1 22.8 5.3 33.5L522.1 274.9c-4.2 5.7-10.7 9.4-17.7 9.8s-14-2.2-18.9-7.3l-46.4-48c-9.2-9.5-9-24.7 .6-33.9 9.5-9.2 24.7-8.9 33.9 .6l26.5 27.4 85.6-117.7zM256.3 248a120 120 0 1 1 0-240 120 120 0 1 1 0 240z"/>
                                     </svg>
                                 </div>
-                                <div class="flex items-center text-emerald-500 text-sm font-bold">
+                                <div class="flex items-center {{ $porcentajeAsistencia >= 0 ? 'text-emerald-500' : 'text-red-500' }} text-sm font-bold">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
-                                    <span>+5.7%</span>
+                                    <span>{{ $porcentajeAsistencia >= 0 ? '+' : '' }}{{ number_format($porcentajeAsistencia, 1) }}%</span>
                                 </div>
                             </div>
                             <div class="mt-4">
                                 <p class="text-[var(--gris-oscuro)] text-sm">Asistencia Promedio</p>
-                                <h3 class="text-3xl istok-web-bold text-black mt-1">218/día</h3>
+                                <h3 class="text-3xl istok-web-bold text-black mt-1">{{ number_format($promedioAsistencia, 0) }}/día</h3>
                             </div>
                         </div>
 
@@ -193,12 +193,12 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
-                                    <span>+2.1%</span>
+                                    <span>Global</span>
                                 </div>
                             </div>
                             <div class="mt-4">
                                 <p class="text-[var(--gris-oscuro)] text-sm">Tasa de Retención</p>
-                                <h3 class="text-3xl istok-web-bold text-black mt-1">94.2%</h3>
+                                <h3 class="text-3xl istok-web-bold text-black mt-1">{{ number_format($tasaRetencion, 1) }}%</h3>
                             </div>
                         </div>
                     </div>
@@ -212,9 +212,9 @@
                                 <h3 class="text-3xl istok-web-bold text-black">Ingresos</h3>
                                 <!-- Selectores -->
                                 <div class="flex bg-[var(--gris-bajito)] p-1 rounded-lg mt-3 sm:mt-0">
-                                    <button class="px-3 py-1 text-sm rounded-md hover:bg-white hover:shadow-sm transition-all text-[var(--gris-oscuro)]">Semana</button>
-                                    <button class="px-3 py-1 text-sm rounded-md bg-white shadow-sm text-black font-semibold">Mes</button>
-                                    <button class="px-3 py-1 text-sm rounded-md hover:bg-white hover:shadow-sm transition-all text-[var(--gris-oscuro)]">Año</button>
+                                    <button onclick="updateChart('week')" id="btn-week" class="filter-btn px-3 py-1 text-sm rounded-md transition-all text-[var(--gris-oscuro)] hover:bg-white hover:shadow-sm">Semana</button>
+                                    <button onclick="updateChart('month')" id="btn-month" class="filter-btn px-3 py-1 text-sm rounded-md bg-white shadow-sm text-black font-semibold">Mes</button>
+                                    <button onclick="updateChart('year')" id="btn-year" class="filter-btn px-3 py-1 text-sm rounded-md transition-all text-[var(--gris-oscuro)] hover:bg-white hover:shadow-sm">Año</button>
                                 </div>
                             </div>
                             <div class="relative w-full h-[300px]">
@@ -239,7 +239,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-1 text-white" viewBox="0 0 576 512">
                                         <path fill="currentColor" d="M64 128a112 112 0 1 1 224 0 112 112 0 1 1 -224 0zM0 464c0-97.2 78.8-176 176-176s176 78.8 176 176l0 6c0 23.2-18.8 42-42 42L42 512c-23.2 0-42-18.8-42-42l0-6zM432 64a96 96 0 1 1 0 192 96 96 0 1 1 0-192zm0 240c79.5 0 144 64.5 144 144l0 22.4c0 23-18.6 41.6-41.6 41.6l-144.8 0c6.6-12.5 10.4-26.8 10.4-42l0-6c0-51.5-17.4-98.9-46.5-136.7 22.6-14.7 49.6-23.3 78.5-23.3z"/>
                                     </svg>
-                                    <span class="text-2xl font-bold">42</span>
+                                    <span id="live-count" class="text-2xl font-bold">--</span>
                                     <span class="text-base text-blue-100">Miembros activos</span>
                                 </div>
                             </div>
@@ -257,7 +257,7 @@
                                         </svg>
                                         <span>Pico de hoy</span>
                                     </div>
-                                    <p class="text-2xl font-bold">61</p>
+                                    <p id="live-peak" class="text-2xl font-bold">--</p>
                                 </div>
                                 <div class="text-right">
                                     <div class="flex items-center gap-2 text-blue-100 text-sm mb-1 justify-end">
@@ -266,7 +266,7 @@
                                         </svg>
                                         <span>vs Ayer</span>
                                     </div>
-                                    <p class="text-2xl font-bold">+14%</p>
+                                    <p id="live-change" class="text-2xl font-bold">--%</p>
                                 </div>
                             </div>
                         </div>
@@ -281,26 +281,103 @@
 
     <!-- Script para renderizar las gráficas con Chart.js -->
     <script>
+    // Variable global para poder destruir/actualizar la gráfica
+        let revenueChartInstance = null;
+
         document.addEventListener('DOMContentLoaded', function() {
-            // 1. Gráfica de Ingresos (Line Chart)
+            // Cargar datos iniciales (Mes por defecto)
+            updateChart('month');
+
+            // 2. Cargar Gráfica de Actividad en Vivo (Nueva funcionalidad)
+            loadLiveActivity();
+            
+            function loadLiveActivity() {
+                fetch("{{ route('api.analytics.live') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        // A. Actualizar Textos
+                        document.getElementById('live-count').innerText = data.active;
+                        document.getElementById('live-peak').innerText = data.peak_today;
+                        
+                        // Formato para el porcentaje (+ o -)
+                        const changeEl = document.getElementById('live-change');
+                        const symbol = data.percentage_change >= 0 ? '+' : '';
+                        changeEl.innerText = `${symbol}${data.percentage_change}%`;
+                        
+                        // B. Renderizar Gráfica Circular
+                        const ctxLive = document.getElementById('liveActivityChart').getContext('2d');
+                        new Chart(ctxLive, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Activos', 'Disponible'],
+                                datasets: [{
+                                    data: [data.active, data.remaining], 
+                                    backgroundColor: ['#ffffff', 'rgba(255, 255, 255, 0.2)'],
+                                    borderWidth: 0,
+                                    borderRadius: 0,
+                                    hoverOffset: 0
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                cutout: '85%',
+                                layout: { padding: 5 },
+                                rotation: -90,
+                                circumference: 360,
+                                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                            }
+                        });
+                    })
+                    .catch(error => console.error('Error loading live activity:', error));
+            }
+        });
+
+        // Función para obtener datos y actualizar gráfica
+        function updateChart(filter) {
+            // 1. Actualizar estilos de botones (Visual feedback)
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow-sm', 'text-black', 'font-semibold');
+                btn.classList.add('text-[var(--gris-oscuro)]');
+            });
+            const activeBtn = document.getElementById('btn-' + filter);
+            activeBtn.classList.remove('text-[var(--gris-oscuro)]');
+            activeBtn.classList.add('bg-white', 'shadow-sm', 'text-black', 'font-semibold');
+
+            // 2. Petición AJAX al servidor
+            fetch(`{{ route('api.analytics.revenue') }}?filter=${filter}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderRevenueChart(data.labels, data.data);
+                })
+                .catch(error => console.error('Error cargando gráfica:', error));
+        }
+
+        function renderRevenueChart(labels, dataPoints) {
             const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+            
+            // Si ya existe una gráfica, la destruimos para crear la nueva limpia
+            if (revenueChartInstance) {
+                revenueChartInstance.destroy();
+            }
+
             const gradientRevenue = ctxRevenue.createLinearGradient(0, 0, 0, 300);
             gradientRevenue.addColorStop(0, 'rgba(37, 99, 235, 0.2)');
             gradientRevenue.addColorStop(1, 'rgba(37, 99, 235, 0)');
 
-            new Chart(ctxRevenue, {
+            revenueChartInstance = new Chart(ctxRevenue, {
                 type: 'line',
                 data: {
-                    labels: ['Nov 1', 'Nov 5', 'Nov 9', 'Nov 13', 'Nov 17', 'Nov 21', 'Nov 24'],
+                    labels: labels,
                     datasets: [{
                         label: 'Ingresos',
-                        data: [2400, 3100, 2900, 4100, 3600, 4800, 5200],
+                        data: dataPoints,
                         borderColor: '#2563EB',
                         backgroundColor: gradientRevenue,
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 0,
+                        pointRadius: 3, // Puntos pequeños visibles
                         pointHoverRadius: 6,
                         pointBackgroundColor: '#2563EB',
                         pointBorderColor: '#fff',
@@ -327,7 +404,6 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 6000,
                             border: { display: false },
                             grid: {
                                 color: '#F3F4F6',
@@ -337,8 +413,7 @@
                             ticks: {
                                 color: '#9CA3AF',
                                 font: { size: 11 },
-                                stepSize: 1500,
-                                callback: function(value) { return value === 0 ? '$0k' : '$' + (value / 1000) + 'k'; }
+                                callback: function(value) { return value === 0 ? '$0' : '$' + value; }
                             }
                         },
                         x: {
@@ -350,38 +425,7 @@
                     interaction: { intersect: false, mode: 'index' },
                 }
             });
-
-            // 2. Gráfica "En este momento" (Circular Progress Bar style)
-            const ctxLive = document.getElementById('liveActivityChart').getContext('2d');
-            new Chart(ctxLive, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Activos', 'Restante'],
-                    datasets: [{
-                        data: [250, 150], // Simulando 250 de 400 capacidad
-                        backgroundColor: ['#ffffff', 'rgba(255, 255, 255, 0.2)'], // Blanco y Transparente
-                        borderWidth: 0,
-                        borderRadius: 0, // Bordes planos
-                        hoverOffset: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '85%', // Grosor fino
-                    layout: {
-                        // CAMBIO: Padding reducido a 5 para aprovechar el contenedor pequeño
-                        padding: 5 
-                    },
-                    rotation: -90, // Empezar desde arriba
-                    circumference: 360,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: false } // Desactivar tooltip para mantener limpio
-                    }
-                }
-            });
-        });
+        }
     </script>
 </body>
 </html>

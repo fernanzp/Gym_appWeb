@@ -9,6 +9,7 @@ use App\Http\Controllers\ActivacionController;
 use App\Http\Controllers\MembresiaController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Api\AccessController;
+use App\Http\Controllers\AnalyticsController;
 
 // Ruta base
 Route::get('/', function () {
@@ -49,7 +50,11 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Análisis y Reportes (Vista de Diseño)
-    Route::view('/analisis-reportes', 'analytics')->name('analytics');
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('/api/analytics/revenue', [AnalyticsController::class, 'revenueData'])
+        ->name('api.analytics.revenue');
+    Route::get('/api/analytics/live', [AnalyticsController::class, 'liveActivityData'])
+        ->name('api.analytics.live');
 
     // Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
