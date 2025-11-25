@@ -113,69 +113,91 @@ class UsuarioController extends Controller
         }
     }
 
-    // 🔥 FUNCIÓN OPTIMIZADA (Timeout reducido a 8s para evitar bloqueos)
+    // Reemplaza tu función resetFingerprint actual por esta:
     public function resetFingerprint($id)
     {
         $usuario = Usuario::findOrFail($id);
         $deviceId = env('PARTICLE_DEVICE_ID');
         $token = env('PARTICLE_ACCESS_TOKEN');
 
-        try {
-            // 1. PING INFORMATIVO
-            try {
-                // Timeout muy corto (3s) para checar estado
-                $responseStatus = Http::timeout(3)->get("https://api.particle.io/v1/devices/{$deviceId}?access_token={$token}");
-                $isConnected = $responseStatus->json()['connected'] ?? false;
-                if (!$isConnected) {
-                    Log::warning("Particle API reporta OFFLINE (posible falso positivo).");
-                }
-            } catch (\Exception $e) { /* Ignorar fallo de ping */ }
+        // URL Base de Particle
+        $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
 
-            // 2. COMANDO REAL "ENROLL"
-            // 🔥 REDUCIDO A 8 SEGUNDOS: Esto evita que el servidor se quede colgado esperando
-            // y provoque el error de "Sin respuesta" en el LCD.
-            $responseEnroll = Http::timeout(8)->asForm()->post(
-                "https://api.particle.io/v1/devices/{$deviceId}/enroll-fingerprint",
+        try {
+            // ---------------------------------------------------------
+            // PASO 1: VERIFICAR CONEXIÓN (Ping rápido 3s)
+            // ---------------------------------------------------------
+            try {
+                $responseStatus = Http::timeout(3)->get("{$baseUrl}?access_token={$token}");
+                if ($responseStatus->successful()) {
+                    $connected = $responseStatus->json()['connected'] ?? false;
+                    if (!$connected) {
+                        return back()->with('error', 'El sensor parece estar desconectado (Offline).');
+                    }
+                }
+            } catch (\Exception $e) {
+                // Si falla el ping, asumimos riesgo y continuamos, o lanzamos error.
+                // Recomendable: Continuar por si es un falso negativo.
+            }
+
+            // ---------------------------------------------------------
+            // PASO 2: LIMPIEZA PREVIA (Borrar huella anterior si existe)
+            // ---------------------------------------------------------
+            // Hacemos esto ANTES de pedir la nueva para evitar conflictos en el dispositivo.
+            if ($usuario->fingerprint_id) {
+                try {
+                    Http::timeout(5)->asForm()->post(
+                        "{$baseUrl}/delete-fingerprint",
+                        ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
+                    );
+                    
+                    // IMPORTANTE: Darle un respiro al Photon tras borrar
+                    sleep(1); 
+                    
+                } catch (\Throwable $e) {
+                    Log::warning("No se pudo borrar huella vieja, intentando sobreescribir...");
+                }
+            }
+
+            // ---------------------------------------------------------
+            // PASO 3: INICIAR ENROLAMIENTO
+            // ---------------------------------------------------------
+            // Enviamos la orden. NO esperamos a que el usuario ponga el dedo.
+            // Con timeout(5) solo esperamos a que el Photon diga "Recibido, entrando en modo enroll".
+            
+            $responseEnroll = Http::timeout(5)->asForm()->post(
+                "{$baseUrl}/enroll-fingerprint",
                 [
                     'access_token' => $token,
-                    'args' => (string) $usuario->id,
+                    'args' => (string) $usuario->id, // Enviamos ID de usuario al Photon
                 ]
             );
 
-            $data = $responseEnroll->json();
+            // Verificamos si el Photon aceptó el COMANDO (no la huella, el comando)
+            if ($responseEnroll->failed()) {
+                throw new \Exception("El dispositivo no aceptó la orden de inicio.");
+            }
+
+            // ---------------------------------------------------------
+            // PASO 4: ACTUALIZAR DB Y RESPONDER A VISTA
+            // ---------------------------------------------------------
+            // Ponemos al usuario en modo "espera" y borramos su ID de huella en DB
+            // para que el polling de JS sepa que estamos esperando.
             
-            // 3. VALIDACIÓN
-            if ($responseEnroll->failed() || !isset($data['return_value'])) {
-                throw new \Exception("El sensor no respondió al comando (Tiempo de espera agotado).");
-            }
-
-            if ($data['return_value'] == -1) {
-                throw new \Exception("El sensor reportó un error interno.");
-            }
-
-            // 4. Limpieza DB y Huella vieja
-            if ($usuario->fingerprint_id) {
-                try {
-                    Http::timeout(3)->asForm()->post(
-                        "https://api.particle.io/v1/devices/{$deviceId}/delete-fingerprint",
-                        ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
-                    );
-                } catch (\Throwable $e) {}
-            }
-
             $usuario->fingerprint_id = null;
-            $usuario->estatus = 0; 
+            $usuario->estatus = 0; // Inactivo/Esperando
             $usuario->save();
 
-            // Timeout de seguridad de 60s
+            // Despachamos job de limpieza por si el usuario se arrepiente y se va (60s)
             CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
 
-            return back()->with('success', '✅ Instrucción enviada. Siga las indicaciones en el sensor.');
+            // Retornamos ÉXITO INMEDIATO. 
+            // La vista leerá este mensaje, activará el loader y el Polling hará el resto.
+            return back()->with('success', 'Instrucción enviada. Coloque su dedo en el sensor.');
 
         } catch (\Exception $e) {
-            Log::error("Fallo conexión Particle: " . $e->getMessage());
-            // Este mensaje se capturará en el JS para mostrar el modal ROJO
-            return back()->with('error', 'No se pudo conectar con el sensor. Verifique que esté encendido (LED Cian).');
+            Log::error("Fallo Flow Fingerprint: " . $e->getMessage());
+            return back()->with('error', 'Error de comunicación con el sensor. Intente de nuevo.');
         }
     }
 }
