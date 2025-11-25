@@ -280,12 +280,14 @@
             }, 1000);
         }
         
-       document.addEventListener("DOMContentLoaded", function() {
-            // 🔥 CAPTURA DE VARIABLES DE SESIÓN (PHP -> JS)
+document.addEventListener("DOMContentLoaded", function() {
+            // 🔥 CAPTURA DE VARIABLES DE SESIÓN
             const successMsg = "{{ session('success') }}";
             const errorMsg = "{{ session('error') }}"; 
+            // Nueva variable bandera (si existe, será "1", si no, vacío)
+            const isEnroll = "{{ session('trigger_enroll') }}"; 
 
-            // 1. PRIORIDAD: SI HAY ERROR, MOSTRAR MODAL ROJO
+            // 1. PRIORIDAD: ERROR (Modal Rojo)
             if (errorMsg) {
                 const overlay = document.getElementById('modalOverlay');
                 const errorModal = document.getElementById('estadoError');
@@ -295,21 +297,22 @@
                 overlay.classList.remove('hidden');
                 errorModal.classList.remove('hidden');
             }
-            // 2. SI HAY ÉXITO
+            
+            // 2. SI ES PROCESO DE HUELLA (Bandera explícita) -> LOADER
+            else if (isEnroll) {
+                activarLoader();
+            }
+
+            // 3. SI ES ÉXITO NORMAL (Solo mensaje, sin bandera) -> PALOMITA VERDE
             else if (successMsg) {
-                // 🔥 CAMBIO: Convertimos a minúsculas y buscamos solo la raíz "instrucci"
-                // Esto detecta: "Instrucción", "Instruccion", "instrucción enviada", etc.
-                if (successMsg.toLowerCase().includes('instrucci')) {
-                    // Si el mensaje contiene "instrucción", es biométrico -> ACTIVA LOADER
-                    activarLoader();
-                } else {
-                    // Éxito normal (actualizar nombre, tel, etc) -> ACTIVA PALOMITA VERDE
-                    const overlay = document.getElementById('modalOverlay');
-                    const exito = document.getElementById('estadoExito');
-                    overlay.classList.remove('hidden');
-                    exito.classList.remove('hidden');
-                    setTimeout(() => { overlay.classList.add('hidden'); }, 2000);
-                }
+                const overlay = document.getElementById('modalOverlay');
+                const exito = document.getElementById('estadoExito');
+                
+                overlay.classList.remove('hidden');
+                exito.classList.remove('hidden');
+                
+                // Ocultar palomita automáticamente a los 2 segundos
+                setTimeout(() => { overlay.classList.add('hidden'); }, 2000);
             }
         });
     </script>
