@@ -125,86 +125,47 @@ public function resetFingerprint($id)
         $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
 
         try {
-            // ---------------------------------------------------------
-            // PASO 1: PING RÁPIDO (Informativo, NO Bloqueante)
-            // ---------------------------------------------------------
-            // Intentamos ver si está online en 3 segundos.
-            try {
-                $responseInfo = Http::timeout(3)->get("{$baseUrl}?access_token={$token}");
-                // Si la nube nos dice explícitamente "connected: false", ahí sí nos preocupamos.
-                if ($responseInfo->successful()) {
-                    $info = $responseInfo->json();
-                    if (isset($info['connected']) && $info['connected'] === false) {
-                        Log::warning("Particle reporta desconectado, pero intentaremos forzar comando.");
-                    }
-                }
-            } catch (\Exception $e) {
-                // AQUÍ ESTÁ EL CAMBIO CLAVE:
-                // Si el ping falla (timeout), NO lanzamos error. Seguimos adelante.
-                // Esto permite que el botón "Reintentar" funcione aunque el ping falle.
-                Log::warning("Ping falló (latencia), pero continuamos flujo: " . $e->getMessage());
-            }
-
-            // ---------------------------------------------------------
-            // PASO 2: LIMPIEZA DE "DEDO FANTASMA" (Crucial para tu error actual)
-            // ---------------------------------------------------------
-            // Si el usuario tiene huella en BD, la borramos.
+            // 1. LIMPIEZA: Intentamos borrar huella vieja (si existe)
             if ($usuario->fingerprint_id) {
                 try {
                     Http::timeout(5)->asForm()->post(
                         "{$baseUrl}/delete-fingerprint",
                         ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
                     );
-                    sleep(2); 
-                } catch (\Throwable $e) {}
-            } 
-            // 🔥 TRUCO DE EMERGENCIA: Si en BD es NULL pero venimos de un error (Estatus 8),
-            // y sospechamos que es el slot 1 (por tu error reciente), intentamos borrar el 1.
-            // Solo se ejecutará si el usuario ya estaba en error.
-            elseif ($usuario->estatus == 8) {
-                 try {
-                    // Intento ciego de borrar el slot 1 para desbloquearte
-                    Http::timeout(3)->asForm()->post(
-                        "{$baseUrl}/delete-fingerprint",
-                        ['access_token' => $token, 'args' => "1"]
-                    );
-                    sleep(1);
+                    sleep(2); // Pausa para el sensor
                 } catch (\Throwable $e) {}
             }
 
-            // ---------------------------------------------------------
-            // PASO 3: PREPARAR DB
-            // ---------------------------------------------------------
+            // 2. RESET DB: Ponemos al usuario en espera
             $usuario->fingerprint_id = null;
             $usuario->estatus = 0; 
             $usuario->save();
 
-            // ---------------------------------------------------------
-            // PASO 4: ENROLAR (Timeout Seguro)
-            // ---------------------------------------------------------
-            // Usamos 8 segundos. Si el ping falló antes, aquí es donde realmente
-            // veremos si funciona o no.
-            $responseEnroll = Http::timeout(8)->asForm()->post(
-                "{$baseUrl}/enroll-fingerprint",
-                ['access_token' => $token, 'args' => (string) $usuario->id]
-            );
+            // 3. ENROLAR: BLINDAJE DE CONEXIÓN
+            // Usamos timeout de 10s y ->throw() para detectar si está desconectado
+            $response = Http::timeout(10)
+                ->asForm()
+                ->post("{$baseUrl}/enroll-fingerprint", [
+                    'access_token' => $token, 
+                    'args' => (string) $usuario->id
+                ])
+                ->throw(); // <--- ESTO ES LA CLAVE: Si falla la red, salta al catch.
 
-            if ($responseEnroll->failed()) {
-                throw new \Exception("El sensor no respondió. Verifique que el LED esté Cian respirando.");
-            }
-
-            // ---------------------------------------------------------
-            // PASO 5: FINALIZAR
-            // ---------------------------------------------------------
+            // 4. FINALIZAR
             CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
 
+            // El mensaje debe contener "Instrucción" para que el JS lo detecte
             return back()->with('success', 'Instrucción enviada. Coloque su dedo en el sensor.');
 
         } catch (\Exception $e) {
             Log::error("Fallo resetFingerprint: " . $e->getMessage());
+            
+            // Marcamos error en BD
             $usuario->estatus = 8; 
             $usuario->save();
-            return back()->with('error', 'Error de conexión: ' . $e->getMessage());
+
+            // Mensaje de error real para la vista (esto mostrará el Modal Rojo)
+            return back()->with('error', 'No se pudo conectar con el sensor. Verifique conexión.');
         }
     }
 }

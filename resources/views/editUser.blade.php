@@ -280,31 +280,30 @@
             }, 1000);
         }
         
-        document.addEventListener("DOMContentLoaded", function() {
+       document.addEventListener("DOMContentLoaded", function() {
             // 🔥 CAPTURA DE VARIABLES DE SESIÓN (PHP -> JS)
             const successMsg = "{{ session('success') }}";
             const errorMsg = "{{ session('error') }}"; 
 
             // 1. PRIORIDAD: SI HAY ERROR, MOSTRAR MODAL ROJO
-            // Esto soluciona el problema de que "no aparecía nada" al desconectar el cable.
             if (errorMsg) {
                 const overlay = document.getElementById('modalOverlay');
                 const errorModal = document.getElementById('estadoError');
                 const txtError = document.getElementById('msgError');
 
-                // Inyectamos el texto que manda el Controlador
                 txtError.innerText = errorMsg;
-
                 overlay.classList.remove('hidden');
                 errorModal.classList.remove('hidden');
             }
             // 2. SI HAY ÉXITO
             else if (successMsg) {
-                if (successMsg.includes('Instrucción enviada')) {
-                    // Si es el inicio del proceso de huella, mostramos loader
+                // 🔥 CAMBIO: Convertimos a minúsculas y buscamos solo la raíz "instrucci"
+                // Esto detecta: "Instrucción", "Instruccion", "instrucción enviada", etc.
+                if (successMsg.toLowerCase().includes('instrucci')) {
+                    // Si el mensaje contiene "instrucción", es biométrico -> ACTIVA LOADER
                     activarLoader();
                 } else {
-                    // Éxito normal (actualizar nombre, tel, etc)
+                    // Éxito normal (actualizar nombre, tel, etc) -> ACTIVA PALOMITA VERDE
                     const overlay = document.getElementById('modalOverlay');
                     const exito = document.getElementById('estadoExito');
                     overlay.classList.remove('hidden');
