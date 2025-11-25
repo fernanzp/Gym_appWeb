@@ -23,6 +23,9 @@ Route::middleware('web')->group(function () {
 
 // Rutas protegidas generales (Cualquier usuario logueado)
 Route::middleware('auth')->group(function () {
+    // 🔴 RUTA DE LOGOUT (Nueva)
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
     Route::view('/membresias', 'membresias')->name('membresias');
     Route::get('/membresias', [MembresiaController::class, 'index'])->name('membresias');
 
@@ -56,6 +59,9 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     Route::get('/usuarios/{usuario}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit'); 
     Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update'); 
     Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+
+    //Ruta para registrar una nueva recepcionista
+    Route::view('/registrar-staff', 'receptionistRegister')->name('registrar-staff');
 
     // Clientes
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');

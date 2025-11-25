@@ -33,7 +33,7 @@ class UsuarioController extends Controller
                 });
             })
             ->orderByDesc('u.created_at')
-            ->select('u.id','u.nombre_comp','u.telefono','lm.estatus as membresia_estatus')
+            ->select('u.id','u.nombre_comp', 'u.email', 'u.telefono','lm.estatus as membresia_estatus')
             ->paginate(10)
             ->withQueryString();
 

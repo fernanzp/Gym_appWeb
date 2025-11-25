@@ -16,6 +16,9 @@
   <!-- Chart.js para las gráficas -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Alpine.js para interacciones UI (Dropdowns) -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 
   <style>
@@ -71,13 +74,13 @@
                     <span class="sr-only">Membresías</span>
                 </a>
 
-                <!-- Entradas y salidas -->
+                <!-- Entradas y salidas
                 <a href="{{ route('entradas-salidas') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Entradas y salidas">
                     <svg class="w-8 h-8" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
                         <path fill="currentColor" d="M48 256c0-114.9 93.1-208 208-208 63.1 0 119.6 28.1 157.8 72.5 8.6 10.1 23.8 11.2 33.8 2.6s11.2-23.8 2.6-33.8C403.3 34.6 333.7 0 256 0 114.6 0 0 114.6 0 256l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40zm458.5-52.9c-2.7-13-15.5-21.3-28.4-18.5s-21.3 15.5-18.5 28.4c2.9 13.9 4.5 28.3 4.5 43.1l0 40c0 13.3 10.7 24 24 24s24-10.7 24-24l0-40c0-18.1-1.9-35.8-5.5-52.9zM256 80c-19 0-37.4 3-54.5 8.6-15.2 5-18.7 23.7-8.3 35.9 7.1 8.3 18.8 10.8 29.4 7.9 10.6-2.9 21.8-4.4 33.4-4.4 70.7 0 128 57.3 128 128l0 24.9c0 25.2-1.5 50.3-4.4 75.3-1.7 14.6 9.4 27.8 24.2 27.8 11.8 0 21.9-8.6 23.3-20.3 3.3-27.4 5-55 5-82.7l0-24.9c0-97.2-78.8-176-176-176zM150.7 148.7c-9.1-10.6-25.3-11.4-33.9-.4-23.1 29.8-36.8 67.1-36.8 107.7l0 24.9c0 24.2-2.6 48.4-7.8 71.9-3.4 15.6 7.9 31.1 23.9 31.1 10.5 0 19.9-7 22.2-17.3 6.4-28.1 9.7-56.8 9.7-85.8l0-24.9c0-27.2 8.5-52.4 22.9-73.1 7.2-10.4 8-24.6-.2-34.2zM256 160c-53 0-96 43-96 96l0 24.9c0 35.9-4.6 71.5-13.8 106.1-3.8 14.3 6.7 29 21.5 29 9.5 0 17.9-6.2 20.4-15.4 10.5-39 15.9-79.2 15.9-119.7l0-24.9c0-28.7 23.3-52 52-52s52 23.3 52 52l0 24.9c0 36.3-3.5 72.4-10.4 107.9-2.7 13.9 7.7 27.2 21.8 27.2 10.2 0 19-7 21-17 7.7-38.8 11.6-78.3 11.6-118.1l0-24.9c0-53-43-96-96-96zm24 96c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 24.9c0 59.9-11 119.3-32.5 175.2l-5.9 15.3c-4.8 12.4 1.4 26.3 13.8 31s26.3-1.4 31-13.8l5.9-15.3C267.9 411.9 280 346.7 280 280.9l0-24.9z"/>
                     </svg>
                     <span class="sr-only">Entradas y salidas</span>
-                </a>
+                </a>-->
 
                 <!-- Análisis y reportes (activo) -->
                 <a href="#" class="p-2 rounded-xl text-[var(--azul)] hover:opacity-85" aria-current="page" title="Análisis y reportes">
@@ -102,16 +105,51 @@
                     <h1 class="text-3xl istok-web-bold">Análisis y reportes</h1>
                     <div class="flex items-center gap-3">
                         <div class="text-right leading-tight">
-                        <p class="istok-web-bold">
-                            Hola, {{ auth()->user()->nombre_comp ?? auth()->user()->name ?? 'Usuario' }}
-                        </p>
-                        <p class="text-xs">{{ $fechaCorta }}</p>
+                            <p class="istok-web-bold">
+                                Hola, {{ auth()->user()->nombre_comp ?? auth()->user()->name ?? 'Usuario' }}
+                            </p>
+                            <p class="text-xs">{{ $fechaCorta }}</p>
                         </div>
-                        <img
-                        src="{{ asset('images/avatar-default.jpg') }}"
-                        alt="Foto de perfil"
-                        class="w-10 h-10 rounded-full object-cover ring-1 ring-black/10"
-                        />
+
+                        <!-- Dropdown de Usuario -->
+                        <div class="relative" x-data="{ open: false }">
+                            <!-- CAMBIO: Agregado 'mr-1' para que el anillo azul no se corte a la derecha -->
+                            <button @click="open = !open" class="focus:outline-none block transition-transform active:scale-95 mr-1" title="Menú de usuario">
+                                <img
+                                    src="{{ asset('images/avatar-default.jpg') }}"
+                                    alt="Foto de perfil"
+                                    class="w-10 h-10 rounded-full object-cover ring-1 ring-black/10 hover:ring-2 hover:ring-[var(--azul)] transition-all"
+                                />
+                            </button>
+
+                            <!-- Menú Desplegable -->
+                            <div 
+                                x-show="open" 
+                                @click.away="open = false"
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="opacity-0 scale-95"
+                                x-transition:enter-end="opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="opacity-100 scale-100"
+                                x-transition:leave-end="opacity-0 scale-95"
+                                class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-[var(--gris-bajito)] py-1 z-50 origin-top-right"
+                                style="display: none;"
+                            >
+                                <!-- Info del usuario -->
+                                <div class="px-4 py-3 border-b border-[var(--gris-bajito)] mb-1">
+                                    <p class="text-sm font-bold text-gray-900 truncate">{{ auth()->user()->nombre_comp ?? 'Usuario' }}</p>
+                                    <p class="text-xs text-[var(--gris-oscuro)] truncate">{{ auth()->user()->email ?? 'correo@ejemplo.com' }}</p>
+                                </div>
+                                
+                                <!-- Botón de Cerrar Sesión -->
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors">
+                                        Cerrar sesión
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </header>
                 
