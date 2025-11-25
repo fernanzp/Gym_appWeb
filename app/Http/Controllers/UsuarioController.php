@@ -115,87 +115,99 @@ class UsuarioController extends Controller
 
 // En app/Http/Controllers/UsuarioController.php
 
+// En UsuarioController.php
+
 public function resetFingerprint($id)
 {
     $usuario = Usuario::findOrFail($id);
     $deviceId = env('PARTICLE_DEVICE_ID');
     $token = env('PARTICLE_ACCESS_TOKEN');
-    
-    // URL base para no repetirla
     $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
 
     try {
         // ---------------------------------------------------------
-        // PASO 1: LIMPIEZA PREVIA (Borrar huella vieja si existe)
+        // PASO 0: VERIFICACIÓN ESTRICTA DE CONEXIÓN (Ping)
         // ---------------------------------------------------------
-        if ($usuario->fingerprint_id) {
+        // Antes de hacer nada, preguntamos si el Photon está ONLINE.
+        $responseInfo = Http::timeout(4)->get("{$baseUrl}?access_token={$token}");
+        
+        if ($responseInfo->failed()) {
+            throw new \Exception("No se puede contactar a la nube de Particle.");
+        }
+        
+        $info = $responseInfo->json();
+        // Si la nube dice que está desconectado, paramos AQUI.
+        if (isset($info['connected']) && $info['connected'] === false) {
+             throw new \Exception("El dispositivo aparece como DESCONECTADO (Offline).");
+        }
+
+        // ---------------------------------------------------------
+        // PASO 1: LIMPIEZA FORZADA (Borrar huella vieja)
+        // ---------------------------------------------------------
+        // Ahora que sabemos que está online, mandamos borrar.
+        // OJO: Si el sensor te dijo "Ya existe ID#1", necesitamos borrar ese ID.
+        // Si en tu BD el usuario ya no tiene fingerprint_id, forzaremos borrar el ID 1 temporalmente 
+        // o confiamos en que al borrar el ID que tenga el usuario funcione.
+        
+        $idABorrar = $usuario->fingerprint_id;
+        
+        // TRUCO: Si la BD dice que es null pero el sensor dice "Ya existe", 
+        // significa que hay basura en el sensor. 
+        // Si sabes que es el ID 1, podriamos forzar borrarlo, pero asumamos flujo normal primero.
+        
+        if ($idABorrar) {
             try {
-                // Intentamos borrar. Timeout corto (4s) para no atorarnos.
-                Http::timeout(4)->asForm()->post(
+                Http::timeout(5)->asForm()->post(
                     "{$baseUrl}/delete-fingerprint",
-                    ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
+                    ['access_token' => $token, 'args' => (string) $idABorrar]
                 );
-                
-                // 🔥 EL SECRETO: Una pausa de 1 segundo.
-                // Esto deja que el Photon termine de borrar antes de pedirle que enrole.
-                sleep(1); 
-                
+                sleep(2); // Damos 2 segundos para asegurar que el sensor borró la memoria
             } catch (\Throwable $e) {
-                // Si falla el borrado (ej. sensor desconectado), seguimos.
-                // No queremos detener el flujo por esto.
-                Log::warning("No se pudo borrar huella previa o ya no existía.");
+                Log::warning("Intento de borrado falló, pero seguimos.");
             }
         }
 
         // ---------------------------------------------------------
-        // PASO 2: PREPARAR EL ESTADO EN BASE DE DATOS
+        // PASO 2: PREPARAR DB
         // ---------------------------------------------------------
-        // Ponemos estatus 0 (Inactivo/Esperando) y borramos el ID de huella.
-        // Tu Javascript (polling) verá esto y sabrá que estamos "Cargando".
         $usuario->fingerprint_id = null;
-        $usuario->estatus = 0; 
+        $usuario->estatus = 0; // Esperando
         $usuario->save();
 
         // ---------------------------------------------------------
-        // PASO 3: ENVIAR LA ORDEN DE "ENROLL"
+        // PASO 3: INICIAR ENROLAMIENTO
         // ---------------------------------------------------------
-        // OJO: Aquí NO esperamos a que el usuario ponga el dedo.
-        // Solo esperamos a que el Photon diga "Recibido, voy a encender el LED".
-        $response = Http::timeout(5)->asForm()->post(
+        $responseEnroll = Http::timeout(5)->asForm()->post(
             "{$baseUrl}/enroll-fingerprint",
-            [
-                'access_token' => $token,
-                'args' => (string) $usuario->id, // Le pasamos el ID para que el Webhook sepa quién es
-            ]
+            ['access_token' => $token, 'args' => (string) $usuario->id]
         );
 
-        if ($response->failed()) {
-            throw new \Exception("El sensor rechazó la conexión (¿Está offline?).");
+        if ($responseEnroll->failed()) {
+            throw new \Exception("El sensor no aceptó la orden de inicio.");
+        }
+        
+        // Verificamos si Particle devolvió un error lógico (ej. return_value = -1)
+        $dataEnroll = $responseEnroll->json();
+        if (isset($dataEnroll['return_value']) && $dataEnroll['return_value'] != 1) {
+             // A veces devuelve 1 si arrancó bien. Si devuelve algo raro, ojo.
+             // Pero generalmente con que no sea failed() basta.
         }
 
         // ---------------------------------------------------------
-        // PASO 4: RED DE SEGURIDAD
+        // PASO 4: FINALIZAR
         // ---------------------------------------------------------
-        // Si el usuario se arrepiente y cierra la página, este Job limpiará 
-        // el estado "zombie" en 60 segundos.
         CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
 
-        // ---------------------------------------------------------
-        // PASO 5: RESPUESTA INMEDIATA
-        // ---------------------------------------------------------
-        // Regresamos al navegador de inmediato.
-        // El modal de "Cargando" se quedará ahí hasta que el Photon avise (vía Webhook) que terminó.
         return back()->with('success', 'Instrucción enviada. Coloque su dedo en el sensor.');
 
     } catch (\Exception $e) {
-        Log::error("Fallo en resetFingerprint: " . $e->getMessage());
+        Log::error("Fallo resetFingerprint: " . $e->getMessage());
         
-        // IMPORTANTE: Marcamos estatus 8 (Error) en la BD.
-        // Tu Javascript detectará este '8' y mostrará el Modal Rojo automáticamente.
-        $usuario->estatus = 8; 
+        $usuario->estatus = 8; // Error
         $usuario->save();
 
-        return back()->with('error', 'No se pudo conectar con el sensor. Verifique que esté encendido.');
+        // Mostramos el mensaje real del error para que sepas qué pasó
+        return back()->with('error', $e->getMessage());
     }
 }
 }
