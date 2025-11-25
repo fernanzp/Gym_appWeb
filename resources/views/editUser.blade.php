@@ -44,14 +44,12 @@
             Editar Usuario: {{ $usuario->nombre_comp ?? 'Cargando...' }}
         </h1>
 
-        <!-- ALERTAS SUPERIORES -->
         @if ($usuario->estatus == 8)
             <div class="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded-r shadow-sm flex items-center justify-between">
                 <div>
                     <strong class="block font-bold text-lg">🛑 Error de Huella</strong>
                     <span class="text-sm">La huella no coincidió en el sensor o hubo un error de lectura.</span>
                 </div>
-                <!-- Botón Reintentar rápido -->
                 <form action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" onsubmit="activarLoader()">
                     @csrf
                     <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 transition text-sm">
@@ -74,17 +72,15 @@
             </div>
         @endif
 
-        <!-- FORMULARIO PRINCIPAL -->
-        <!-- 🔥 MODIFICADO: Se agrega onsubmit="activarLoader()" para mostrar modal al guardar datos -->
         <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5" onsubmit="activarLoader()">
             @csrf @method('PUT')
+            
             @if (session('success') && $usuario->estatus != 8 && $usuario->estatus != 9) 
                 <div class="p-3 rounded-md bg-green-100 text-green-800 border border-green-200 text-center font-bold">{{ session('success') }}</div> 
             @endif
             @if (session('error')) <div class="p-3 rounded-md bg-red-100 text-red-800 border border-red-200 text-center font-bold">{{ session('error') }}</div> @endif
             @error('general') <div class="p-3 rounded-md bg-red-100 text-red-800">{{ $message }}</div> @enderror
 
-            <!-- Campos -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Nombre completo</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
@@ -119,7 +115,6 @@
             </div>
         </form>
         
-        <!-- SECCIÓN BIOMÉTRICA -->
         <div class="mt-12 pt-6 border-t-2 border-[var(--gris-bajito)]">
             <h2 class="text-2xl font-bold text-center mb-6 istok-web-bold text-[var(--azul)]">Gestión Biométrica</h2>
             <div class="bg-[var(--gris-bajito)] rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -151,7 +146,6 @@
                     @endif
                 </div>
 
-                <!-- Formulario con llamada a JS -->
                 <form action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="w-full sm:w-auto" onsubmit="activarLoader()">
                     @csrf
                     @if($usuario->fingerprint_id)
@@ -168,12 +162,9 @@
         </div>
     </div>
 
-    <!-- 🛠 MODAL OVERLAY -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/70 z-[9999] hidden flex items-center justify-center backdrop-blur-sm">
         
-        <!-- 1. CARGANDO (Con "X" de cerrar y Pasos visuales) -->
         <div id="estadoCargando" class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative hidden">
-            <!-- 🔥 Botón X para cancelar -->
             <button onclick="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
 
             <div class="flex justify-center mb-6"><div class="windows-loader"></div></div>
@@ -183,7 +174,6 @@
                 Si el sensor se activa, siga las instrucciones:
             </p>
 
-            <!-- Pasos visuales -->
             <div class="bg-gray-50 rounded-xl p-4 text-left space-y-3 text-sm text-gray-700 border border-gray-200">
                 <div class="flex items-center gap-3">
                     <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
@@ -202,7 +192,6 @@
             <p class="mt-6 text-xs text-gray-400 animate-pulse">Esperando confirmación del dispositivo...</p>
         </div>
 
-        <!-- 2. ÉXITO -->
         <div id="estadoExito" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-4">
                 <div class="checkmark-circle"><div class="background"></div><div class="checkmark draw"></div></div>
@@ -211,7 +200,6 @@
             <p class="text-gray-600 text-sm">Los cambios se guardaron correctamente.</p>
         </div>
 
-        <!-- 3. ERROR -->
         <div id="estadoError" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-4">
                 <div class="cross-circle"><div class="background"></div><div class="cross-line one"></div><div class="cross-line two"></div></div>
@@ -219,11 +207,9 @@
             <h3 class="text-2xl istok-web-bold text-red-600 mb-2">¡Error!</h3>
             <p id="msgError" class="text-gray-600 text-sm mb-6">Ocurrió un problema con la huella o la conexión.</p>
             
-            <!-- Botón reintentar desde el modal -->
             <button onclick="activarLoader(); document.getElementById('formRetryModal').submit();" class="bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 w-full">
                 Intentar de Nuevo
             </button>
-            <!-- Formulario oculto para el reintento -->
             <form id="formRetryModal" action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="hidden">@csrf</form>
             
             <button onclick="cerrarModal()" class="mt-3 text-gray-500 text-sm hover:underline">
@@ -232,7 +218,6 @@
         </div>
     </div>
 
-    <!-- SCRIPT -->
     <script>
         let pollingInterval;
         const userId = "{{ $usuario->id }}";
@@ -296,14 +281,30 @@
         }
         
         document.addEventListener("DOMContentLoaded", function() {
-            const msg = "{{ session('success') }}";
-            // Si venimos de un éxito normal (guardar nombre, etc) mostramos solo la palomita brevemente
-            // Si venimos de "Instrucción enviada" (Huella), activamos el loader completo
-            if (msg) {
-                if (msg.includes('Instrucción enviada')) {
+            // 🔥 CAPTURA DE VARIABLES DE SESIÓN (PHP -> JS)
+            const successMsg = "{{ session('success') }}";
+            const errorMsg = "{{ session('error') }}"; 
+
+            // 1. PRIORIDAD: SI HAY ERROR, MOSTRAR MODAL ROJO
+            // Esto soluciona el problema de que "no aparecía nada" al desconectar el cable.
+            if (errorMsg) {
+                const overlay = document.getElementById('modalOverlay');
+                const errorModal = document.getElementById('estadoError');
+                const txtError = document.getElementById('msgError');
+
+                // Inyectamos el texto que manda el Controlador
+                txtError.innerText = errorMsg;
+
+                overlay.classList.remove('hidden');
+                errorModal.classList.remove('hidden');
+            }
+            // 2. SI HAY ÉXITO
+            else if (successMsg) {
+                if (successMsg.includes('Instrucción enviada')) {
+                    // Si es el inicio del proceso de huella, mostramos loader
                     activarLoader();
                 } else {
-                    // Éxito normal (datos personales)
+                    // Éxito normal (actualizar nombre, tel, etc)
                     const overlay = document.getElementById('modalOverlay');
                     const exito = document.getElementById('estadoExito');
                     overlay.classList.remove('hidden');
