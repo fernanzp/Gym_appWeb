@@ -157,14 +157,14 @@ public function resetFingerprint($id)
             ]);
             $usuario->estatus = $prevEstatus;
             $usuario->save();
-            return back()->with('error', 'No hay conexión con el dispositivo.');
+            return back()->withErrors('error', 'No hay conexión con el dispositivo.');
         }
 
         $info = $responseInfo->json();
         if (isset($info['connected']) && $info['connected'] === false) {
             $usuario->estatus = $prevEstatus;
             $usuario->save();
-            return back()->with('error', 'El dispositivo está desconectado.');
+            return back()->withErrors('error', 'El dispositivo está desconectado.');
         }
 
 
@@ -211,7 +211,7 @@ public function resetFingerprint($id)
 
             $usuario->estatus = $prevEstatus;
             $usuario->save();
-            return back()->with('error', 'No se pudo iniciar el enrolamiento.');
+            return back()->withErrors('error', 'No se pudo iniciar el enrolamiento.');
         }
 
         $body = $fnResp->json();
@@ -229,14 +229,14 @@ public function resetFingerprint($id)
         ]);
         $usuario->estatus = $prevEstatus;
         $usuario->save();
-        return back()->with('error', 'El dispositivo rechazó la instrucción.');
+        return back()->withErrors('error', 'El dispositivo rechazó la instrucción.');
 
     } catch (\Throwable $e) {
         Log::error("resetFingerprint EXCEPCIÓN HEADER: ".$e->getMessage());
 
         $usuario->estatus = $prevEstatus;
         $usuario->save();
-        return back()->with('error', 'Error: '.$e->getMessage());
+        return back()->withErrors('error', 'Error: '.$e->getMessage());
     }
 }
 
