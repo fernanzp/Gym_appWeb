@@ -72,7 +72,7 @@
             </div>
         @endif
 
-        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5" onsubmit="activarLoader()">
+        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5">
             @csrf @method('PUT')
             
             @if (session('success') && $usuario->estatus != 8 && $usuario->estatus != 9) 
