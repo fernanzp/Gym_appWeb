@@ -218,31 +218,24 @@
         </div>
     </div>
 
-    <script>
+<script>
     let pollingInterval;
     
-    // --- VARIABLES SEGURAS (Usando json_encode estándar) ---
-    // Esto evita el error de "unexpected token"
+    // Variables de sesión seguras
     const userId = {{ json_encode($usuario->id) }};
-    const successMsg = {{ json_encode(session('success')) }};
-    const errorMsg = {{ json_encode(session('error')) }}; 
+    const sessionError = {{ json_encode(session('error')) }}; 
+    const sessionSuccess = {{ json_encode(session('success')) }};
     const triggerEnroll = {{ json_encode(session('trigger_enroll')) }}; 
-
-    console.log("Debug Sesión -> Success:", successMsg, "| Error:", errorMsg, "| Enroll:", triggerEnroll);
 
     // --- FUNCIÓN PARA MOSTRAR LOADER ---
     function activarLoader() {
         const overlay = document.getElementById('modalOverlay');
         const cargando = document.getElementById('estadoCargando');
-        const errorModal = document.getElementById('estadoError');
-        const exitoModal = document.getElementById('estadoExito');
         
-        // Ocultar todo primero
-        cargando.classList.add('hidden');
-        errorModal.classList.add('hidden');
-        exitoModal.classList.add('hidden');
+        // Aseguramos que los otros modales estén ocultos
+        document.getElementById('estadoError').classList.add('hidden');
+        document.getElementById('estadoExito').classList.add('hidden');
         
-        // Mostrar loader
         overlay.classList.remove('hidden');
         cargando.classList.remove('hidden');
     }
@@ -252,7 +245,7 @@
         if(pollingInterval) clearInterval(pollingInterval);
     }
 
-    // --- FUNCIÓN DE POLLING ---
+    // --- POLLING (Solo si hay éxito en la conexión) ---
     function iniciarPolling() {
         if(pollingInterval) clearInterval(pollingInterval);
         let intentos = 0;
@@ -260,85 +253,80 @@
         pollingInterval = setInterval(async () => {
             intentos++;
             try {
-                // Fetch a la API
                 const res = await fetch(`/api/user-status/${userId}`);
                 const data = await res.json();
 
-                const cargando = document.getElementById('estadoCargando');
-                const exito = document.getElementById('estadoExito');
-                const error = document.getElementById('estadoError');
-
-                // 1. CASO ERROR
+                // Caso Error en sensor
                 if (data.estatus == 8 || data.estatus == 9) {
                     clearInterval(pollingInterval);
-                    cargando.classList.add('hidden');
-                    error.classList.remove('hidden');
-
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    
+                    const modalError = document.getElementById('estadoError');
+                    modalError.classList.remove('hidden');
+                    
                     document.getElementById('msgError').innerText = (data.estatus == 9) 
-                        ? "Se acabó el tiempo de espera del sensor." 
-                        : "Error: Las huellas no coincidieron.";
+                        ? "Tiempo de espera agotado en el sensor." 
+                        : "Error de lectura: Las huellas no coincidieron.";
                     return;
                 }
 
-                // 2. CASO ÉXITO
+                // Caso Éxito
                 if (data.fingerprint_id != null) {
                     clearInterval(pollingInterval);
-                    cargando.classList.add('hidden');
-                    exito.classList.remove('hidden');
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    document.getElementById('estadoExito').classList.remove('hidden');
                     setTimeout(() => location.reload(), 2000);
                     return;
                 }
 
-                // Timeout del navegador (60 segundos)
                 if (intentos > 60) {
                     clearInterval(pollingInterval);
-                    cargando.classList.add('hidden');
-                    error.classList.remove('hidden');
-                    document.getElementById('msgError').innerText = "El navegador dejó de recibir respuesta.";
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    document.getElementById('estadoError').classList.remove('hidden');
+                    document.getElementById('msgError').innerText = "El navegador perdió contacto con el servidor.";
                 }
 
-            } catch (e) { console.error("Error polling:", e); }
+            } catch (e) { console.error(e); }
         }, 1000);
     }
 
-    // --- LÓGICA DE INICIO ---
+    // --- LÓGICA PRINCIPAL AL CARGAR PAGINA ---
     document.addEventListener("DOMContentLoaded", function() {
 
-        // 1. SI HAY ERROR -> MOSTRAR Y PARAR
-        if (errorMsg) {
+        // 1. SI HAY ERROR (Desde el Controlador)
+        if (sessionError) {
+            // A. Buscamos si existe una alerta rosa genérica en el HTML y la ocultamos
+            // (Ajusta el selector '.alert-danger' o similar según tu plantilla)
+            const alertasGenericas = document.querySelectorAll('.bg-red-100, .alert-danger'); 
+            alertasGenericas.forEach(el => el.style.display = 'none');
+
+            // B. Mostramos TU Modal Rojo Diseño
             const overlay = document.getElementById('modalOverlay');
             const errorModal = document.getElementById('estadoError');
             const txtError = document.getElementById('msgError');
 
-            txtError.innerText = errorMsg;
+            txtError.innerText = sessionError; // Ponemos el mensaje del controlador
             overlay.classList.remove('hidden');
             errorModal.classList.remove('hidden');
+            
+            // Importante: No activamos polling ni loader aquí
             return; 
         }
 
-        // 2. MODO ENROLAMIENTO -> LOADER + POLLING
+        // 2. SI TODO SALIÓ BIEN Y ESTAMOS ENROLANDO
         if (triggerEnroll) {
-            const overlay = document.getElementById('modalOverlay');
-            const cargando = document.getElementById('estadoCargando');
-            
-            overlay.classList.remove('hidden');
-            cargando.classList.remove('hidden');
-            
+            activarLoader();
             iniciarPolling();
             return;
         }
 
-        // 3. ÉXITO GENÉRICO
-        if (successMsg) {
+        // 3. ÉXITO GENÉRICO (Mensaje verde)
+        if (sessionSuccess) {
             const overlay = document.getElementById('modalOverlay');
             const exito = document.getElementById('estadoExito');
-
             overlay.classList.remove('hidden');
             exito.classList.remove('hidden');
-
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => overlay.classList.add('hidden'), 3000);
         }
     });
 </script>
