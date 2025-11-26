@@ -109,13 +109,6 @@ Route::get('/api/aforo-live', [DashboardController::class, 'getAforoEnVivo']);
 
 // 2. Ruta para el estado del modal de huella (EditUser / ClientRegister)
 use App\Models\Usuario;
-Route::get('/api/user-status/{id}', function ($id) {
-    $usuario = Usuario::find($id);
-    return response()->json([
-        'estatus' => $usuario->estatus,
-        'fingerprint_id' => $usuario->fingerprint_id
-    ]);
-});
 
 // -----------------------------------------------------------------------------
 
