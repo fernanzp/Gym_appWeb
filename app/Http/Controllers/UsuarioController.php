@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http; // 🔥
+use Illuminate\Support\Facades\Http; 
 use Illuminate\Support\Facades\Log;   
 use App\Models\Usuario;
 use App\Jobs\CleanupIncompleteUser; 
+use Illuminate\Http\Client\ConnectionException; 
+use Illuminate\Support\Str;
 
 class UsuarioController extends Controller
 {
@@ -129,79 +131,124 @@ class UsuarioController extends Controller
         }
     }
 
-// En app/Http/Controllers/UsuarioController.php
-
-// En UsuarioController.php
 
 public function resetFingerprint($id)
-    {
-        $usuario = Usuario::findOrFail($id);
-        $deviceId = env('PARTICLE_DEVICE_ID');
-        $token = env('PARTICLE_ACCESS_TOKEN');
-        $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
+{
+    $usuario = Usuario::findOrFail($id);
+    $deviceId = env('PARTICLE_DEVICE_ID');
+    $token = env('PARTICLE_ACCESS_TOKEN');
+    $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
 
+    // Iniciamos la "Caja Fuerte" (Transacción)
+    DB::beginTransaction();
+
+    try {
+        // Guardamos el estado original para poder restaurar
+        $oldFingerprintId = $usuario->fingerprint_id;
+
+        // 1. CAMBIO TEMPORAL EN BD (Solo se confirma si todo sale bien)
+        $usuario->estatus = 7; // Estatus "En proceso"
+        $usuario->save();
+
+        // ---------------------------------------------------------
+        // 2. VALIDACIÓN DE CONEXIÓN (PING RÁPIDO)
+        // ---------------------------------------------------------
         try {
-            // ---------------------------------------------------------
-            // PASO 1: PING ESTRICTO (Detectar desconexión rápido)
-            // ---------------------------------------------------------
-            // Si desconectas el cable, esto fallará en 3 segundos y lanzará el error.
-            $responseInfo = Http::timeout(3)->get("{$baseUrl}?access_token={$token}");
+            $responseInfo = Http::withHeaders(['Authorization' => "Bearer {$token}"])
+                ->timeout(4) // 4 segundos máx para checar conexión
+                ->get($baseUrl);
             
-            if ($responseInfo->failed()) {
-                throw new \Exception("No hay conexión con el dispositivo (Ping fallido).");
+            if (!$responseInfo->successful()) {
+                throw new \Exception('No se pudo conectar con la nube de Particle.');
             }
+
             $info = $responseInfo->json();
             if (isset($info['connected']) && $info['connected'] === false) {
-                 throw new \Exception("El dispositivo reporta estar DESCONECTADO.");
+                throw new \Exception('El dispositivo Photon está APAGADO o sin internet.');
             }
-
-            // ---------------------------------------------------------
-            // PASO 2: LIMPIEZA
-            // ---------------------------------------------------------
-            if ($usuario->fingerprint_id) {
-                try {
-                    Http::timeout(5)->asForm()->post(
-                        "{$baseUrl}/delete-fingerprint",
-                        ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
-                    );
-                    sleep(2);
-                } catch (\Throwable $e) {}
-            }
-
-            // ---------------------------------------------------------
-            // PASO 3: RESET DB
-            // ---------------------------------------------------------
-            $usuario->fingerprint_id = null;
-            $usuario->estatus = 0; 
-            $usuario->save();
-
-            // ---------------------------------------------------------
-            // PASO 4: ENROLAR
-            // ---------------------------------------------------------
-            $response = Http::timeout(8)
-                ->asForm()
-                ->post("{$baseUrl}/enroll-fingerprint", [
-                    'access_token' => $token, 
-                    'args' => (string) $usuario->id
-                ])->throw();
-
-            // ---------------------------------------------------------
-            // PASO 5: FINALIZAR CON BANDERA 'trigger_enroll'
-            // ---------------------------------------------------------
-            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
-
-            // 🔥 AQUÍ ESTÁ EL TRUCO: Enviamos 'trigger_enroll' => true
-            return back()
-                ->with('success', 'Instrucción enviada. Coloque su dedo en el sensor.')
-                ->with('trigger_enroll', true); 
 
         } catch (\Exception $e) {
-            Log::error("Fallo resetFingerprint: " . $e->getMessage());
-            
-            $usuario->estatus = 8; 
-            $usuario->save();
-
-            return back()->with('error', 'Error de conexión: ' . $e->getMessage());
+            // Si falla el ping, abortamos antes de borrar nada
+            throw $e; 
         }
+
+        // ---------------------------------------------------------
+        // 3. INTENTAR BORRAR HUELLA FÍSICA (Si existía)
+        // ---------------------------------------------------------
+        if ($oldFingerprintId) {
+            try {
+                $delResp = Http::withHeaders(['Authorization' => "Bearer {$token}"])
+                    ->timeout(5)
+                    ->asForm()->post("{$baseUrl}/delete-fingerprint", [
+                        'args' => (string) $oldFingerprintId
+                    ]);
+                
+                // Pequeña pausa para que el Photon procese el borrado
+                sleep(1);
+
+            } catch (\Exception $e) {
+                // Si falla borrar, lanzamos error específico para que el usuario reintente
+                throw new \Exception('Sincronización fallida: El sensor tiene datos antiguos.');
+            }
+        }
+
+        // 4. RESET LOCAL (Borramos ID en la BD)
+        $usuario->fingerprint_id = null;
+        $usuario->save();
+
+        // ---------------------------------------------------------
+        // 5. INSTRUCCIÓN DE ENROLAMIENTO
+        // ---------------------------------------------------------
+        $fnResp = Http::withHeaders(['Authorization' => "Bearer {$token}"])
+            ->timeout(12) // Damos tiempo suficiente al request
+            ->asForm()->post("{$baseUrl}/enroll-fingerprint", [
+                'args' => (string) $usuario->id
+            ]);
+
+        if (!$fnResp->successful()) {
+            throw new \Exception('El dispositivo rechazó la instrucción (Error ' . $fnResp->status() . ').');
+        }
+
+        $body = $fnResp->json();
+
+        // 6. VERIFICAR RESPUESTA DEL FIRMWARE
+        if (isset($body['return_value']) && intval($body['return_value']) >= 0) {
+            
+            // ¡ÉXITO! Confirmamos los cambios en la BD
+            DB::commit();
+
+            // Job de seguridad por si el usuario abandona
+            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
+
+            // Regresamos la señal para activar el Loader y el Polling JS
+            return back()->with('trigger_enroll', true);
+        }
+
+        throw new \Exception('El sensor devolvió un error desconocido al iniciar.');
+
+    } catch (ConnectionException $e) {
+        // --- MANEJO DE TIMEOUTS (Photon desconectado violentamente) ---
+        DB::rollBack();
+        return back()->with('error', 'El dispositivo no responde. Verifique que esté conectado a la luz e internet.');
+
+    } catch (\Throwable $e) {
+        // --- MANEJO DE ERRORES GENERALES ---
+        DB::rollBack();
+        Log::error("Error en resetFingerprint: ".$e->getMessage());
+
+        // Personalizamos el mensaje para que se vea bonito en el Modal Rojo
+        $msg = $e->getMessage();
+
+        if (Str::contains($msg, 'Sincronización fallida') || Str::contains($msg, 'datos antiguos')) {
+            $msg = 'Sincronización incompleta: El sensor tiene huellas antiguas. Presione "Intentar de Nuevo" para forzar la limpieza.';
+        } elseif (Str::contains($msg, 'connected') || Str::contains($msg, 'APAGADO')) {
+            $msg = 'El dispositivo parece estar desconectado. Revise su conexión WiFi.';
+        } elseif (Str::contains($msg, 'cURL error')) {
+             $msg = 'Error de comunicación. El dispositivo tardó demasiado en responder.';
+        }
+
+        return back()->with('error', $msg);
     }
+}
+
 }

@@ -72,7 +72,7 @@
             </div>
         @endif
 
-        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5" onsubmit="activarLoader()">
+        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5">
             @csrf @method('PUT')
             
             @if (session('success') && $usuario->estatus != 8 && $usuario->estatus != 9) 
@@ -218,103 +218,118 @@
         </div>
     </div>
 
-    <script>
-        let pollingInterval;
-        const userId = "{{ $usuario->id }}";
+<script>
+    let pollingInterval;
+    
+    // Variables de sesión seguras
+    const userId = {{ json_encode($usuario->id) }};
+    const sessionError = {{ json_encode(session('error')) }}; 
+    const sessionSuccess = {{ json_encode(session('success')) }};
+    const triggerEnroll = {{ json_encode(session('trigger_enroll')) }}; 
 
-        function activarLoader() {
-            const overlay = document.getElementById('modalOverlay');
-            const cargando = document.getElementById('estadoCargando');
-            const errorModal = document.getElementById('estadoError');
-            const exitoModal = document.getElementById('estadoExito');
-            
-            // Resetear vistas
-            cargando.classList.add('hidden');
-            errorModal.classList.add('hidden');
-            exitoModal.classList.add('hidden');
-            
-            // Mostrar loader
-            overlay.classList.remove('hidden');
-            cargando.classList.remove('hidden');
-
-            // Iniciar Polling inmediato
-            iniciarPolling();
-        }
-
-        function cerrarModal() {
-            document.getElementById('modalOverlay').classList.add('hidden');
-            clearInterval(pollingInterval); // Detener polling para no gastar recursos
-        }
-
-        function iniciarPolling() {
-            clearInterval(pollingInterval); // Limpiar cualquier anterior
-            let intentos = 0;
-            pollingInterval = setInterval(async () => {
-                intentos++;
-                try {
-                    const res = await fetch(`/api/user-status/${userId}`);
-                    const data = await res.json();
-
-                    const cargando = document.getElementById('estadoCargando');
-                    const exito = document.getElementById('estadoExito');
-                    const error = document.getElementById('estadoError');
-
-                    // CASO ERROR (8=Error, 9=Timeout)
-                    if (data.estatus == 8 || data.estatus == 9) {
-                        clearInterval(pollingInterval);
-                        cargando.classList.add('hidden');
-                        error.classList.remove('hidden');
-                        if(data.estatus == 9) document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
-                        else document.getElementById('msgError').innerText = "Las huellas no coincidieron o hubo error.";
-                    } 
-                    // CASO ÉXITO (Ya tiene huella)
-                    else if (data.fingerprint_id != null) {
-                        clearInterval(pollingInterval);
-                        cargando.classList.add('hidden');
-                        exito.classList.remove('hidden');
-                        setTimeout(() => { location.reload(); }, 2000);
-                    }
-
-                    if (intentos > 60) clearInterval(pollingInterval);
-                } catch (e) { console.error(e); }
-            }, 1000);
-        }
+    // --- FUNCIÓN PARA MOSTRAR LOADER ---
+    function activarLoader() {
+        const overlay = document.getElementById('modalOverlay');
+        const cargando = document.getElementById('estadoCargando');
         
-document.addEventListener("DOMContentLoaded", function() {
-            // 🔥 CAPTURA DE VARIABLES DE SESIÓN
-            const successMsg = "{{ session('success') }}";
-            const errorMsg = "{{ session('error') }}"; 
-            // Nueva variable bandera (si existe, será "1", si no, vacío)
-            const isEnroll = "{{ session('trigger_enroll') }}"; 
+        // Aseguramos que los otros modales estén ocultos
+        document.getElementById('estadoError').classList.add('hidden');
+        document.getElementById('estadoExito').classList.add('hidden');
+        
+        overlay.classList.remove('hidden');
+        cargando.classList.remove('hidden');
+    }
 
-            // 1. PRIORIDAD: ERROR (Modal Rojo)
-            if (errorMsg) {
-                const overlay = document.getElementById('modalOverlay');
-                const errorModal = document.getElementById('estadoError');
-                const txtError = document.getElementById('msgError');
+    function cerrarModal() {
+        document.getElementById('modalOverlay').classList.add('hidden');
+        if(pollingInterval) clearInterval(pollingInterval);
+    }
 
-                txtError.innerText = errorMsg;
-                overlay.classList.remove('hidden');
-                errorModal.classList.remove('hidden');
-            }
+    // --- POLLING (Solo si hay éxito en la conexión) ---
+    function iniciarPolling() {
+        if(pollingInterval) clearInterval(pollingInterval);
+        let intentos = 0;
+
+        pollingInterval = setInterval(async () => {
+            intentos++;
+            try {
+                const res = await fetch(`/api/user-status/${userId}`);
+                const data = await res.json();
+
+                // Caso Error en sensor
+                if (data.estatus == 8 || data.estatus == 9) {
+                    clearInterval(pollingInterval);
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    
+                    const modalError = document.getElementById('estadoError');
+                    modalError.classList.remove('hidden');
+                    
+                    document.getElementById('msgError').innerText = (data.estatus == 9) 
+                        ? "Tiempo de espera agotado en el sensor." 
+                        : "Error de lectura: Las huellas no coincidieron.";
+                    return;
+                }
+
+                // Caso Éxito
+                if (data.fingerprint_id != null) {
+                    clearInterval(pollingInterval);
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    document.getElementById('estadoExito').classList.remove('hidden');
+                    setTimeout(() => location.reload(), 2000);
+                    return;
+                }
+
+                if (intentos > 60) {
+                    clearInterval(pollingInterval);
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    document.getElementById('estadoError').classList.remove('hidden');
+                    document.getElementById('msgError').innerText = "El navegador perdió contacto con el servidor.";
+                }
+
+            } catch (e) { console.error(e); }
+        }, 1000);
+    }
+
+    // --- LÓGICA PRINCIPAL AL CARGAR PAGINA ---
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // 1. SI HAY ERROR (Desde el Controlador)
+        if (sessionError) {
+            // A. Buscamos si existe una alerta rosa genérica en el HTML y la ocultamos
+            // (Ajusta el selector '.alert-danger' o similar según tu plantilla)
+            const alertasGenericas = document.querySelectorAll('.bg-red-100, .alert-danger'); 
+            alertasGenericas.forEach(el => el.style.display = 'none');
+
+            // B. Mostramos TU Modal Rojo Diseño
+            const overlay = document.getElementById('modalOverlay');
+            const errorModal = document.getElementById('estadoError');
+            const txtError = document.getElementById('msgError');
+
+            txtError.innerText = sessionError; // Ponemos el mensaje del controlador
+            overlay.classList.remove('hidden');
+            errorModal.classList.remove('hidden');
             
-            // 2. SI ES PROCESO DE HUELLA (Bandera explícita) -> LOADER
-            else if (isEnroll) {
-                activarLoader();
-            }
+            // Importante: No activamos polling ni loader aquí
+            return; 
+        }
 
-            // 3. SI ES ÉXITO NORMAL (Solo mensaje, sin bandera) -> PALOMITA VERDE
-            else if (successMsg) {
-                const overlay = document.getElementById('modalOverlay');
-                const exito = document.getElementById('estadoExito');
-                
-                overlay.classList.remove('hidden');
-                exito.classList.remove('hidden');
-                
-                // Ocultar palomita automáticamente a los 2 segundos
-                setTimeout(() => { overlay.classList.add('hidden'); }, 2000);
-            }
-        });
-    </script>
+        // 2. SI TODO SALIÓ BIEN Y ESTAMOS ENROLANDO
+        if (triggerEnroll) {
+            activarLoader();
+            iniciarPolling();
+            return;
+        }
+
+        // 3. ÉXITO GENÉRICO (Mensaje verde)
+        if (sessionSuccess) {
+            const overlay = document.getElementById('modalOverlay');
+            const exito = document.getElementById('estadoExito');
+            overlay.classList.remove('hidden');
+            exito.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('hidden'), 3000);
+        }
+    });
+</script>
+
 </body>
 </html>
