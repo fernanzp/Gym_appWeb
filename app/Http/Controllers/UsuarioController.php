@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Usuario;
 use App\Jobs\CleanupIncompleteUser; 
 use Illuminate\Http\Client\ConnectionException; 
+use Illuminate\Support\Str;
 
 class UsuarioController extends Controller
 {
