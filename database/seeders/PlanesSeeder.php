@@ -14,7 +14,6 @@ class PlanesSeeder extends Seeder
     public function run(): void
     {
     DB::table('planes')->insert([
-        ['id' => 1, 'nombre' => 'Día', 'descripcion' => 'Acceso por 1 día', 'duracion_dias' => 1, 'precio' => 60],
         ['id' => 2, 'nombre' => 'Semana', 'descripcion' => 'Acceso por 7 días', 'duracion_dias' => 7, 'precio' => 180],
         ['id' => 3, 'nombre' => 'Mensual', 'descripcion' => 'Acceso por 30 días', 'duracion_dias' => 30, 'precio' => 450],
         ['id' => 4, 'nombre' => 'Trimestral', 'descripcion' => 'Acceso por 90 días (ahorro vs mensual)', 'duracion_dias' => 90, 'precio' => 1200],

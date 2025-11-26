@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Usuario; 
-use App\Models\RegistroAcceso; // 🔥 Iñimportante ko'ápe
+use App\Models\RegistroAcceso; // 🔥 Importante para el historial de visitas
 
 class DashboardController extends Controller
 {
@@ -65,6 +65,8 @@ class DashboardController extends Controller
     }
 
     // 🔥 NUEVA API PARA AFORO EN VIVO (Socios + Visitas) 🔥
+    // Esta función calcula el aforo recorriendo cronológicamente las entradas y salidas
+    // para evitar números negativos si se marca salida errónea.
     public function getAforoEnVivo()
     {
         // A. Contar SOCIOS reales adentro (los que tienen is_inside = 1)
@@ -73,27 +75,33 @@ class DashboardController extends Controller
                                 ->where('id', '!=', 99999) 
                                 ->count();
 
-        // B. Calcular VISITAS adentro (Basado en logs de HOY)
+        // B. Calcular VISITAS adentro (Recorrido Cronológico)
         $visitaId = 99999;
         
-        // Contamos cuántas veces entró el usuario 99999 hoy
-        $entradasVisita = RegistroAcceso::where('usuario_id', $visitaId)
-            ->where('acceso', 1) // Solo accesos exitosos
-            ->where('direccion', 1) // Entradas
-            ->whereDate('fecha', Carbon::today())
-            ->count();
-
-        // Contamos cuántas veces salió el usuario 99999 hoy
-        $salidasVisita = RegistroAcceso::where('usuario_id', $visitaId)
+        // 1. Obtenemos TODOS los movimientos de visita de HOY en orden
+        $movimientos = RegistroAcceso::where('usuario_id', $visitaId)
             ->where('acceso', 1)
-            ->where('direccion', 0) // Salidas
             ->whereDate('fecha', Carbon::today())
-            ->count();
+            ->orderBy('fecha', 'asc') // Importante: Orden cronológico
+            ->get(['direccion']); // Solo necesitamos saber si entró o salió
 
-        // El aforo de visitas es la resta. Usamos max(0) para no tener negativos.
-        $visitasAdentro = max(0, $entradasVisita - $salidasVisita);
+        // 2. Simulamos el día paso a paso
+        $visitasAdentro = 0;
 
-        // C. Total
+        foreach ($movimientos as $mov) {
+            if ($mov->direccion == 1) {
+                // Entrada: Sumamos 1
+                $visitasAdentro++;
+            } else {
+                // Salida: Restamos 1, pero NUNCA bajamos de 0
+                // Esto ignora las salidas erróneas si el local ya estaba "vacío"
+                if ($visitasAdentro > 0) {
+                    $visitasAdentro--;
+                }
+            }
+        }
+
+        // C. Total Final
         $totalGente = $sociosAdentro + $visitasAdentro;
 
         return response()->json([

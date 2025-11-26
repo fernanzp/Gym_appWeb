@@ -9,6 +9,7 @@ use App\Http\Controllers\ActivacionController;
 use App\Http\Controllers\MembresiaController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Api\AccessController;
+use App\Http\Controllers\AnalyticsController;
 
 // Ruta base
 Route::get('/', function () {
@@ -23,6 +24,9 @@ Route::middleware('web')->group(function () {
 
 // Rutas protegidas generales (Cualquier usuario logueado)
 Route::middleware('auth')->group(function () {
+    // 🔴 RUTA DE LOGOUT (Nueva)
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
     Route::view('/membresias', 'membresias')->name('membresias');
     Route::get('/membresias', [MembresiaController::class, 'index'])->name('membresias');
 
@@ -48,17 +52,39 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Análisis y Reportes (Vista de Diseño)
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('/api/analytics/revenue', [AnalyticsController::class, 'revenueData'])
+        ->name('api.analytics.revenue');
+    Route::get('/api/analytics/live', [AnalyticsController::class, 'liveActivityData'])
+        ->name('api.analytics.live');
+
     // Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
     Route::get('/usuarios/{usuario}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit'); 
     Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update'); 
     Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
 
+    //Ruta para registrar una nueva recepcionista
+    Route::view('/registrar-staff', 'receptionistRegister')->name('registrar-staff');
+
     // Clientes
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
 
-    // Pagos
+    // Ruta para mostrar la vista de pago tras el registro
+    Route::get('/usuarios/{id}/pago-inicial', [ClienteController::class, 'vistaPagoRegistro'])
+        ->name('clientes.pagoInicial');
+
+    // Ruta para finalizar el proceso (botón "Pago Recibido")
+    Route::get('/usuarios/{id}/finalizar-registro', [ClienteController::class, 'finalizarRegistro'])
+        ->name('clientes.finalizarRegistro');
+
+    // Ruta para cancelar el registro (eliminar usuario recién creado)
+    Route::delete('/usuarios/{id}/cancelar-registro', [ClienteController::class, 'cancelarRegistro'])
+        ->name('clientes.cancelarRegistro');
+
+    // Pagos (Vista Mockup)
     Route::get('/pago-membresia', function () {
         return view('payment');
     })->name('pagos.show');

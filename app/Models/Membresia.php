@@ -11,7 +11,7 @@ class Membresia extends Model
     public $timestamps = false;
     
     protected $fillable = [
-        'usuario_id','plan_id','fecha_ini','fecha_fin','dias_congelados','estatus','creada','actualizada'
+        'usuario_id','plan_id','fecha_ini','fecha_fin','dias_congelados','precio_pagado','estatus','creada','actualizada'
     ];
 
     protected $casts = [
@@ -19,6 +19,7 @@ class Membresia extends Model
         'fecha_fin' => 'datetime',
         'creada' => 'datetime',
         'actualizada' => 'datetime',
+        'precio_pagado' => 'decimal:2',
     ];
 
     // Relaciones

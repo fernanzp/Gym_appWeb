@@ -44,14 +44,12 @@
             Editar Usuario: {{ $usuario->nombre_comp ?? 'Cargando...' }}
         </h1>
 
-        <!-- ALERTAS SUPERIORES -->
         @if ($usuario->estatus == 8)
             <div class="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded-r shadow-sm flex items-center justify-between">
                 <div>
                     <strong class="block font-bold text-lg">🛑 Error de Huella</strong>
                     <span class="text-sm">La huella no coincidió en el sensor o hubo un error de lectura.</span>
                 </div>
-                <!-- Botón Reintentar rápido -->
                 <form action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" onsubmit="activarLoader()">
                     @csrf
                     <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 transition text-sm">
@@ -74,17 +72,15 @@
             </div>
         @endif
 
-        <!-- FORMULARIO PRINCIPAL -->
-        <!-- 🔥 MODIFICADO: Se agrega onsubmit="activarLoader()" para mostrar modal al guardar datos -->
-        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5" onsubmit="activarLoader()">
+        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-5">
             @csrf @method('PUT')
+            
             @if (session('success') && $usuario->estatus != 8 && $usuario->estatus != 9) 
                 <div class="p-3 rounded-md bg-green-100 text-green-800 border border-green-200 text-center font-bold">{{ session('success') }}</div> 
             @endif
             @if (session('error')) <div class="p-3 rounded-md bg-red-100 text-red-800 border border-red-200 text-center font-bold">{{ session('error') }}</div> @endif
             @error('general') <div class="p-3 rounded-md bg-red-100 text-red-800">{{ $message }}</div> @enderror
 
-            <!-- Campos -->
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Nombre completo</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
@@ -119,7 +115,6 @@
             </div>
         </form>
         
-        <!-- SECCIÓN BIOMÉTRICA -->
         <div class="mt-12 pt-6 border-t-2 border-[var(--gris-bajito)]">
             <h2 class="text-2xl font-bold text-center mb-6 istok-web-bold text-[var(--azul)]">Gestión Biométrica</h2>
             <div class="bg-[var(--gris-bajito)] rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -151,7 +146,6 @@
                     @endif
                 </div>
 
-                <!-- Formulario con llamada a JS -->
                 <form action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="w-full sm:w-auto" onsubmit="activarLoader()">
                     @csrf
                     @if($usuario->fingerprint_id)
@@ -168,12 +162,9 @@
         </div>
     </div>
 
-    <!-- 🛠 MODAL OVERLAY -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/70 z-[9999] hidden flex items-center justify-center backdrop-blur-sm">
         
-        <!-- 1. CARGANDO (Con "X" de cerrar y Pasos visuales) -->
         <div id="estadoCargando" class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative hidden">
-            <!-- 🔥 Botón X para cancelar -->
             <button onclick="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
 
             <div class="flex justify-center mb-6"><div class="windows-loader"></div></div>
@@ -183,7 +174,6 @@
                 Si el sensor se activa, siga las instrucciones:
             </p>
 
-            <!-- Pasos visuales -->
             <div class="bg-gray-50 rounded-xl p-4 text-left space-y-3 text-sm text-gray-700 border border-gray-200">
                 <div class="flex items-center gap-3">
                     <span class="bg-[var(--azul)] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
@@ -202,7 +192,6 @@
             <p class="mt-6 text-xs text-gray-400 animate-pulse">Esperando confirmación del dispositivo...</p>
         </div>
 
-        <!-- 2. ÉXITO -->
         <div id="estadoExito" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-4">
                 <div class="checkmark-circle"><div class="background"></div><div class="checkmark draw"></div></div>
@@ -211,7 +200,6 @@
             <p class="text-gray-600 text-sm">Los cambios se guardaron correctamente.</p>
         </div>
 
-        <!-- 3. ERROR -->
         <div id="estadoError" class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl hidden">
             <div class="flex justify-center mb-4">
                 <div class="cross-circle"><div class="background"></div><div class="cross-line one"></div><div class="cross-line two"></div></div>
@@ -219,11 +207,9 @@
             <h3 class="text-2xl istok-web-bold text-red-600 mb-2">¡Error!</h3>
             <p id="msgError" class="text-gray-600 text-sm mb-6">Ocurrió un problema con la huella o la conexión.</p>
             
-            <!-- Botón reintentar desde el modal -->
             <button onclick="activarLoader(); document.getElementById('formRetryModal').submit();" class="bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 w-full">
                 Intentar de Nuevo
             </button>
-            <!-- Formulario oculto para el reintento -->
             <form id="formRetryModal" action="{{ route('usuario.resetFingerprint', $usuario->id) }}" method="POST" class="hidden">@csrf</form>
             
             <button onclick="cerrarModal()" class="mt-3 text-gray-500 text-sm hover:underline">
@@ -232,86 +218,120 @@
         </div>
     </div>
 
-    <!-- SCRIPT -->
     <script>
-        let pollingInterval;
-        const userId = "{{ $usuario->id }}";
+    let pollingInterval;
+    const userId = "{{ $usuario->id }}";
 
-        function activarLoader() {
-            const overlay = document.getElementById('modalOverlay');
-            const cargando = document.getElementById('estadoCargando');
-            const errorModal = document.getElementById('estadoError');
-            const exitoModal = document.getElementById('estadoExito');
-            
-            // Resetear vistas
-            cargando.classList.add('hidden');
-            errorModal.classList.add('hidden');
-            exitoModal.classList.add('hidden');
-            
-            // Mostrar loader
-            overlay.classList.remove('hidden');
-            cargando.classList.remove('hidden');
-
-            // Iniciar Polling inmediato
-            iniciarPolling();
-        }
-
-        function cerrarModal() {
-            document.getElementById('modalOverlay').classList.add('hidden');
-            clearInterval(pollingInterval); // Detener polling para no gastar recursos
-        }
-
-        function iniciarPolling() {
-            clearInterval(pollingInterval); // Limpiar cualquier anterior
-            let intentos = 0;
-            pollingInterval = setInterval(async () => {
-                intentos++;
-                try {
-                    const res = await fetch(`/api/user-status/${userId}`);
-                    const data = await res.json();
-
-                    const cargando = document.getElementById('estadoCargando');
-                    const exito = document.getElementById('estadoExito');
-                    const error = document.getElementById('estadoError');
-
-                    // CASO ERROR (8=Error, 9=Timeout)
-                    if (data.estatus == 8 || data.estatus == 9) {
-                        clearInterval(pollingInterval);
-                        cargando.classList.add('hidden');
-                        error.classList.remove('hidden');
-                        if(data.estatus == 9) document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
-                        else document.getElementById('msgError').innerText = "Las huellas no coincidieron o hubo error.";
-                    } 
-                    // CASO ÉXITO (Ya tiene huella)
-                    else if (data.fingerprint_id != null) {
-                        clearInterval(pollingInterval);
-                        cargando.classList.add('hidden');
-                        exito.classList.remove('hidden');
-                        setTimeout(() => { location.reload(); }, 2000);
-                    }
-
-                    if (intentos > 60) clearInterval(pollingInterval);
-                } catch (e) { console.error(e); }
-            }, 1000);
-        }
+    function activarLoader() {
+        const overlay = document.getElementById('modalOverlay');
+        const cargando = document.getElementById('estadoCargando');
+        const errorModal = document.getElementById('estadoError');
+        const exitoModal = document.getElementById('estadoExito');
         
-        document.addEventListener("DOMContentLoaded", function() {
-            const msg = "{{ session('success') }}";
-            // Si venimos de un éxito normal (guardar nombre, etc) mostramos solo la palomita brevemente
-            // Si venimos de "Instrucción enviada" (Huella), activamos el loader completo
-            if (msg) {
-                if (msg.includes('Instrucción enviada')) {
-                    activarLoader();
-                } else {
-                    // Éxito normal (datos personales)
-                    const overlay = document.getElementById('modalOverlay');
-                    const exito = document.getElementById('estadoExito');
-                    overlay.classList.remove('hidden');
-                    exito.classList.remove('hidden');
-                    setTimeout(() => { overlay.classList.add('hidden'); }, 2000);
+        cargando.classList.add('hidden');
+        errorModal.classList.add('hidden');
+        exitoModal.classList.add('hidden');
+        
+        overlay.classList.remove('hidden');
+        cargando.classList.remove('hidden');
+
+        iniciarPolling();
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalOverlay').classList.add('hidden');
+        clearInterval(pollingInterval);
+    }
+
+    function iniciarPolling() {
+        clearInterval(pollingInterval);
+        let intentos = 0;
+
+        pollingInterval = setInterval(async () => {
+            intentos++;
+
+            try {
+                const res = await fetch(`/api/user-status/${userId}`);
+                const data = await res.json();
+
+                const cargando = document.getElementById('estadoCargando');
+                const exito = document.getElementById('estadoExito');
+                const error = document.getElementById('estadoError');
+
+                // ERROR → estatus 8 o 9
+                if (data.estatus == 8 || data.estatus == 9) {
+                    clearInterval(pollingInterval);
+                    cargando.classList.add('hidden');
+                    error.classList.remove('hidden');
+
+                    if (data.estatus == 9)
+                        document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
+                    else
+                        document.getElementById('msgError').innerText = "Las huellas no coincidieron o hubo error.";
+
+                    return;
                 }
-            }
-        });
-    </script>
+
+                // ÉXITO → fingerprint asignado
+                if (data.fingerprint_id != null) {
+                    clearInterval(pollingInterval);
+                    cargando.classList.add('hidden');
+                    exito.classList.remove('hidden');
+                    setTimeout(() => location.reload(), 2000);
+                    return;
+                }
+
+                if (intentos > 60) clearInterval(pollingInterval);
+
+            } catch (e) { console.error(e); }
+        }, 1000);
+    }
+
+
+    // -----------------------------
+    // 🔥 MANEJO DE MENSAJES DE SESIÓN
+    // -----------------------------
+    document.addEventListener("DOMContentLoaded", function() {
+
+    const successMsg = "{{ session('success') }}";
+    const errorMsg = "{{ session('error') }}"; 
+    const isEnroll = "{{ session('trigger_enroll') ? 1 : 0 }}"; 
+
+    // 1. Si hubo error → modal rojo
+    if (errorMsg && errorMsg.trim() !== "") {
+        const overlay = document.getElementById('modalOverlay');
+        const errorModal = document.getElementById('estadoError');
+        const txtError = document.getElementById('msgError');
+
+        txtError.innerText = errorMsg;
+        overlay.classList.remove('hidden');
+        errorModal.classList.remove('hidden');
+        return;
+    }
+
+    // 2. Biometría → SOLO mostrar loader
+    if (isEnroll == "1") {
+        activarLoader();
+        return;
+    }
+
+    // 3. Éxito normal (NO biometría)
+    if (successMsg && successMsg.trim() !== "" && isEnroll == "0") {
+        const overlay = document.getElementById('modalOverlay');
+        const exito = document.getElementById('estadoExito');
+
+        overlay.classList.remove('hidden');
+        exito.classList.remove('hidden');
+
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 2000);
+
+        return;
+    }
+
+    });
+</script>
+
 </body>
 </html>
