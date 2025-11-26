@@ -219,102 +219,119 @@
     </div>
 
     <script>
-        let pollingInterval;
-        const userId = "{{ $usuario->id }}";
+    let pollingInterval;
+    const userId = "{{ $usuario->id }}";
 
-        function activarLoader() {
-            const overlay = document.getElementById('modalOverlay');
-            const cargando = document.getElementById('estadoCargando');
-            const errorModal = document.getElementById('estadoError');
-            const exitoModal = document.getElementById('estadoExito');
-            
-            // Resetear vistas
-            cargando.classList.add('hidden');
-            errorModal.classList.add('hidden');
-            exitoModal.classList.add('hidden');
-            
-            // Mostrar loader
-            overlay.classList.remove('hidden');
-            cargando.classList.remove('hidden');
-
-            // Iniciar Polling inmediato
-            iniciarPolling();
-        }
-
-        function cerrarModal() {
-            document.getElementById('modalOverlay').classList.add('hidden');
-            clearInterval(pollingInterval); // Detener polling para no gastar recursos
-        }
-
-        function iniciarPolling() {
-            clearInterval(pollingInterval); // Limpiar cualquier anterior
-            let intentos = 0;
-            pollingInterval = setInterval(async () => {
-                intentos++;
-                try {
-                    const res = await fetch(`/api/user-status/${userId}`);
-                    const data = await res.json();
-
-                    const cargando = document.getElementById('estadoCargando');
-                    const exito = document.getElementById('estadoExito');
-                    const error = document.getElementById('estadoError');
-
-                    // CASO ERROR (8=Error, 9=Timeout)
-                    if (data.estatus == 8 || data.estatus == 9) {
-                        clearInterval(pollingInterval);
-                        cargando.classList.add('hidden');
-                        error.classList.remove('hidden');
-                        if(data.estatus == 9) document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
-                        else document.getElementById('msgError').innerText = "Las huellas no coincidieron o hubo error.";
-                    } 
-                    // CASO ÉXITO (Ya tiene huella)
-                    else if (data.fingerprint_id != null) {
-                        clearInterval(pollingInterval);
-                        cargando.classList.add('hidden');
-                        exito.classList.remove('hidden');
-                        setTimeout(() => { location.reload(); }, 2000);
-                    }
-
-                    if (intentos > 60) clearInterval(pollingInterval);
-                } catch (e) { console.error(e); }
-            }, 1000);
-        }
+    function activarLoader() {
+        const overlay = document.getElementById('modalOverlay');
+        const cargando = document.getElementById('estadoCargando');
+        const errorModal = document.getElementById('estadoError');
+        const exitoModal = document.getElementById('estadoExito');
         
-document.addEventListener("DOMContentLoaded", function() {
-            // 🔥 CAPTURA DE VARIABLES DE SESIÓN
-            const successMsg = "{{ session('success') }}";
-            const errorMsg = "{{ session('error') }}"; 
-            // Nueva variable bandera (si existe, será "1", si no, vacío)
-            const isEnroll = "{{ session('trigger_enroll') }}"; 
+        cargando.classList.add('hidden');
+        errorModal.classList.add('hidden');
+        exitoModal.classList.add('hidden');
+        
+        overlay.classList.remove('hidden');
+        cargando.classList.remove('hidden');
 
-            // 1. PRIORIDAD: ERROR (Modal Rojo)
-            if (errorMsg) {
-                const overlay = document.getElementById('modalOverlay');
-                const errorModal = document.getElementById('estadoError');
-                const txtError = document.getElementById('msgError');
+        iniciarPolling();
+    }
 
-                txtError.innerText = errorMsg;
-                overlay.classList.remove('hidden');
-                errorModal.classList.remove('hidden');
-            }
-            
-            // 2. SI ES PROCESO DE HUELLA (Bandera explícita) -> LOADER
-            else if (isEnroll) {
-                activarLoader();
-            }
+    function cerrarModal() {
+        document.getElementById('modalOverlay').classList.add('hidden');
+        clearInterval(pollingInterval);
+    }
 
-            // 3. SI ES ÉXITO NORMAL (Solo mensaje, sin bandera) -> PALOMITA VERDE
-            else if (successMsg) {
-                const overlay = document.getElementById('modalOverlay');
+    function iniciarPolling() {
+        clearInterval(pollingInterval);
+        let intentos = 0;
+
+        pollingInterval = setInterval(async () => {
+            intentos++;
+
+            try {
+                const res = await fetch(`/api/user-status/${userId}`);
+                const data = await res.json();
+
+                const cargando = document.getElementById('estadoCargando');
                 const exito = document.getElementById('estadoExito');
-                
-                overlay.classList.remove('hidden');
-                exito.classList.remove('hidden');
-                
-                // Ocultar palomita automáticamente a los 2 segundos
-                setTimeout(() => { overlay.classList.add('hidden'); }, 2000);
-            }
-        });
-    </script>
+                const error = document.getElementById('estadoError');
+
+                // ERROR → estatus 8 o 9
+                if (data.estatus == 8 || data.estatus == 9) {
+                    clearInterval(pollingInterval);
+                    cargando.classList.add('hidden');
+                    error.classList.remove('hidden');
+
+                    if (data.estatus == 9)
+                        document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
+                    else
+                        document.getElementById('msgError').innerText = "Las huellas no coincidieron o hubo error.";
+
+                    return;
+                }
+
+                // ÉXITO → fingerprint asignado
+                if (data.fingerprint_id != null) {
+                    clearInterval(pollingInterval);
+                    cargando.classList.add('hidden');
+                    exito.classList.remove('hidden');
+                    setTimeout(() => location.reload(), 2000);
+                    return;
+                }
+
+                if (intentos > 60) clearInterval(pollingInterval);
+
+            } catch (e) { console.error(e); }
+        }, 1000);
+    }
+
+
+    // -----------------------------
+    // 🔥 MANEJO DE MENSAJES DE SESIÓN
+    // -----------------------------
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const successMsg = "{{ session('success') }}";
+        const errorMsg = "{{ session('error') }}"; 
+        const isEnroll = "{{ session('trigger_enroll') }}"; // bandera REAL de enrolamiento
+
+        // 1. ERROR explícito → Modal rojo
+        if (errorMsg) {
+            const overlay = document.getElementById('modalOverlay');
+            const errorModal = document.getElementById('estadoError');
+            const txtError = document.getElementById('msgError');
+
+            txtError.innerText = errorMsg;
+            overlay.classList.remove('hidden');
+            errorModal.classList.remove('hidden');
+            return;
+        }
+
+        // 2. SI el backend dice que sí hubo inicio de enrolamiento → Loader
+        if (isEnroll == "1") {
+            activarLoader();
+            return;
+        }
+
+        // 3. Solo mostrar éxito si NO es biometría (o sea, success normal del sistema)
+        if (successMsg && isEnroll != "1") {
+            const overlay = document.getElementById('modalOverlay');
+            const exito = document.getElementById('estadoExito');
+
+            overlay.classList.remove('hidden');
+            exito.classList.remove('hidden');
+
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 2000);
+
+            return;
+        }
+
+    });
+</script>
+
 </body>
 </html>
