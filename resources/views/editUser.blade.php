@@ -293,44 +293,42 @@
     // -----------------------------
     document.addEventListener("DOMContentLoaded", function() {
 
-        const successMsg = "{{ session('success') }}";
-        const errorMsg = "{{ session('error') }}"; 
-        const isEnroll = "{{ session('trigger_enroll') }}"; // bandera REAL de enrolamiento
+    const successMsg = "{{ session('success') }}";
+    const errorMsg = "{{ session('error') }}"; 
+    const isEnroll = "{{ session('trigger_enroll') ? 1 : 0 }}"; 
 
-        // 1. ERROR explícito → Modal rojo
-       
-        if (errorMsg && errorMsg.trim() !== "") {
-            const overlay = document.getElementById('modalOverlay');
-            const errorModal = document.getElementById('estadoError');
-            const txtError = document.getElementById('msgError');
+    // 1. Si hubo error → modal rojo
+    if (errorMsg && errorMsg.trim() !== "") {
+        const overlay = document.getElementById('modalOverlay');
+        const errorModal = document.getElementById('estadoError');
+        const txtError = document.getElementById('msgError');
 
-            txtError.innerText = errorMsg;
-            overlay.classList.remove('hidden');
-            errorModal.classList.remove('hidden');
-            return;
-        }
+        txtError.innerText = errorMsg;
+        overlay.classList.remove('hidden');
+        errorModal.classList.remove('hidden');
+        return;
+    }
 
+    // 2. Biometría → SOLO mostrar loader
+    if (isEnroll == "1") {
+        activarLoader();
+        return;
+    }
 
-        // 2. SI el backend dice que sí hubo inicio de enrolamiento → Loader
-        if (isEnroll == "1") {
-            activarLoader();
-            return;
-        }
+    // 3. Éxito normal (NO biometría)
+    if (successMsg && successMsg.trim() !== "" && isEnroll == "0") {
+        const overlay = document.getElementById('modalOverlay');
+        const exito = document.getElementById('estadoExito');
 
-        // 3. Solo mostrar éxito si NO es biometría (o sea, success normal del sistema)
-        if (successMsg && isEnroll != "1") {
-            const overlay = document.getElementById('modalOverlay');
-            const exito = document.getElementById('estadoExito');
+        overlay.classList.remove('hidden');
+        exito.classList.remove('hidden');
 
-            overlay.classList.remove('hidden');
-            exito.classList.remove('hidden');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 2000);
 
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-            }, 2000);
-
-            return;
-        }
+        return;
+    }
 
     });
 </script>
