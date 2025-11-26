@@ -129,79 +129,84 @@ class UsuarioController extends Controller
         }
     }
 
-// En app/Http/Controllers/UsuarioController.php
-
-// En UsuarioController.php
 
 public function resetFingerprint($id)
-    {
-        $usuario = Usuario::findOrFail($id);
-        $deviceId = env('PARTICLE_DEVICE_ID');
-        $token = env('PARTICLE_ACCESS_TOKEN');
-        $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
+{
+    $usuario = Usuario::findOrFail($id);
+    $deviceId = env('PARTICLE_DEVICE_ID');
+    $token = env('PARTICLE_ACCESS_TOKEN');
+    $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
 
-        try {
-            // ---------------------------------------------------------
-            // PASO 1: PING ESTRICTO (Detectar desconexión rápido)
-            // ---------------------------------------------------------
-            // Si desconectas el cable, esto fallará en 3 segundos y lanzará el error.
-            $responseInfo = Http::timeout(3)->get("{$baseUrl}?access_token={$token}");
-            
-            if ($responseInfo->failed()) {
-                throw new \Exception("No hay conexión con el dispositivo (Ping fallido).");
-            }
-            $info = $responseInfo->json();
-            if (isset($info['connected']) && $info['connected'] === false) {
-                 throw new \Exception("El dispositivo reporta estar DESCONECTADO.");
-            }
-
-            // ---------------------------------------------------------
-            // PASO 2: LIMPIEZA
-            // ---------------------------------------------------------
-            if ($usuario->fingerprint_id) {
-                try {
-                    Http::timeout(5)->asForm()->post(
-                        "{$baseUrl}/delete-fingerprint",
-                        ['access_token' => $token, 'args' => (string) $usuario->fingerprint_id]
-                    );
-                    sleep(2);
-                } catch (\Throwable $e) {}
-            }
-
-            // ---------------------------------------------------------
-            // PASO 3: RESET DB
-            // ---------------------------------------------------------
-            $usuario->fingerprint_id = null;
-            $usuario->estatus = 0; 
-            $usuario->save();
-
-            // ---------------------------------------------------------
-            // PASO 4: ENROLAR
-            // ---------------------------------------------------------
-            $response = Http::timeout(8)
-                ->asForm()
-                ->post("{$baseUrl}/enroll-fingerprint", [
-                    'access_token' => $token, 
-                    'args' => (string) $usuario->id
-                ])->throw();
-
-            // ---------------------------------------------------------
-            // PASO 5: FINALIZAR CON BANDERA 'trigger_enroll'
-            // ---------------------------------------------------------
-            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
-
-            // 🔥 AQUÍ ESTÁ EL TRUCO: Enviamos 'trigger_enroll' => true
-            return back()
-                ->with('success', 'Instrucción enviada. Coloque su dedo en el sensor.')
-                ->with('trigger_enroll', true); 
-
-        } catch (\Exception $e) {
-            Log::error("Fallo resetFingerprint: " . $e->getMessage());
-            
-            $usuario->estatus = 8; 
-            $usuario->save();
-
-            return back()->with('error', 'Error de conexión: ' . $e->getMessage());
+    try {
+        // ---------------------------------------------------------
+        // PASO 1: PING ESTRICTO (Detectar desconexión rápido)
+        // ---------------------------------------------------------
+        $responseInfo = Http::timeout(3)->get("{$baseUrl}?access_token={$token}");
+        
+        if ($responseInfo->failed()) {
+            throw new \Exception("No hay conexión con el dispositivo (Ping fallido).");
         }
+
+        $info = $responseInfo->json();
+        if (isset($info['connected']) && $info['connected'] === false) {
+            throw new \Exception("El dispositivo está DESCONECTADO.");
+        }
+
+        // ---------------------------------------------------------
+        // PASO 2: BORRAR HUELLA EXISTENTE EN EL SENSOR (si aplica)
+        // ---------------------------------------------------------
+        if ($usuario->fingerprint_id) {
+            try {
+                Http::timeout(5)->asForm()->post(
+                    "{$baseUrl}/delete-fingerprint",
+                    [
+                        'access_token' => $token,
+                        'args' => (string) $usuario->fingerprint_id
+                    ]
+                );
+                sleep(2);
+            } catch (\Throwable $e) {
+                // ignorar (el sensor podría no tenerla)
+            }
+        }
+
+        // ---------------------------------------------------------
+        // PASO 3: RESET EN BASE DE DATOS
+        // ---------------------------------------------------------
+        $usuario->fingerprint_id = null;
+        $usuario->estatus = 0; 
+        $usuario->save();
+
+        // ---------------------------------------------------------
+        // PASO 4: INICIAR ENROLAMIENTO EN EL PHOTON
+        // ---------------------------------------------------------
+        Http::timeout(8)
+            ->asForm()
+            ->post("{$baseUrl}/enroll-fingerprint", [
+                'access_token' => $token, 
+                'args' => (string) $usuario->id
+            ])
+            ->throw();
+
+        // ---------------------------------------------------------
+        // PASO 5: PROTECCIÓN POR SI SE ATORA
+        // ---------------------------------------------------------
+        CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
+
+        // ---------------------------------------------------------
+        // 🔥 REGRESO CORRECTO PARA EL FRONTEND
+        // ---------------------------------------------------------
+        return back()->with('trigger_enroll', true);
+
+    } catch (\Exception $e) {
+
+        Log::error("Fallo resetFingerprint: " . $e->getMessage());
+        
+        $usuario->estatus = 8;
+        $usuario->save();
+
+        return back()->with('error', 'Error de conexión: ' . $e->getMessage());
     }
+}
+
 }
