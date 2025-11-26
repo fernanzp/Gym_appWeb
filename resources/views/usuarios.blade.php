@@ -30,7 +30,12 @@
         .istok-web-bold { font-family: "Istok Web", sans-serif; font-weight: 700; font-style: normal; }
     </style>
 </head>
-<body class="antialiased istok-web-regular">
+<body class="antialiased istok-web-regular" 
+      x-data="{ 
+          modalDeleteOpen: false, 
+          deleteAction: '', 
+          userNameToDelete: '' 
+      }">
   <div class="min-h-screen p-6">
     <!-- GRID PRINCIPAL: [Sidebar | Área principal] -->
     <div class="grid grid-cols-[84px_minmax(0,1fr)] gap-6 h-[calc(100vh-3rem)]">
@@ -215,16 +220,17 @@
                               <path d="M471.6 21.7c-21.9-21.9-57.3-21.9-79.2 0L368 46.1 465.9 144 490.3 119.6c21.9-21.9 21.9-57.3 0-79.2L471.6 21.7zm-299.2 220c-6.1 6.1-10.8 13.6-13.5 21.9l-29.6 88.8c-2.9 8.6-.6 18.1 5.8 24.6s15.9 8.7 24.6 5.8l88.8-29.6c8.2-2.7 15.7-7.4 21.9-13.5L432 177.9 334.1 80 172.4 241.7zM96 64C43 64 0 107 0 160L0 416c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-96c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 64z"/>
                             </svg>
                           </a>
-                          <form method="POST" action="{{ route('usuarios.destroy', $u->id) }}"
-                                onsubmit="return confirm('¿Seguro que deseas eliminar este usuario? Esta acción no se puede deshacer.');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="p-1.5 rounded-lg hover:bg-gray-200/60 transition-colors" title="Eliminar" aria-label="Eliminar">
+                          <button 
+                              type="button"
+                              @click="modalDeleteOpen = true; deleteAction = '{{ route('usuarios.destroy', $u->id) }}'; userNameToDelete = '{{ $u->nombre_comp }}'"
+                              class="p-1.5 rounded-lg hover:bg-red-50 text-[var(--gris-oscuro)] hover:text-red-600 transition-colors" 
+                              title="Eliminar" 
+                              aria-label="Eliminar"
+                          >
                               <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor">
-                                <path d="M136.7 5.9L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-8.7-26.1C306.9-7.2 294.7-16 280.9-16L167.1-16c-13.8 0-26 8.8-30.4 21.9zM416 144L32 144 53.1 467.1C54.7 492.4 75.7 512 101 512L347 512c25.3 0 46.3-19.6 47.9-44.9L416 144z"/>
+                                  <path d="M136.7 5.9L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-8.7-26.1C306.9-7.2 294.7-16 280.9-16L167.1-16c-13.8 0-26 8.8-30.4 21.9zM416 144L32 144 53.1 467.1C54.7 492.4 75.7 512 101 512L347 512c25.3 0 46.3-19.6 47.9-44.9L416 144z"/>
                               </svg>
-                            </button>
-                          </form>
+                          </button>
                         </div>
                       </td>
                   </tr>
@@ -252,5 +258,63 @@
 
     </div>
   </div>
+
+<div 
+    x-show="modalDeleteOpen" 
+    style="display: none;"
+    class="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+>
+    <div 
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4 transform transition-all"
+        @click.away="modalDeleteOpen = false"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-90"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-90"
+    >
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-900 istok-web-bold mb-2">¿Eliminar usuario?</h3>
+            
+            <p class="text-gray-500 mb-6">
+                Estás a punto de eliminar a <span x-text="userNameToDelete" class="font-bold text-gray-800"></span>. <br>
+                Esta acción no se puede deshacer y se borrarán todos sus datos asociados.
+            </p>
+
+            <div class="flex gap-3 justify-center">
+                <button 
+                    @click="modalDeleteOpen = false" 
+                    class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
+                >
+                    Cancelar
+                </button>
+
+                <form method="POST" :action="deleteAction">
+                    @csrf
+                    @method('DELETE')
+                    <button 
+                        type="submit" 
+                        class="px-5 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-lg shadow-red-600/30 transition"
+                    >
+                        Sí, eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

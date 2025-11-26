@@ -78,9 +78,9 @@
                     Cancelar
                 </a>
 
-                <form action="{{ route('membresias.procesarRenovacion', $membresia->id) }}" method="POST" class="w-full">
+                <form action="{{ route('membresias.procesarRenovacion') }}" method="POST" class="w-full">
                     @csrf
-                    @method('PUT')
+                    <input type="hidden" name="membresia_id" value="{{ $membresia->id }}">
                     <input type="hidden" name="plan_id" value="{{ $plan->id }}">
                     <input type="hidden" name="fecha_ini" value="{{ $fecha_inicio }}">
                     <input type="hidden" name="fecha_fin" value="{{ $fecha_fin }}">

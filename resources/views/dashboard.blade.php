@@ -84,6 +84,15 @@
 
       <!-- ÁREA PRINCIPAL -->
       <main class="h-full min-h-0 flex flex-col overflow-hidden">
+        @if (session('success'))
+            <div x-data="{ show: true }" 
+                x-init="setTimeout(() => show = false, 4000)" 
+                x-show="show" 
+                x-transition.duration.500ms
+                class="mb-3 p-3 rounded-md bg-green-100 text-green-800">
+                {{ session('success') }}
+            </div>
+        @endif
         <!-- Cabecera -->
         <header class="h-16 flex items-center justify-between"> <!--bg-[#D9D9D9] rounded-2xl-->
           @php
@@ -193,7 +202,7 @@
                   <!-- Botón 1.2: Nueva Recepcionista (NUEVO) -->
                   <!-- Mismo estilo que Nuevo Cliente, ruta 'register' (ajústala si es distinta) -->
                   <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
-                    <a href="{{ route('registrar-staff') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
+                    <a href="{{ route('receptionist.create') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
                       <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
                           <!-- Icono: Usuario con gafete/corbata -->
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">

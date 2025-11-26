@@ -10,6 +10,7 @@ use App\Http\Controllers\MembresiaController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Api\AccessController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\RecepcionistaController;
 
 // Ruta base
 Route::get('/', function () {
@@ -66,7 +67,8 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
     Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
 
     //Ruta para registrar una nueva recepcionista
-    Route::view('/registrar-staff', 'receptionistRegister')->name('registrar-staff');
+    Route::get('/recepcionista/registrar', [RecepcionistaController::class, 'create'])->name('receptionist.create');
+    Route::post('/recepcionista/registrar', [RecepcionistaController::class, 'store'])->name('receptionist.store');
 
     // Clientes
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientRegister');

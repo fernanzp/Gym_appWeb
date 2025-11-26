@@ -11,23 +11,44 @@ class MembresiaController extends Controller
 {
     public function index(Request $request)
     {
-        // Ejecutamos una actualización rápida antes de mostrar (truco si no tienes cron jobs)
+        // 0. ACTUALIZACIÓN AUTOMÁTICA DE VENCIMIENTOS
         Membresia::where('estatus', 'vigente')
             ->where('fecha_fin', '<', now()->format('Y-m-d'))
             ->update(['estatus' => 'vencida']);
 
-        // 1. STATS (Usando strings del ENUM)
-        $totalActivas = Membresia::where('estatus', 'vigente')->count();
-        $totalVencidas = Membresia::where('estatus', 'vencida')->count();
-        $totalCongeladas = Membresia::where('estatus', 'congelada')->count();
+        // --- CORE: SUBCONSULTA PARA OBTENER SOLO LA ÚLTIMA MEMBRESÍA DE CADA USUARIO ---
+        // Esto es lo que "limpia" la basura histórica.
+        // Seleccionamos el ID más alto agrupado por usuario.
+        $subqueryUltimas = Membresia::selectRaw('MAX(id)')->groupBy('usuario_id');
+
+
+        // 1. STATS (Ahora aplicando el filtro de últimas membresías)
+        // Usamos whereIn('id', $subqueryUltimas) en cada contador para asegurar precisión real.
+
+        $totalActivas = Membresia::whereIn('id', $subqueryUltimas)
+                            ->where('estatus', 'vigente')
+                            ->count();
+
+        $totalVencidas = Membresia::whereIn('id', $subqueryUltimas)
+                            ->where('estatus', 'vencida')
+                            ->count();
+
+        $totalCongeladas = Membresia::whereIn('id', $subqueryUltimas)
+                            ->where('estatus', 'congelada')
+                            ->count();
 
         $fechaLimite = Carbon::now()->addDays(15);
-        $totalPorVencer = Membresia::where('estatus', 'vigente')
-            ->whereBetween('fecha_fin', [Carbon::now(), $fechaLimite])
-            ->count();
+        $totalPorVencer = Membresia::whereIn('id', $subqueryUltimas)
+                            ->where('estatus', 'vigente')
+                            ->whereBetween('fecha_fin', [Carbon::now(), $fechaLimite])
+                            ->count();
 
-        // 2. FILTRO
-        $query = Membresia::with(['usuario', 'plan']);
+
+        // 2. TABLA PRINCIPAL (También filtrada)
+        $query = Membresia::with(['usuario', 'plan'])
+                    ->whereIn('id', $subqueryUltimas); // <--- Aplicamos el filtro base aquí
+
+        // Filtros de la interfaz
         $filtro = $request->get('filter', 'todas');
 
         switch ($filtro) {
@@ -46,6 +67,7 @@ class MembresiaController extends Controller
                 break;
         }
 
+        // Buscador
         if ($search = $request->get('search')) {
             $query->whereHas('usuario', function($q) use ($search) {
                 $q->where('nombre_comp', 'like', "%{$search}%")
@@ -54,7 +76,6 @@ class MembresiaController extends Controller
         }
 
         $membresias = $query->orderBy('fecha_fin', 'asc')->paginate(10);
-
         $planes = Plan::all();
 
         return view('membresias', compact('membresias', 'totalActivas', 'totalVencidas', 'totalCongeladas', 'totalPorVencer', 'filtro', 'planes'));
@@ -152,26 +173,38 @@ class MembresiaController extends Controller
 
     public function procesarRenovacion(Request $request)
     {
+        // 1. Validamos los datos entrantes
         $request->validate([
-            'membresia_id' => 'required|exists:membresias,id',
+            'membresia_id' => 'required|exists:membresias,id', // ID de la membresía ANTERIOR
             'plan_id' => 'required|exists:planes,id',
             'fecha_ini' => 'required|date',
             'fecha_fin' => 'required|date',
         ]);
 
-        $membresia = Membresia::findOrFail($request->membresia_id);
+        // 2. Recuperamos la información necesaria
+        $membresiaAnterior = Membresia::findOrFail($request->membresia_id);
+        $planNuevo = Plan::findOrFail($request->plan_id); // Buscamos el plan para obtener el precio actual
         
-        // Actualizamos la membresía
-        $membresia->plan_id = $request->plan_id;
-        $membresia->fecha_ini = $request->fecha_ini;
-        $membresia->fecha_fin = $request->fecha_fin;
-        $membresia->estatus = 'vigente'; // Reactivamos si estaba vencida
-        $membresia->dias_congelados = null; // Reseteamos congelados al renovar
-        $membresia->save();
+        // 3. CREAMOS el nuevo registro (Aquí ocurre la magia de la retención)
+        Membresia::create([
+            'usuario_id'    => $membresiaAnterior->usuario_id, // Usamos el mismo usuario
+            'plan_id'       => $planNuevo->id,
+            'precio_pagado' => $planNuevo->precio, // <--- IMPORTANTE: Guardamos el precio histórico
+            'fecha_ini'     => $request->fecha_ini,
+            'fecha_fin'     => $request->fecha_fin,
+            'estatus'       => 'vigente',
+            'dias_congelados' => null,
+            'created_at'    => now(), // Aseguramos la fecha de creación para reportes
+            'updated_at'    => now(),
+        ]);
 
-        // Opcional: Aquí podrías crear un registro en una tabla de 'pagos' o 'ingresos'
+        // NOTA SOBRE LA MEMBRESÍA ANTERIOR:
+        // No necesitamos cambiarle el estatus a la anterior manualmente.
+        // Tu función index() ya se encarga de poner en 'vencida' 
+        // cualquier membresía cuya fecha_fin haya pasado. 
+        // Así permites que termine sus días restantes si renovó por adelantado.
 
         return redirect()->route('membresias')
-            ->with('success', 'Membresía renovada exitosamente.');
+            ->with('success', 'Membresía renovada exitosamente. Se ha generado un nuevo historial.');
     }
 }
