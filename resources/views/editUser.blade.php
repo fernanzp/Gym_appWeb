@@ -298,7 +298,8 @@
         const isEnroll = "{{ session('trigger_enroll') }}"; // bandera REAL de enrolamiento
 
         // 1. ERROR explícito → Modal rojo
-        if (errorMsg) {
+       
+        if (errorMsg && errorMsg.trim() !== "") {
             const overlay = document.getElementById('modalOverlay');
             const errorModal = document.getElementById('estadoError');
             const txtError = document.getElementById('msgError');
@@ -308,6 +309,7 @@
             errorModal.classList.remove('hidden');
             return;
         }
+
 
         // 2. SI el backend dice que sí hubo inicio de enrolamiento → Loader
         if (isEnroll == "1") {
