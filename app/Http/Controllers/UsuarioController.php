@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http; // 🔥
+use Illuminate\Support\Facades\Http; 
 use Illuminate\Support\Facades\Log;   
 use App\Models\Usuario;
 use App\Jobs\CleanupIncompleteUser; 
+use Illuminate\Http\Client\ConnectionException; 
 
 class UsuarioController extends Controller
 {
@@ -137,104 +138,119 @@ public function resetFingerprint($id)
     $token = env('PARTICLE_ACCESS_TOKEN');
     $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
 
-    // Guardamos el estatus original por si hay que revertir
-    $prevEstatus = $usuario->estatus;
+    // Iniciamos la "Caja Fuerte" (Transacción)
+    DB::beginTransaction();
 
     try {
+        // Guardamos el estado original para poder restaurar en caso de error lógico
+        $oldFingerprintId = $usuario->fingerprint_id;
+        $oldEstatus = $usuario->estatus;
+
+        // 1. CAMBIO TEMPORAL EN BD (Solo se confirma si todo sale bien)
+        $usuario->estatus = 7; // En proceso
+        $usuario->save();
+
         // ---------------------------------------------------------
-        // 1. VALIDACIÓN ESTRICTA DE CONEXIÓN (PING)
+        // 2. VALIDACIÓN DE CONEXIÓN (PING)
         // ---------------------------------------------------------
         try {
-            // Timeout corto (3s) para no hacer esperar al usuario si está desconectado
-            $responseInfo = Http::withHeaders([
-                'Authorization' => "Bearer {$token}"
-            ])->timeout(3)->get($baseUrl);
+            $responseInfo = Http::withHeaders(['Authorization' => "Bearer {$token}"])
+                ->timeout(4) // 4 segundos máximo para conectar
+                ->get($baseUrl);
             
-            // Si la API de Particle da error (404, 500, etc.)
             if (!$responseInfo->successful()) {
                 throw new \Exception('No se pudo conectar con la nube de Particle.');
             }
 
             $info = $responseInfo->json();
-            
-            // Si la API responde, pero la variable 'connected' es false
             if (isset($info['connected']) && $info['connected'] === false) {
                 throw new \Exception('El dispositivo Photon está APAGADO o sin internet.');
             }
 
-        } catch (\Throwable $e) {
-            // Si falla el ping, NO tocamos la BD y regresamos error inmediato.
-            Log::warning("Fallo conexión Photon: " . $e->getMessage());
-            return back()->with('error', $e->getMessage()); // Usamos 'error' en flash session
+        } catch (\Exception $e) {
+            // Si falla la conexión, deshacemos cambios en BD y mostramos error
+            DB::rollBack(); 
+            Log::warning("Ping fallido: " . $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
 
         // ---------------------------------------------------------
-        // 2. PREPARACIÓN EN BASE DE DATOS
+        // 3. INTENTAR BORRAR HUELLA FÍSICA (Si existía)
         // ---------------------------------------------------------
-        $usuario->estatus = 7; // Estatus "En proceso"
-        $usuario->save();
-
-        // ---------------------------------------------------------
-        // 3. LIMPIEZA DE HUELLA ANTERIOR (Best effort)
-        // ---------------------------------------------------------
-        if ($usuario->fingerprint_id) {
+        if ($oldFingerprintId) {
             try {
-                Http::withHeaders([
-                    'Authorization' => "Bearer {$token}"
-                ])->timeout(3)->asForm()->post(
-                    "{$baseUrl}/delete-fingerprint",
-                    ['args' => (string) $usuario->fingerprint_id]
-                );
-                sleep(1); // Pequeña pausa para que el Photon procese
-            } catch (\Throwable $e) {
-                Log::warning("No se pudo borrar huella anterior: " . $e->getMessage());
+                $delResp = Http::withHeaders(['Authorization' => "Bearer {$token}"])
+                    ->timeout(5)
+                    ->asForm()->post("{$baseUrl}/delete-fingerprint", [
+                        'args' => (string) $oldFingerprintId
+                    ]);
+                
+                // Opcional: Verificar si el sensor confirmó el borrado
+                // Si falla el borrado físico, ¿queremos detener todo? 
+                // Generalmente sí, para evitar "huellas fantasma".
+                if ($delResp->failed()) {
+                     Log::warning("El sensor no confirmó el borrado de la huella ID: $oldFingerprintId");
+                }
+                
+                sleep(1); // Dar respiro al Photon
+
+            } catch (\Exception $e) {
+                // Si falla borrar, es riesgoso continuar. Mejor abortamos.
+                DB::rollBack();
+                return back()->with('error', 'No se pudo limpiar la huella anterior del sensor. Intente de nuevo.');
             }
         }
 
-        // Reset local del ID
+        // 4. PREPARAR DB PARA NUEVA HUELLA
         $usuario->fingerprint_id = null;
         $usuario->save();
 
         // ---------------------------------------------------------
-        // 4. INSTRUCCIÓN DE ENROLAMIENTO
+        // 5. INSTRUCCIÓN DE ENROLAMIENTO (El paso crítico)
         // ---------------------------------------------------------
-        $fnResp = Http::withHeaders([
-            'Authorization' => "Bearer {$token}"
-        ])->timeout(10)->asForm()->post(
-            "{$baseUrl}/enroll-fingerprint",
-            ['args' => (string) $usuario->id]
-        );
+        try {
+            $fnResp = Http::withHeaders(['Authorization' => "Bearer {$token}"])
+                ->timeout(12) // Tiempo suficiente para que responda el request
+                ->asForm()->post("{$baseUrl}/enroll-fingerprint", [
+                    'args' => (string) $usuario->id
+                ]);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            // AQUÍ CACHAMOS EL TIMEOUT (cURL error 28)
+            throw new \Exception('El dispositivo no respondió a tiempo (Timeout). Verifique su conexión.');
+        }
 
         if (!$fnResp->successful()) {
-            throw new \Exception('El dispositivo rechazó la instrucción de enrolamiento.');
+            throw new \Exception('El dispositivo rechazó la instrucción (Error ' . $fnResp->status() . ').');
         }
 
         $body = $fnResp->json();
 
-        // Validamos que el firmware responda un código positivo
+        // 6. VERIFICAR RESPUESTA DEL FIRMWARE
         if (isset($body['return_value']) && intval($body['return_value']) >= 0) {
             
-            // Job de limpieza (failsafe)
+            // ¡TODO SALIÓ BIEN! CONFIRMAMOS LOS CAMBIOS EN LA BD
+            DB::commit();
+
             CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
 
-            // ÉXITO: Enviamos la señal 'trigger_enroll' para que el JS inicie el polling
             return back()->with('trigger_enroll', true);
         }
 
-        throw new \Exception('El dispositivo devolvió un error desconocido.');
+        // Si llegamos aquí, el firmware devolvió -1 o algo raro
+        throw new \Exception('El sensor devolvió un error desconocido al iniciar.');
 
     } catch (\Throwable $e) {
-        // ---------------------------------------------------------
-        // MANEJO DE ERRORES GENERAL
-        // ---------------------------------------------------------
-        Log::error("Error crítico en resetFingerprint: ".$e->getMessage());
+        // "Ctrl + Z" a la base de datos
+        DB::rollBack();
+        
+        Log::error("Error en resetFingerprint: ".$e->getMessage());
 
-        // Revertimos cambios en BD
-        $usuario->estatus = $prevEstatus;
-        $usuario->save();
+        // Mensaje amigable para el usuario en lugar del error cURL feo
+        $msg =Str::contains($e->getMessage(), 'cURL error 28') 
+            ? 'El dispositivo tardó demasiado en responder. Asegúrese de que esté conectado.' 
+            : $e->getMessage();
 
-        // Regresamos el error a la vista
-        return back()->with('error', $e->getMessage());
+        return back()->with('error', $msg);
     }
 }
 
