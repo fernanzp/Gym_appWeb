@@ -137,72 +137,97 @@ public function resetFingerprint($id)
     $token = env('PARTICLE_ACCESS_TOKEN');
     $baseUrl = "https://api.particle.io/v1/devices/{$deviceId}";
 
+    // Guardamos el estatus previo por si necesitamos revertir
+    $prevEstatus = $usuario->estatus;
+
     try {
-        // ---------------------------------------------------------
-        // PASO 1: PING ESTRICTO (Detectar desconexión rápido)
-        // ---------------------------------------------------------
-        $responseInfo = Http::timeout(3)->get("{$baseUrl}?access_token={$token}");
-        
-        if ($responseInfo->failed()) {
-            throw new \Exception("No hay conexión con el dispositivo (Ping fallido).");
+        // 1) Marcar como "enrolando" ANTES de empezar (para que el frontend no trate como error)
+        $usuario->estatus = 7; // en proceso
+        $usuario->save();
+
+        // 2) Ping (timeout un poco mayor para evitar falsos negativos)
+        $responseInfo = Http::timeout(6)->get("{$baseUrl}?access_token={$token}");
+
+        if (!$responseInfo->successful()) {
+            Log::warning("Ping a Particle no exitoso", [
+                'device' => $deviceId,
+                'status' => $responseInfo->status(),
+                'body' => $responseInfo->body()
+            ]);
+            // Revertimos al estatus anterior para no dejar en 7 si falló
+            $usuario->estatus = $prevEstatus;
+            $usuario->save();
+            return back()->with('error', 'No hay conexión con el dispositivo (ping fallido).');
         }
 
         $info = $responseInfo->json();
         if (isset($info['connected']) && $info['connected'] === false) {
-            throw new \Exception("El dispositivo está DESCONECTADO.");
+            $usuario->estatus = $prevEstatus;
+            $usuario->save();
+            return back()->with('error', 'El dispositivo reporta estar desconectado.');
         }
 
-        // ---------------------------------------------------------
-        // PASO 2: BORRAR HUELLA EXISTENTE EN EL SENSOR (si aplica)
-        // ---------------------------------------------------------
+        // 3) Si había fingerprint en DB, pedir que la borre en el sensor (no forzar error si falla)
         if ($usuario->fingerprint_id) {
             try {
-                Http::timeout(5)->asForm()->post(
-                    "{$baseUrl}/delete-fingerprint",
-                    [
+                $delResp = Http::timeout(6)
+                    ->asForm()
+                    ->post("{$baseUrl}/delete-fingerprint", [
                         'access_token' => $token,
                         'args' => (string) $usuario->fingerprint_id
-                    ]
-                );
-                sleep(2);
+                    ]);
+                // no hacemos throw: si la eliminación falla, lo registramos y seguimos
+                if (!$delResp->successful()) {
+                    Log::warning("delete-fingerprint falló", ['status' => $delResp->status(), 'body' => $delResp->body()]);
+                } else {
+                    // espera breve para dejar que el sensor procese
+                    sleep(1);
+                }
             } catch (\Throwable $e) {
-                // ignorar (el sensor podría no tenerla)
+                Log::warning("Excepción borrando fingerprint en sensor: " . $e->getMessage());
             }
         }
 
-        // ---------------------------------------------------------
-        // PASO 3: RESET EN BASE DE DATOS
-        // ---------------------------------------------------------
+        // 4) Reset local: limpiar fingerprint_id y dejar estatus en 7 (en proceso)
         $usuario->fingerprint_id = null;
-        $usuario->estatus = 0; 
         $usuario->save();
 
-        // ---------------------------------------------------------
-        // PASO 4: INICIAR ENROLAMIENTO EN EL PHOTON
-        // ---------------------------------------------------------
-        Http::timeout(8)
+        // 5) Llamar a la función del dispositivo para iniciar enrolamiento
+        $fnResp = Http::timeout(12)
             ->asForm()
             ->post("{$baseUrl}/enroll-fingerprint", [
-                'access_token' => $token, 
+                'access_token' => $token,
                 'args' => (string) $usuario->id
-            ])
-            ->throw();
+            ]);
 
-        // ---------------------------------------------------------
-        // PASO 5: PROTECCIÓN POR SI SE ATORA
-        // ---------------------------------------------------------
-        CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
+        // 6) Validar respuesta de la nube (Particle devuelve JSON con return_value cuando es función)
+        if (!$fnResp->successful()) {
+            Log::error("enroll-fingerprint POST no exitoso", ['status' => $fnResp->status(), 'body' => $fnResp->body()]);
+            // Revertir estatus para no dejar usuario marcado en enrolamiento si la llamada falló
+            $usuario->estatus = $prevEstatus;
+            $usuario->save();
+            return back()->with('error', 'No se pudo iniciar el enrolamiento (falló la llamada al dispositivo).');
+        }
 
-        // ---------------------------------------------------------
-        // 🔥 REGRESO CORRECTO PARA EL FRONTEND
-        // ---------------------------------------------------------
-        return back()->with('trigger_enroll', true);
+        $body = $fnResp->json();
+        // Particle normalmente devuelve { "id": ..., "connected": true, "return_value": 1 } o similar.
+        if (isset($body['return_value']) && intval($body['return_value']) >= 0) {
+            // Éxito: la función fue aceptada por el dispositivo — ahora el dispositivo ejecutará iniciarEnroll()
+            CleanupIncompleteUser::dispatch($usuario->id)->delay(now()->addSeconds(60));
+            return back()->with('trigger_enroll', 1);
+        } else {
+            Log::warning("Respuesta inesperada de enroll-fingerprint", ['body' => $body]);
+            $usuario->estatus = $prevEstatus;
+            $usuario->save();
+            return back()->with('error', 'El dispositivo no aceptó la instrucción de enrolamiento.');
+        }
 
-    } catch (\Exception $e) {
-
-        Log::error("Fallo resetFingerprint: " . $e->getMessage());
-        
-        $usuario->estatus = 8;
+    } catch (\Throwable $e) {
+        Log::error("Fallo resetFingerprint (excepción): " . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
+        // Revertimos estatus para evitar dejarlo marcado en error automático
+        $usuario->estatus = $prevEstatus;
         $usuario->save();
 
         return back()->with('error', 'Error de conexión: ' . $e->getMessage());
