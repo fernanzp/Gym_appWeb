@@ -220,21 +220,29 @@
 
     <script>
     let pollingInterval;
-    // Pasamos el ID de usuario de forma segura
-    const userId = @json($usuario->id);
+    
+    // --- VARIABLES SEGURAS (Usando json_encode estándar) ---
+    // Esto evita el error de "unexpected token"
+    const userId = {{ json_encode($usuario->id) }};
+    const successMsg = {{ json_encode(session('success')) }};
+    const errorMsg = {{ json_encode(session('error')) }}; 
+    const triggerEnroll = {{ json_encode(session('trigger_enroll')) }}; 
+
+    console.log("Debug Sesión -> Success:", successMsg, "| Error:", errorMsg, "| Enroll:", triggerEnroll);
 
     // --- FUNCIÓN PARA MOSTRAR LOADER ---
     function activarLoader() {
-        // Solo activamos visualmente, la lógica real depende del reload
         const overlay = document.getElementById('modalOverlay');
         const cargando = document.getElementById('estadoCargando');
         const errorModal = document.getElementById('estadoError');
         const exitoModal = document.getElementById('estadoExito');
         
+        // Ocultar todo primero
         cargando.classList.add('hidden');
         errorModal.classList.add('hidden');
         exitoModal.classList.add('hidden');
         
+        // Mostrar loader
         overlay.classList.remove('hidden');
         cargando.classList.remove('hidden');
     }
@@ -244,7 +252,7 @@
         if(pollingInterval) clearInterval(pollingInterval);
     }
 
-    // --- FUNCIÓN DE POLLING (Solo se activa si el backend dio luz verde) ---
+    // --- FUNCIÓN DE POLLING ---
     function iniciarPolling() {
         if(pollingInterval) clearInterval(pollingInterval);
         let intentos = 0;
@@ -252,7 +260,7 @@
         pollingInterval = setInterval(async () => {
             intentos++;
             try {
-                // Hacemos fetch a la API (la ruta correcta en api.php)
+                // Fetch a la API
                 const res = await fetch(`/api/user-status/${userId}`);
                 const data = await res.json();
 
@@ -260,7 +268,7 @@
                 const exito = document.getElementById('estadoExito');
                 const error = document.getElementById('estadoError');
 
-                // 1. CASO ERROR (Estatus 8=Error, 9=Timeout según tu lógica)
+                // 1. CASO ERROR
                 if (data.estatus == 8 || data.estatus == 9) {
                     clearInterval(pollingInterval);
                     cargando.classList.add('hidden');
@@ -272,17 +280,16 @@
                     return;
                 }
 
-                // 2. CASO ÉXITO (Ya tenemos fingerprint_id)
+                // 2. CASO ÉXITO
                 if (data.fingerprint_id != null) {
                     clearInterval(pollingInterval);
                     cargando.classList.add('hidden');
                     exito.classList.remove('hidden');
-                    // Recargamos la página tras 2 segundos para ver el cambio
                     setTimeout(() => location.reload(), 2000);
                     return;
                 }
 
-                // Timeout del navegador (60 segundos por seguridad)
+                // Timeout del navegador (60 segundos)
                 if (intentos > 60) {
                     clearInterval(pollingInterval);
                     cargando.classList.add('hidden');
@@ -294,19 +301,10 @@
         }, 1000);
     }
 
-
-    // --- LÓGICA DE INICIO (AL CARGAR LA PÁGINA) ---
+    // --- LÓGICA DE INICIO ---
     document.addEventListener("DOMContentLoaded", function() {
 
-        // Leemos las variables de sesión de forma segura con @json
-        const successMsg = @json(session('success'));
-        const errorMsg = @json(session('error')); 
-        const triggerEnroll = @json(session('trigger_enroll')); 
-
-        console.log("Estado Sesión -> Error:", errorMsg, "| Enroll:", triggerEnroll, "| Success:", successMsg);
-
-        // 1. PRIORIDAD ABSOLUTA: SI HAY ERROR, MOSTRARLO Y PARAR.
-        // Esto arregla el bug donde veías "éxito" falsamente.
+        // 1. SI HAY ERROR -> MOSTRAR Y PARAR
         if (errorMsg) {
             const overlay = document.getElementById('modalOverlay');
             const errorModal = document.getElementById('estadoError');
@@ -315,10 +313,10 @@
             txtError.innerText = errorMsg;
             overlay.classList.remove('hidden');
             errorModal.classList.remove('hidden');
-            return; // DETIENE CUALQUIER OTRA LÓGICA
+            return; 
         }
 
-        // 2. MODO ENROLAMIENTO: El backend confirmó conexión y espera huella.
+        // 2. MODO ENROLAMIENTO -> LOADER + POLLING
         if (triggerEnroll) {
             const overlay = document.getElementById('modalOverlay');
             const cargando = document.getElementById('estadoCargando');
@@ -326,13 +324,11 @@
             overlay.classList.remove('hidden');
             cargando.classList.remove('hidden');
             
-            // Iniciamos el polling para escuchar al Photon
             iniciarPolling();
             return;
         }
 
-        // 3. ÉXITO GENÉRICO: Solo si NO estamos enrolando y NO hay error.
-        // (Ejemplo: Cuando borras un usuario exitosamente y rediriges aquí)
+        // 3. ÉXITO GENÉRICO
         if (successMsg) {
             const overlay = document.getElementById('modalOverlay');
             const exito = document.getElementById('estadoExito');
