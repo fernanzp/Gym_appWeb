@@ -31,7 +31,7 @@
         .istok-web-bold { font-family: "Istok Web", sans-serif; font-weight: 700; font-style: normal; }
     </style>
 </head>
-<body class="antialiased istok-web-regular" x-data="{ aforoModalOpen: false }">
+<body class="antialiased istok-web-regular" x-data="{ aforoModalOpen: false, editPlanModalOpen: false, currentPlan: { nombre: '', precio: 0, duracion: 0 }, isEditing: false }">
   <div class="min-h-screen p-6">
     <!-- GRID PRINCIPAL: [Sidebar | Área principal] -->
     <div class="grid grid-cols-[84px_minmax(0,1fr)] gap-6 h-[calc(100vh-3rem)]">
@@ -322,13 +322,18 @@
                     <p class="text-sm text-[var(--gris-oscuro)]">Administra los precios y duracion de tus servicios.</p>
                 </div>
                 
-                <!-- Botón Crear Nuevo Plan -->
-                <a href="#" class="inline-flex items-center justify-center gap-2 bg-[var(--azul)] hover:bg-[var(--azul-oscuro)] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 group">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>Crear Nuevo Plan</span>
-                </a>
+              <!--Botón: Crear nuevo plan-->
+              <button type="button"
+                  @click="
+                      currentPlan = { nombre: '', precio: '', duracion: '' }; 
+                      isEditing = false; 
+                      editPlanModalOpen = true"
+                  class="inline-flex items-center justify-center gap-2 bg-[var(--azul)] hover:bg-[var(--azul-oscuro)] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 group">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Crear Nuevo Plan</span>
+              </button>
             </div>
 
             <!-- Datos de Prueba (Frontend Only) -->
@@ -381,7 +386,18 @@
                                     <td class="px-6 py-4">
                                         <div class="flex gap-2 transition-all transform translate-x-2 group-hover:translate-x-0">
                                             <!-- Botón Editar -->
-                                            <button class="p-2 rounded-lg text-[var(--gris-medio)] hover:text-[var(--azul)] hover:bg-blue-50 transition-colors" title="Editar">
+                                            <button 
+                                                type="button"
+                                                @click="
+                                                    currentPlan = { 
+                                                        nombre: '{{ $plan->nombre }}', 
+                                                        precio: {{ $plan->precio }}, 
+                                                        duracion: {{ $plan->duracion_dias }} 
+                                                    }; 
+                                                    isEditing = true; 
+                                                    editPlanModalOpen = true"
+                                                class="p-2 rounded-lg text-[var(--gris-medio)] hover:text-[var(--azul)] hover:bg-blue-50 transition-colors" 
+                                                title="Editar">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
@@ -488,6 +504,115 @@
                           class="flex-1 px-4 py-2.5 rounded-xl bg-[var(--azul)] text-white font-bold hover:bg-[var(--azul-oscuro)] shadow-md shadow-blue-500/20 transition-all"
                       >
                           Guardar
+                      </button>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </div>
+
+  <!-- MODAL DINÁMICO (CREAR / EDITAR PLAN) -->
+  <div 
+      x-show="editPlanModalOpen" 
+      style="display: none;"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+  >
+      <div 
+          @click.away="editPlanModalOpen = false"
+          class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+          x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+          x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+      >
+          <!-- Header -->
+          <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <!-- Título Dinámico -->
+              <h3 class="text-lg font-bold text-gray-800 istok-web-bold" x-text="isEditing ? 'Editar Plan' : 'Crear Nuevo Plan'"></h3>
+              
+              <button @click="editPlanModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+              </button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6">
+              <form action="#" method="POST">
+                  @csrf
+                  
+                  <!-- Solo incluimos el método PUT si estamos editando -->
+                  <template x-if="isEditing">
+                      <input type="hidden" name="_method" value="PUT">
+                  </template>
+                  
+                  <div class="space-y-4">
+                      <!-- Campo: Nombre -->
+                      <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Plan</label>
+                          <input 
+                              type="text" 
+                              x-model="currentPlan.nombre"
+                              class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
+                              placeholder="Ej. Plan Mensual"
+                          >
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-4">
+                          <!-- Campo: Precio -->
+                          <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Precio (MXN)</label>
+                              <div class="relative">
+                                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-bold">$</span>
+                                  <input 
+                                      type="number" 
+                                      step="0.01"
+                                      x-model="currentPlan.precio"
+                                      class="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
+                                      placeholder="0.00"
+                                  >
+                              </div>
+                          </div>
+
+                          <!-- Campo: Duración -->
+                          <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Duración</label>
+                              <div class="relative">
+                                  <input 
+                                      type="number" 
+                                      x-model="currentPlan.duracion"
+                                      class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
+                                      placeholder="30"
+                                  >
+                                  <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 text-sm pointer-events-none">días</span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Footer Botones -->
+                  <div class="flex gap-3 mt-8">
+                      <button 
+                          type="button" 
+                          @click="editPlanModalOpen = false"
+                          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      >
+                          Cancelar
+                      </button>
+                      <button 
+                          type="submit"
+                          class="flex-1 px-4 py-2.5 rounded-xl bg-[var(--azul)] text-white font-bold hover:bg-[var(--azul-oscuro)] shadow-md shadow-blue-500/20 transition-all"
+                          x-text="isEditing ? 'Guardar Cambios' : 'Crear Plan'"
+                      >
                       </button>
                   </div>
               </form>
