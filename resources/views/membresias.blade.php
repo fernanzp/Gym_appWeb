@@ -76,6 +76,15 @@
       </aside>
 
       <main class="h-full min-h-0 flex flex-col overflow-hidden">
+        @if (session('success'))
+            <div x-data="{ show: true }" 
+                x-init="setTimeout(() => show = false, 4000)" 
+                x-show="show" 
+                x-transition.duration.500ms
+                class="mb-3 p-3 rounded-md bg-green-100 text-green-800">
+                {{ session('success') }}
+            </div>
+        @endif
         <header class="h-16 flex items-center justify-between">
           @php
             $hoy = now('America/Mexico_City');

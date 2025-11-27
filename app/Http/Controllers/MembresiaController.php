@@ -84,57 +84,59 @@ class MembresiaController extends Controller
     public function toggleStatus($id)
     {
         $membresia = Membresia::findOrFail($id);
-        $hoy = Carbon::now(); // Fecha actual
+        
+        // Usamos startOfDay para que la hora (09:00am vs 00:00am) no afecte la comparación
+        $hoy = Carbon::now()->startOfDay(); 
 
-        // LOGICA PARA CONGELAR
         if ($membresia->estatus === 'vigente') {
             
-            // 1. Calcular días restantes (Fecha Fin - Hoy)
-            // Usamos diffInDays(..., false) para obtener negativos si ya pasó, 
-            // pero validaremos que sea positivo.
-            $fechaFin = Carbon::parse($membresia->fecha_fin);
+            $fechaFin = Carbon::parse($membresia->fecha_fin)->startOfDay();
             
-            // Si la fecha fin es hoy o futura, calculamos la diferencia
+            // Verificamos que la fecha fin sea hoy o futura
             if ($fechaFin->greaterThanOrEqualTo($hoy)) {
+                // diffInDays retorna entero positivo absoluto
                 $diasRestantes = $hoy->diffInDays($fechaFin);
                 
-                // Guardamos esos días en la columna temporal
+                // Si vence HOY, diffInDays da 0. Aseguramos al menos 1 día o lo que consideres lógico.
+                // Opcional: si quieres permitir guardar 0 días, deja la línea como estaba.
+                // $diasRestantes = $diasRestantes === 0 ? 1 : $diasRestantes; 
+
                 $membresia->dias_congelados = $diasRestantes;
                 $membresia->estatus = 'congelada';
                 
-                $mensaje = "Membresía congelada. Se guardaron $diasRestantes días restantes.";
+                // 1. GUARDAMOS ANTES DE RETORNAR
+                $membresia->save();
+
+                return back()->with('success', 'Membresía congelada correctamente.');
             } else {
                 return back()->with('error', 'No se puede congelar una membresía que ya venció.');
             }
 
-        // LOGICA PARA REACTIVAR
         } elseif ($membresia->estatus === 'congelada') {
             
-            // Verificamos que tenga días guardados
             if ($membresia->dias_congelados !== null) {
                 
-                // 1. Nueva Fecha Fin = Hoy + Días Guardados
+                // Al reactivar, sumamos los días guardados a la fecha de HOY
                 $nuevaFechaFin = $hoy->copy()->addDays($membresia->dias_congelados);
                 
-                // 2. Actualizamos la fecha fin y limpiamos los días guardados
                 $membresia->fecha_fin = $nuevaFechaFin;
                 $membresia->dias_congelados = null;
                 $membresia->estatus = 'vigente';
+                
+                // 1. GUARDAMOS ANTES DE RETORNAR
+                $membresia->save();
 
-                $mensaje = "Membresía reactivada. Nueva fecha de vencimiento: " . $nuevaFechaFin->format('d/m/Y');
+                return back()->with('success', 'Membresía reactivada correctamente.');
             } else {
-                // Caso de error (datos corruptos o manuales)
+                // Corrección de datos corruptos
                 $membresia->estatus = 'vigente';
-                $mensaje = 'Membresía reactivada (No había días guardados registrados).';
+                $membresia->save();
+                return back()->with('warning', 'Membresía reactivada (No había días guardados registrados).');
             }
 
         } else {
             return back()->with('error', 'No se puede modificar una membresía vencida.');
         }
-
-        $membresia->save();
-
-        return back()->with('success', $mensaje);
     }
 
     public function prepararRenovacion(Request $request)
@@ -205,6 +207,6 @@ class MembresiaController extends Controller
         // Así permites que termine sus días restantes si renovó por adelantado.
 
         return redirect()->route('membresias')
-            ->with('success', 'Membresía renovada exitosamente. Se ha generado un nuevo historial.');
+            ->with('success', 'Membresía renovada exitosamente.');
     }
 }

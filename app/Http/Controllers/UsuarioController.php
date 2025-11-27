@@ -68,7 +68,7 @@ class UsuarioController extends Controller
             // Mensajes personalizados (opcional)
             'email.unique'    => 'Este correo ya está registrado por otro usuario.',
             'telefono.unique' => 'Este teléfono ya pertenece a otro usuario.',
-            'telefono.numeric'=> 'El teléfono solo debe contener números.',
+            'telefono.numeric'=> 'El teléfono solo debe contener números.'
         ]);
 
         try {
@@ -77,9 +77,7 @@ class UsuarioController extends Controller
             $usuario->update($validatedData);
 
             // 3. Retornar éxito
-            // Tu JS busca la sesión 'success'. Al no contener "Instrucción enviada",
-            // mostrará el modal de éxito con la palomita verde.
-            return back()->with('success', 'Información actualizada correctamente.');
+            return redirect()->route('usuarios')->with('success', 'Información del usuario actualizada correctamente.');
         } catch (\Exception $e) {
             // Log del error para depuración interna
             Log::error("Error al actualizar usuario ID {$usuario->id}: " . $e->getMessage());
