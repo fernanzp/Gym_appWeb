@@ -361,10 +361,10 @@
                 ];
             @endphp
 
-            <div class="overflow-hidden rounded-2xl bg-white border border-[var(--gris-bajito)] shadow-sm">
+            <div class="overflow-hidden rounded-2xl bg-white border border-[var(--gris-medio-bajito)] shadow-sm">
                 <div class="overflow-x-auto">
                     <table class="min-w-full">
-                        <thead class="bg-gray-50 border-b border-[var(--gris-bajito)] istok-web-bold">
+                        <thead class="bg-[#F8F8F8] border-b border-[var(--gris-medio-bajito)] istok-web-bold">
                             <tr>
                                 <th class="px-6 py-4 text-left text-gray-600">Nombre del Plan</th>
                                 <th class="px-6 py-4 text-left text-gray-600">Precio</th>

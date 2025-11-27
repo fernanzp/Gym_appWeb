@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Usuario; // ¡Asegúrate de que tu modelo se llame así!
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 
 class MobileAuthController extends Controller
 {
@@ -21,7 +20,7 @@ class MobileAuthController extends Controller
         // Verificar si el usuario existe
         $u = Usuario::where('email', $data['email'])->first();
 
-        // Verificar contraseña (asumiendo que en DB se llama 'contrasena')
+        // Verificar contraseña
         if (!$u || !Hash::check($data['password'], $u->contrasena)) {
             return response()->json(['message' => 'Credenciales inválidas'], 401);
         }
@@ -29,32 +28,24 @@ class MobileAuthController extends Controller
         // Crear Token
         $token = $u->createToken('mobile')->plainTextToken;
 
-        // --- DEVOLVER DATOS + ESTATUS ---
+        // Devolver Token y datos básicos (incluyendo estatus para onboarding)
         return [
             'token' => $token,
             'user'  => [
                 'id'          => $u->id,
                 'nombre_comp' => $u->nombre_comp,
                 'email'       => $u->email,
-                'estatus'     => $u->estatus, // IMPORTANTE: Enviar el estatus para Flutter
+                'estatus'     => $u->estatus, 
             ],
         ];
     }
 
-    // POST /api/onboarding-complete (Protegida)
+    // POST /api/onboarding-complete
     public function completeOnboarding(Request $request)
     {
-        // Obtener el ID del usuario logueado
-        $authId = Auth::id();
+        // Obtenemos el usuario directamente del request (gracias al token)
+        $user = $request->user();
 
-        if (!$authId) {
-            return response()->json(['message' => 'No autorizado'], 401);
-        }
-
-        // Buscar al usuario
-        $user = Usuario::find($authId);
-
-        // Si el usuario es nuevo (Estatus 0), lo actualizamos a 1
         if ($user && $user->estatus == 0) {
             $user->estatus = 1;
             $user->save();
@@ -74,7 +65,12 @@ class MobileAuthController extends Controller
     // POST /api/logout
     public function logout(Request $r)
     {
+        // Borra el token actual para cerrar la sesión en el dispositivo
         $r->user()->currentAccessToken()->delete();
-        return ['ok' => true];
+        
+        return response()->json([
+            'status' => 'success', 
+            'message' => 'Sesión cerrada correctamente'
+        ]);
     }
 }

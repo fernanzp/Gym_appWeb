@@ -24,6 +24,7 @@
             --azul-oscuro: #0248D2;
             --gris-oscuro: #727272;
             --gris-medio: #A3A3A3;
+            --gris-medio-bajito: #E5E5E5;
             --gris-bajito: #F1F1F1;
         }
         .istok-web-regular { font-family: "Istok Web", sans-serif; font-weight: 400; font-style: normal; }
@@ -164,7 +165,7 @@
         </header>
 
         <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
-          <form method="GET" action="{{ route('usuarios') }}" class="rounded-2xl bg-[var(--gris-bajito)] h-12 mb-4 flex items-center gap-3 px-4 group ring-1 ring-black/10">
+          <form method="GET" action="{{ route('usuarios') }}" class="rounded-2xl border border-[var(--gris-medio-bajito)] shadow-sm h-12 mb-4 flex items-center gap-3 px-4">
             <!-- Icono de Búsqueda -->
             <svg class="w-5 h-5 text-[var(--gris-medio)] transition-colors group-focus-within:text-[var(--azul)]" 
               xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
@@ -175,78 +176,81 @@
               placeholder="Buscar por nombre o teléfono..."
               class="flex-1 bg-transparent h-full focus:outline-none text-gray-800 placeholder:text-[var(--gris-medio)] istok-web-regular" />
           </form>
-          <div class="overflow-x-auto rounded-2xl bg-[var(--gris-bajito)] ring-1 ring-black/10">
-            <table class="min-w-full">
-              <thead class="bg-[var(--gris-bajito)] text-xl istok-web-bold">
-                <tr class="border-b border-[var(--gris-medio)]">
-                  <th class="px-4 py-3 text-left text-gray-600">Nombre completo</th>
-                  <th class="px-4 py-3 text-left text-gray-600">Teléfono</th>
-                  <th class="px-4 py-3 text-left text-gray-600">Membresía</th>
-                  <th class="px-4 py-3 text-right text-gray-600 w-28">Acciones</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-[var(--gris-medio)] istok-web-regular">
-                @forelse($usuarios as $u)
-                  @php
-                    $estatus = $u->membresia_estatus ?? null;
-                      
-                    $badgeData = match ($estatus) {
-                      'vigente'   => ['label' => 'Vigente',   'class' => 'bg-green-100 text-green-700'],
-                      'vencida'   => ['label' => 'Vencida',   'class' => 'bg-red-100 text-red-700'],
-                      'congelada' => ['label' => 'Congelada', 'class' => 'bg-blue-100 text-blue-700'],
-                      default     => [
-                        'label' => $estatus ? ucfirst($estatus) : '—', 
-                        'class' => 'bg-gray-100 text-gray-500'
-                      ],
-                    };
-                  @endphp
 
-                  <tr class="hover:bg-[#FAFAFA] transition-colors group">
-                      <td class="px-4 py-3">
-                          <p class="font-semibold text-gray-900">{{ $u->nombre_comp }}</p>
-                          <p class="text-sm text-gray-600">{{ $u->email ?? '' }}</p>
-                      </td>
-                      <td class="px-4 py-3 text-gray-600">{{ $u->telefono ?? '—' }}</td>
-                      <td class="px-4 py-3">
-                          <span class="px-3 py-1 rounded-full text-xs font-bold {{ $badgeData['class'] }}">
-                              {{ $badgeData['label'] }}
-                          </span>
-                      </td>
-                      
-                      <td class="px-2 py-2">
-                        <div class="flex items-center justify-end gap-3 pr-2 text-[var(--gris-oscuro)]">
-                          <a href="{{ route('usuarios.edit', $u->id) }}" class="p-1.5 rounded-lg hover:bg-gray-200/60 transition-colors" title="Editar" aria-label="Editar">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
-                              <path d="M471.6 21.7c-21.9-21.9-57.3-21.9-79.2 0L368 46.1 465.9 144 490.3 119.6c21.9-21.9 21.9-57.3 0-79.2L471.6 21.7zm-299.2 220c-6.1 6.1-10.8 13.6-13.5 21.9l-29.6 88.8c-2.9 8.6-.6 18.1 5.8 24.6s15.9 8.7 24.6 5.8l88.8-29.6c8.2-2.7 15.7-7.4 21.9-13.5L432 177.9 334.1 80 172.4 241.7zM96 64C43 64 0 107 0 160L0 416c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-96c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 64z"/>
-                            </svg>
-                          </a>
-                          <button 
-                              type="button"
-                              @click="modalDeleteOpen = true; deleteAction = '{{ route('usuarios.destroy', $u->id) }}'; userNameToDelete = '{{ $u->nombre_comp }}'"
-                              class="p-1.5 rounded-lg hover:bg-red-50 text-[var(--gris-oscuro)] hover:text-red-600 transition-colors" 
-                              title="Eliminar" 
-                              aria-label="Eliminar"
-                          >
-                              <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor">
-                                  <path d="M136.7 5.9L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-8.7-26.1C306.9-7.2 294.7-16 280.9-16L167.1-16c-13.8 0-26 8.8-30.4 21.9zM416 144L32 144 53.1 467.1C54.7 492.4 75.7 512 101 512L347 512c25.3 0 46.3-19.6 47.9-44.9L416 144z"/>
+          <div class="overflow-hidden rounded-2xl bg-white border border-[var(--gris-medio-bajito)] shadow-sm">
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead class="bg-[#F8F8F8] border-b border-[var(--gris-medio-bajito)] istok-web-bold">
+                  <tr class="">
+                    <th class="px-4 py-3 text-left text-gray-600">Nombre completo</th>
+                    <th class="px-4 py-3 text-left text-gray-600">Teléfono</th>
+                    <th class="px-4 py-3 text-left text-gray-600">Membresía</th>
+                    <th class="px-4 py-3 text-right text-gray-600 w-28">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--gris-medio-bajito)] istok-web-regular">
+                  @forelse($usuarios as $u)
+                    @php
+                      $estatus = $u->membresia_estatus ?? null;
+                        
+                      $badgeData = match ($estatus) {
+                        'vigente'   => ['label' => 'Vigente',   'class' => 'bg-green-100 text-green-700'],
+                        'vencida'   => ['label' => 'Vencida',   'class' => 'bg-red-100 text-red-700'],
+                        'congelada' => ['label' => 'Congelada', 'class' => 'bg-blue-100 text-blue-700'],
+                        default     => [
+                          'label' => $estatus ? ucfirst($estatus) : '—', 
+                          'class' => 'bg-gray-100 text-gray-500'
+                        ],
+                      };
+                    @endphp
+
+                    <tr class="hover:bg-[#FAFAFA] transition-colors group">
+                        <td class="px-4 py-3">
+                            <p class="font-semibold text-gray-900">{{ $u->nombre_comp }}</p>
+                            <p class="text-sm text-gray-600">{{ $u->email ?? '' }}</p>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600">{{ $u->telefono ?? '—' }}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold {{ $badgeData['class'] }}">
+                                {{ $badgeData['label'] }}
+                            </span>
+                        </td>
+                        
+                        <td class="px-2 py-2">
+                          <div class="flex items-center justify-end gap-3 pr-2">
+                            <a href="{{ route('usuarios.edit', $u->id) }}" class="p-1.5 rounded-lg text-[var(--gris-medio)] hover:text-[var(--azul)] hover:bg-blue-50 transition-colors" title="Editar" aria-label="Editar">
+                              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+                                <path d="M471.6 21.7c-21.9-21.9-57.3-21.9-79.2 0L368 46.1 465.9 144 490.3 119.6c21.9-21.9 21.9-57.3 0-79.2L471.6 21.7zm-299.2 220c-6.1 6.1-10.8 13.6-13.5 21.9l-29.6 88.8c-2.9 8.6-.6 18.1 5.8 24.6s15.9 8.7 24.6 5.8l88.8-29.6c8.2-2.7 15.7-7.4 21.9-13.5L432 177.9 334.1 80 172.4 241.7zM96 64C43 64 0 107 0 160L0 416c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-96c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 64z"/>
                               </svg>
-                          </button>
-                        </div>
+                            </a>
+                            <button 
+                                type="button"
+                                @click="modalDeleteOpen = true; deleteAction = '{{ route('usuarios.destroy', $u->id) }}'; userNameToDelete = '{{ $u->nombre_comp }}'"
+                                class="p-1.5 rounded-lg hover:bg-red-50 text-[var(--gris-medio)] hover:text-red-600 transition-colors" 
+                                title="Eliminar" 
+                                aria-label="Eliminar"
+                            >
+                                <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor">
+                                    <path d="M136.7 5.9L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-8.7-26.1C306.9-7.2 294.7-16 280.9-16L167.1-16c-13.8 0-26 8.8-30.4 21.9zM416 144L32 144 53.1 467.1C54.7 492.4 75.7 512 101 512L347 512c25.3 0 46.3-19.6 47.9-44.9L416 144z"/>
+                                </svg>
+                            </button>
+                          </div>
+                        </td>
+                    </tr>
+                  @empty
+                    <tr>
+                      <td colspan="4" class="px-4 py-6 text-center text-gray-600">
+                        @if (!empty($q))
+                          No se encontraron resultados para: <span class="font-semibold text-gray-700">"{{ $q }}"</span>
+                        @else
+                          Aún no hay usuarios registrados.
+                        @endif
                       </td>
-                  </tr>
-                @empty
-                  <tr>
-                    <td colspan="4" class="px-4 py-6 text-center text-gray-600">
-                      @if (!empty($q))
-                        No se encontraron resultados para: <span class="font-semibold text-gray-700">"{{ $q }}"</span>
-                      @else
-                        Aún no hay usuarios registrados.
-                      @endif
-                    </td>
-                  </tr>
-                @endforelse
-              </tbody>
-            </table>
+                    </tr>
+                  @endforelse
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div class="mt-4">

@@ -277,7 +277,7 @@
             <div class="overflow-hidden rounded-2xl bg-white border border-[var(--gris-medio-bajito)] shadow-sm">
               <div class="overflow-x-auto">
                 <table class="min-w-full">
-                  <thead class="bg-gray-50 border-b border-[var(--gris-medio-bajito)] istok-web-bold">
+                  <thead class="bg-[#F8F8F8] border-b border-[var(--gris-medio-bajito)] istok-web-bold">
                       <tr class="">
                           <th class="px-4 py-3 text-left text-gray-600">Usuario</th>
                           <th class="px-4 py-3 text-left text-gray-600">Plan</th>
