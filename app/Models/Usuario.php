@@ -12,10 +12,25 @@ class Usuario extends Authenticatable
     use HasApiTokens, Notifiable;
 
     protected $table = 'usuarios';
-    // public $timestamps = false; // descomenta si tu tabla no tiene created_at/updated_at
+    
+    // 🔥 ACTUALIZACIÓN AQUÍ: Agregué 'fingerprint_id' e 'is_inside'
+    protected $fillable = [
+        'nombre_comp',
+        'email',
+        'telefono',
+        'contrasena',
+        'fecha_nac',
+        'estatus',
+        'fingerprint_id', 
+        'is_inside'
+    ];
 
-    protected $fillable = ['nombre_comp','email','telefono','contrasena','fecha_nac','estatus'];
     protected $hidden  = ['contrasena','remember_token'];
+
+    // 🔥 OPCIONAL PERO RECOMENDADO: Esto hace que is_inside se trate como true/false
+    protected $casts = [
+        'is_inside' => 'boolean',
+    ];
 
     // Indica a Laravel dónde está el password
     public function getAuthPassword(){ return $this->contrasena; }
