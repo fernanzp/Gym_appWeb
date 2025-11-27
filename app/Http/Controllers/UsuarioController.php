@@ -62,13 +62,16 @@ class UsuarioController extends Controller
         $validatedData = $request->validate([
             'nombre_comp' => 'required|string|max:255',
             'email'       => 'required|email|max:255|unique:usuarios,email,' . $usuario->id,
-            'telefono'    => 'required|numeric|digits_between:10,15|unique:usuarios,telefono,' . $usuario->id,
+            'telefono'    => 'nullable|numeric|digits_between:10,15|unique:usuarios,telefono,' . $usuario->id,
             'estatus'     => 'required|in:0,1', // Asegura que solo reciba 1 (Activo) o 0 (Inactivo)
         ], [
             // Mensajes personalizados (opcional)
-            'email.unique'    => 'Este correo ya está registrado por otro usuario.',
-            'telefono.unique' => 'Este teléfono ya pertenece a otro usuario.',
-            'telefono.numeric'=> 'El teléfono solo debe contener números.'
+            'nombre_comp.required'    => 'Ingresa un nombre de usuario para continuar.',
+            'email.required'    => 'Ingresa un correo electrónico para continuar.',
+            'email.email'       => 'Ingresa un correo electrónico valido.',
+            'email.unique'      => 'Este correo ya pertenece a otro usuario.',
+            'telefono.unique'   => 'Este teléfono ya pertenece a otro usuario.',
+            'telefono.numeric'  => 'El teléfono solo debe contener números.'
         ]);
 
         try {

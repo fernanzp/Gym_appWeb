@@ -227,12 +227,12 @@
                                         <path d="M384 160c-17.7 0-32-14.3-32-32s14.3-32 32-32l160 0c17.7 0 32 14.3 32 32l0 160c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-82.7-169.4 169.4c-12.5 12.5-32.8 12.5-45.3 0L192 269.3 54.6 406.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l160-160c12.5-12.5 32.8-12.5 45.3 0L320 306.7 466.7 160 384 160z"/>
                                     </svg>
                                 </div>
-                                <div class="flex items-center text-emerald-500 text-sm font-bold">
+                                {{-- <div class="flex items-center text-emerald-500 text-sm font-bold">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
                                     <span>Global</span>
-                                </div>
+                                </div> --}}
                             </div>
                             <div class="mt-4">
                                 <p class="text-[var(--gris-oscuro)] text-sm">Tasa de Retención</p>
@@ -265,8 +265,8 @@
                         <div class="lg:col-span-1 bg-[var(--azul)] p-4 rounded-2xl shadow-sm flex flex-col text-white relative overflow-hidden h-fit">
                             <!-- Header -->
                             <!-- CAMBIO: Margin bottom reducido (mb-1) -->
-                            <h3 class="text-2xl istok-web-bold mb-1">En este momento</h3>
-                            <p class="text-blue-100 text-base mb-1">Actividad en vivo</p>
+                            <h3 class="text-2xl istok-web-bold mb-1">Actividad del gimnasio</h3>
+                            {{-- <p class="text-blue-100 text-base mb-1">Actividad de</p> --}}
 
                             <!-- Chart Container -->
                             <!-- CAMBIO: Altura fija explícita h-[110px] para forzar el tamaño -->
