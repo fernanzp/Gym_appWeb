@@ -246,7 +246,7 @@
 
                 <!-- Card 3: Ocupación Actual (Aforo) - MODIFICADA -->
                 <!-- Importante: Verifica que en tu <body x-data="{ aforoModalOpen: false }"> esté declarado el x-data -->
-                <article class="h-[180px] bg-white p-4 rounded-2xl border border-[var(--gris-bajito)] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
+                <article class="h-[180px] bg-white p-4 rounded-2xl border border-[var(--gris-medio-bajito)] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
                     
                     <div class="flex justify-between items-start">
                         <!-- Icono Izquierdo -->
@@ -259,7 +259,7 @@
                         <!-- Botón Configuración (Engranaje) -->
                         <button 
                             @click="aforoModalOpen = true" 
-                            class="text-gray-300 hover:text-[var(--azul)] hover:bg-blue-50 p-1.5 rounded-full transition-all"
+                            class="text-[var(--gris-medio)] hover:text-[var(--azul)] hover:bg-blue-50 p-1.5 rounded-full transition-all"
                             title="Configurar Aforo Máximo"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,47 +313,98 @@
 
           </div>
 
-          <!--Tabla usuarios-->
-          <div class="mt-6">
-            <h1 class="text-3xl istok-web-bold mb-1">Nuevos usuarios en el último mes</h1>
-            <div class="overflow-x-auto rounded-2xl bg-[var(--gris-bajito)] ring-1 ring-black/10">
-                <table class="min-w-full">
-                <thead class="bg-[var(--gris-bajito)] text-xl istok-web-bold">
-                    <tr class="border-b border-[var(--gris-medio)]">
-                    <th class="px-4 py-3 text-left">Nombre completo</th>
-                    <th class="px-4 py-3 text-left ">Teléfono</th>
-                    <th class="px-4 py-3 text-left ">Membresía</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[var(--gris-medio)] istok-web-regular">
-                  @forelse($nuevosUsuarios as $u)
-                    @php
-                      $estatus = $u->membresia_estatus; // null si no tiene
-                      $badgeClass = match ($estatus) {
-                        'vigente'   => 'text-green-600',
-                        'vencida'   => 'text-red-600',
-                        'congelada' => 'text-[var(--gris-medio)]',
-                        default     => 'text-gray-500'
-                      };
-                      $badgeText = $estatus ? ucfirst($estatus) : '—';
-                    @endphp
-                    <tr class="hover:bg-[#FAFAFA]">
-                      <td class="px-4 py-3">
-                        <p class="text-[#0460D9]">{{ $u->nombre_comp }}</p>
-                      </td>
-                      <td class="px-4 py-3 text-gray-800">{{ $u->telefono ?? '—' }}</td>
-                      <td class="px-4 py-3"><span class="{{ $badgeClass }}">{{ $badgeText }}</span></td>
-                    </tr>
-                  @empty
-                    <tr>
-                      <td colspan="3" class="px-4 py-6 text-center text-gray-600">
-                        No hay usuarios nuevos en el último mes.
-                      </td>
-                    </tr>
-                  @endforelse
-                </tbody>
+          <!-- Sección: Gestión de Planes y Membresías -->
+          <div class="mt-8">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl istok-web-bold">Planes y Membresías</h2>
+                    <p class="text-sm text-[var(--gris-oscuro)]">Administra los precios y duracion de tus servicios.</p>
+                </div>
+                
+                <!-- Botón Crear Nuevo Plan -->
+                <a href="#" class="inline-flex items-center justify-center gap-2 bg-[var(--azul)] hover:bg-[var(--azul-oscuro)] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 group">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Crear Nuevo Plan</span>
+                </a>
+            </div>
 
-                </table>
+            <!-- Datos de Prueba (Frontend Only) -->
+            @php
+                $planesDummy = [
+                    (object)['id' => 1, 'nombre' => 'Plan Mensual', 'precio' => 500.00, 'duracion_dias' => 30, 'usuarios_activos' => 142, 'estatus' => 'activo'],
+                    (object)['id' => 2, 'nombre' => 'Plan Trimestral', 'precio' => 1350.00, 'duracion_dias' => 90, 'usuarios_activos' => 56, 'estatus' => 'activo'],
+                    (object)['id' => 3, 'nombre' => 'Plan Anual', 'precio' => 4800.00, 'duracion_dias' => 365, 'usuarios_activos' => 24, 'estatus' => 'inactivo'],
+                ];
+            @endphp
+
+            <div class="overflow-hidden rounded-2xl bg-white border border-[var(--gris-bajito)] shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50 border-b border-[var(--gris-bajito)] istok-web-bold">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-gray-600">Nombre del Plan</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Precio</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Duración</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Usuarios Activos</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--gris-bajito)] istok-web-regular">
+                            @forelse($planesDummy as $plan)
+                                <tr class="hover:bg-[#FAFAFA] transition-colors group">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[var(--azul)]">
+                                                <!-- Icono Plan -->
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-gray-900 text-lg">{{ $plan->nombre }}</p>
+                                                <p class="text-xs text-gray-500">ID: {{ $plan->id }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-800 font-semibold">
+                                        ${{ number_format($plan->precio, 2) }}
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-600">
+                                        {{ $plan->duracion_dias }} días
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-600">
+                                        {{ $plan->usuarios_activos }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex gap-2 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                            <!-- Botón Editar -->
+                                            <button class="p-2 rounded-lg text-[var(--gris-medio)] hover:text-[var(--azul)] hover:bg-blue-50 transition-colors" title="Editar">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </button>
+                                            <!-- Botón Eliminar -->
+                                            <button class="p-2 rounded-lg text-[var(--gris-medio)] hover:text-red-600 hover:bg-red-50 transition-colors" title="Eliminar">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                        No hay planes registrados.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
           </div>
         </section>
