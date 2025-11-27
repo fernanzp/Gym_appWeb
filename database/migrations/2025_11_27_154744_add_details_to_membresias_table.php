@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('membresias', function (Blueprint $table) {
-            // Agregamos la columna. 
-            // Usamos 'default(0)' para que las membresías viejas tengan valor 0.00 y no falle.
-            // 'after' sirve para acomodarla después de una columna específica (opcional).
-            $table->decimal('precio_pagado', 10, 2)->default(0)->after('estatus');
+            //
         });
     }
 
@@ -25,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('membresias', function (Blueprint $table) {
-            $table->dropColumn('precio_pagado');
+            //
         });
     }
 };
