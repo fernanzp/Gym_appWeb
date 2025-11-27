@@ -31,7 +31,7 @@
         .istok-web-bold { font-family: "Istok Web", sans-serif; font-weight: 700; font-style: normal; }
     </style>
 </head>
-<body class="antialiased istok-web-regular">
+<body class="antialiased istok-web-regular" x-data="{ aforoModalOpen: false, editPlanModalOpen: false, currentPlan: { nombre: '', precio: 0, duracion: 0 }, isEditing: false }">
   <div class="min-h-screen p-6">
     <!-- GRID PRINCIPAL: [Sidebar | Área principal] -->
     <div class="grid grid-cols-[84px_minmax(0,1fr)] gap-6 h-[calc(100vh-3rem)]">
@@ -84,6 +84,15 @@
 
       <!-- ÁREA PRINCIPAL -->
       <main class="h-full min-h-0 flex flex-col overflow-hidden">
+        @if (session('success'))
+            <div x-data="{ show: true }" 
+                x-init="setTimeout(() => show = false, 4000)" 
+                x-show="show" 
+                x-transition.duration.500ms
+                class="mb-3 p-3 rounded-md bg-green-100 text-green-800">
+                {{ session('success') }}
+            </div>
+        @endif
         <!-- Cabecera -->
         <header class="h-16 flex items-center justify-between"> <!--bg-[#D9D9D9] rounded-2xl-->
           @php
@@ -172,87 +181,103 @@
             </div>
 
         @endforeach
-        <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
 
-              <!-- Card 1: Registrar Nuevo Cliente (Acción Principal) -->
-              <div class="h-[180px] flex flex-col gap-4">
-                  <!-- Botón 1.1: Registrar Nuevo Cliente -->
-                  <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
-                    <!-- He ajustado el layout a horizontal (flex-row) para que se vea bien en la mitad de altura -->
-                    <a href="{{ route('clientRegister') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
-                      <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">
-                              <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
-                          </svg>
-                      </div>
-                      <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nuevo Cliente</h3>
-                    </a>
-                  </article>
+                <!-- Card 1: Registrar Nuevo Cliente (Acción Principal) -->
+                <div class="h-[180px] flex flex-col gap-4">
+                    <!-- Botón 1.1: Registrar Nuevo Cliente -->
+                    <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
+                      <!-- He ajustado el layout a horizontal (flex-row) para que se vea bien en la mitad de altura -->
+                      <a href="{{ route('clientRegister') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">
+                                <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nuevo Cliente</h3>
+                      </a>
+                    </article>
 
-                  <!-- Botón 1.2: Nueva Recepcionista (NUEVO) -->
-                  <!-- Mismo estilo que Nuevo Cliente, ruta 'register' (ajústala si es distinta) -->
-                  <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
-                    <a href="{{ route('registrar-staff') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
-                      <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
-                          <!-- Icono: Usuario con gafete/corbata -->
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">
-                              <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
-                          </svg>
-                      </div>
-                      <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nueva Recepcionista</h3>
-                    </a>
-                  </article>
-              </div>
-
-              <!-- Card 2: Control de Acceso (Entrada/Salida) -->
-              <div class="h-[180px] flex flex-col gap-4">
-                  
-                  <!-- Botón Abrir Entrada (Estilo Verde/Clean) -->
-                  <form action="{{ route('access.visita') }}" method="POST" class="flex-1 h-full">
-                      @csrf
-                      <input type="hidden" name="direction" value="entry">
-                      
-                      <button type="submit" class="w-full h-full rounded-xl bg-blue-50 border border-blue-100 text-[var(--azul)] hover:bg-blue-100 hover:shadow-sm flex items-center justify-center gap-3 transition-all group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 512 512">
-                          <path d="M352 96l64 0c17.7 0 32 14.3 32 32l0 256c0 17.7-14.3 32-32 32l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0c53 0 96-43 96-96l0-256c0-53-43-96-96-96l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32zm-9.4 182.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L242.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/>
-                        </svg>
-                        <span class="font-bold group-hover:scale-105 transition-transform block">Abrir Entrada</span>
-                      </button>
-                  </form>
-
-                  <!-- Botón Abrir Salida (Estilo Rojo/Clean) -->
-                  <form action="{{ route('access.visita') }}" method="POST" class="flex-1 h-full">
-                      @csrf
-                      <input type="hidden" name="direction" value="exit">
-                      
-                      <button type="submit" class="w-full h-full rounded-xl bg-blue-50 border border-blue-100 text-[var(--azul)] hover:bg-blue-100 hover:shadow-sm flex items-center justify-center gap-3 transition-all group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                        </svg>
-                        <span class="font-bold group-hover:scale-105 transition-transform block">Abrir Salida</span>
-                      </button>
-                  </form>
-              </div>
-
-              <!-- Card 3: Ocupación Actual (Aforo) -->
-              <article class="h-[180px] bg-white p-4 rounded-2xl border border-[var(--gris-medio-bajito)] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                  <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                      <!-- Icono Personas/Aforo -->
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 640 512">
-                          <path d="M320 16a104 104 0 1 1 0 208 104 104 0 1 1 0-208zM96 88a72 72 0 1 1 0 144 72 72 0 1 1 0-144zM0 416c0-70.7 57.3-128 128-128 12.8 0 25.2 1.9 36.9 5.4-32.9 36.8-52.9 85.4-52.9 138.6l0 16c0 11.4 2.4 22.2 6.7 32L32 480c-17.7 0-32-14.3-32-32l0-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32l0-16c0-53.2-20-101.8-52.9-138.6 11.7-3.5 24.1-5.4 36.9-5.4 70.7 0 128 57.3 128 128l0 32c0 17.7-14.3 32-32 32l-86.7 0zM472 160a72 72 0 1 1 144 0 72 72 0 1 1 -144 0zM160 432c0-88.4 71.6-160 160-160s160 71.6 160 160l0 16c0 17.7-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32l0-16z"/>
-                      </svg>
-                  </div>
+                    <!-- Botón 1.2: Nueva Recepcionista (NUEVO) -->
+                    <!-- Mismo estilo que Nuevo Cliente, ruta 'register' (ajústala si es distinta) -->
+                    <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
+                      <a href="{{ route('receptionist.create') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
+                            <!-- Icono: Usuario con gafete/corbata -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">
+                                <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nueva Recepcionista</h3>
+                      </a>
+                    </article>
                 </div>
-                <div>
-                    <p class="text-[var(--gris-oscuro)] text-sm font-medium">Ocupación Actual</p>
-                    <div class="flex items-baseline gap-1 mt-1">
-                      <!-- ID txt-aforo mantenido para el JS del aforo en vivo -->
-                      <h3 id="txt-aforo" class="text-4xl istok-web-bold text-gray-900">-</h3>
+
+                <!-- Card 2: Control de Acceso (Entrada/Salida) -->
+                <div class="h-[180px] flex flex-col gap-4">
+                    
+                    <!-- Botón Abrir Entrada (Estilo Verde/Clean) -->
+                    <form action="{{ route('access.visita') }}" method="POST" class="flex-1 h-full">
+                        @csrf
+                        <input type="hidden" name="direction" value="entry">
+                        
+                        <button type="submit" class="w-full h-full rounded-xl bg-blue-50 border border-blue-100 text-[var(--azul)] hover:bg-blue-100 hover:shadow-sm flex items-center justify-center gap-3 transition-all group">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 512 512">
+                            <path d="M352 96l64 0c17.7 0 32 14.3 32 32l0 256c0 17.7-14.3 32-32 32l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0c53 0 96-43 96-96l0-256c0-53-43-96-96-96l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32zm-9.4 182.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L242.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/>
+                          </svg>
+                          <span class="font-bold group-hover:scale-105 transition-transform block">Abrir Entrada</span>
+                        </button>
+                    </form>
+
+                    <!-- Botón Abrir Salida (Estilo Rojo/Clean) -->
+                    <form action="{{ route('access.visita') }}" method="POST" class="flex-1 h-full">
+                        @csrf
+                        <input type="hidden" name="direction" value="exit">
+                        
+                        <button type="submit" class="w-full h-full rounded-xl bg-blue-50 border border-blue-100 text-[var(--azul)] hover:bg-blue-100 hover:shadow-sm flex items-center justify-center gap-3 transition-all group">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                          </svg>
+                          <span class="font-bold group-hover:scale-105 transition-transform block">Abrir Salida</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Card 3: Ocupación Actual (Aforo) - MODIFICADA -->
+                <!-- Importante: Verifica que en tu <body x-data="{ aforoModalOpen: false }"> esté declarado el x-data -->
+                <article class="h-[180px] bg-white p-4 rounded-2xl border border-[var(--gris-medio-bajito)] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
+                    
+                    <div class="flex justify-between items-start">
+                        <!-- Icono Izquierdo -->
+                        <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 640 512">
+                                <path d="M320 16a104 104 0 1 1 0 208 104 104 0 1 1 0-208zM96 88a72 72 0 1 1 0 144 72 72 0 1 1 0-144zM0 416c0-70.7 57.3-128 128-128 12.8 0 25.2 1.9 36.9 5.4-32.9 36.8-52.9 85.4-52.9 138.6l0 16c0 11.4 2.4 22.2 6.7 32L32 480c-17.7 0-32-14.3-32-32l0-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32l0-16c0-53.2-20-101.8-52.9-138.6 11.7-3.5 24.1-5.4 36.9-5.4 70.7 0 128 57.3 128 128l0 32c0 17.7-14.3 32-32 32l-86.7 0zM472 160a72 72 0 1 1 144 0 72 72 0 1 1 -144 0zM160 432c0-88.4 71.6-160 160-160s160 71.6 160 160l0 16c0 17.7-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32l0-16z"/>
+                            </svg>
+                        </div>
+
+                        <!-- Botón Configuración (Engranaje) -->
+                        <button 
+                            @click="aforoModalOpen = true" 
+                            class="text-[var(--gris-medio)] hover:text-[var(--azul)] hover:bg-blue-50 p-1.5 rounded-full transition-all"
+                            title="Configurar Aforo Máximo"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
                     </div>
-                </div>
-              </article>
+
+                    <div>
+                        <p class="text-[var(--gris-oscuro)] text-sm font-medium">Ocupación Actual</p>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <h3 id="txt-aforo" class="text-4xl istok-web-bold text-gray-900">-</h3>
+                            <!-- Puedes poner dinámico este / 100 después -->
+                            <span class="text-sm text-gray-400 font-medium">/ 100</span> 
+                        </div>
+                    </div>
+                </article>
 
               <!-- Card 4: Membresías por Vencer -->
               <article class="h-[180px] bg-white p-4 rounded-2xl border border-[var(--gris-medio-bajito)] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
@@ -288,52 +313,311 @@
 
           </div>
 
-          <!--Tabla usuarios-->
-          <div class="mt-6">
-            <h1 class="text-3xl istok-web-bold mb-1">Nuevos usuarios en el último mes</h1>
-            <div class="overflow-x-auto rounded-2xl bg-[var(--gris-bajito)] ring-1 ring-black/10">
-                <table class="min-w-full">
-                <thead class="bg-[var(--gris-bajito)] text-xl istok-web-bold">
-                    <tr class="border-b border-[var(--gris-medio)]">
-                    <th class="px-4 py-3 text-left">Nombre completo</th>
-                    <th class="px-4 py-3 text-left ">Teléfono</th>
-                    <th class="px-4 py-3 text-left ">Membresía</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[var(--gris-medio)] istok-web-regular">
-                  @forelse($nuevosUsuarios as $u)
-                    @php
-                      $estatus = $u->membresia_estatus; // null si no tiene
-                      $badgeClass = match ($estatus) {
-                        'vigente'   => 'text-green-600',
-                        'vencida'   => 'text-red-600',
-                        'congelada' => 'text-[var(--gris-medio)]',
-                        default     => 'text-gray-500'
-                      };
-                      $badgeText = $estatus ? ucfirst($estatus) : '—';
-                    @endphp
-                    <tr class="hover:bg-[#FAFAFA]">
-                      <td class="px-4 py-3">
-                        <p class="text-[#0460D9]">{{ $u->nombre_comp }}</p>
-                      </td>
-                      <td class="px-4 py-3 text-gray-800">{{ $u->telefono ?? '—' }}</td>
-                      <td class="px-4 py-3"><span class="{{ $badgeClass }}">{{ $badgeText }}</span></td>
-                    </tr>
-                  @empty
-                    <tr>
-                      <td colspan="3" class="px-4 py-6 text-center text-gray-600">
-                        No hay usuarios nuevos en el último mes.
-                      </td>
-                    </tr>
-                  @endforelse
-                </tbody>
+          <!-- Sección: Gestión de Planes y Membresías -->
+          <div class="mt-8">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl istok-web-bold">Planes y Membresías</h2>
+                    <p class="text-sm text-[var(--gris-oscuro)]">Administra los precios y duracion de tus servicios.</p>
+                </div>
+                
+              <!--Botón: Crear nuevo plan-->
+              <button type="button"
+                  @click="
+                      currentPlan = { nombre: '', precio: '', duracion: '' }; 
+                      isEditing = false; 
+                      editPlanModalOpen = true"
+                  class="inline-flex items-center justify-center gap-2 bg-[var(--azul)] hover:bg-[var(--azul-oscuro)] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 group">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Crear Nuevo Plan</span>
+              </button>
+            </div>
 
-                </table>
+            <!-- Datos de Prueba (Frontend Only) -->
+            @php
+                $planesDummy = [
+                    (object)['id' => 1, 'nombre' => 'Plan Mensual', 'precio' => 500.00, 'duracion_dias' => 30, 'usuarios_activos' => 142, 'estatus' => 'activo'],
+                    (object)['id' => 2, 'nombre' => 'Plan Trimestral', 'precio' => 1350.00, 'duracion_dias' => 90, 'usuarios_activos' => 56, 'estatus' => 'activo'],
+                    (object)['id' => 3, 'nombre' => 'Plan Anual', 'precio' => 4800.00, 'duracion_dias' => 365, 'usuarios_activos' => 24, 'estatus' => 'inactivo'],
+                ];
+            @endphp
+
+            <div class="overflow-hidden rounded-2xl bg-white border border-[var(--gris-medio-bajito)] shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-[#F8F8F8] border-b border-[var(--gris-medio-bajito)] istok-web-bold">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-gray-600">Nombre del Plan</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Precio</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Duración</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Usuarios Activos</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--gris-medio-bajito)] istok-web-regular">
+                            @forelse($planesDummy as $plan)
+                                <tr class="hover:bg-[#FAFAFA] transition-colors group">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[var(--azul)]">
+                                                <!-- Icono Plan -->
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-gray-900 text-lg">{{ $plan->nombre }}</p>
+                                                <p class="text-xs text-gray-500">ID: {{ $plan->id }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-800 font-semibold">
+                                        ${{ number_format($plan->precio, 2) }}
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-600">
+                                        {{ $plan->duracion_dias }} días
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-600">
+                                        {{ $plan->usuarios_activos }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex gap-2 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                            <!-- Botón Editar -->
+                                            <button 
+                                                type="button"
+                                                @click="
+                                                    currentPlan = { 
+                                                        nombre: '{{ $plan->nombre }}', 
+                                                        precio: {{ $plan->precio }}, 
+                                                        duracion: {{ $plan->duracion_dias }} 
+                                                    }; 
+                                                    isEditing = true; 
+                                                    editPlanModalOpen = true"
+                                                class="p-2 rounded-lg text-[var(--gris-medio)] hover:text-[var(--azul)] hover:bg-blue-50 transition-colors" 
+                                                title="Editar">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </button>
+                                            <!-- Botón Eliminar -->
+                                            <button class="p-2 rounded-lg text-[var(--gris-medio)] hover:text-red-600 hover:bg-red-50 transition-colors" title="Eliminar">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                        No hay planes registrados.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
           </div>
         </section>
       </main>
     </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURACIÓN DE AFORO (Alpine.js) -->
+  <!-- Este bloque va al final de tu archivo dashboard.blade.php, antes del </body> -->
+  <div 
+      x-show="aforoModalOpen" 
+      style="display: none;"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+  >
+      <!-- Contenedor del Modal -->
+      <div 
+          @click.away="aforoModalOpen = false"
+          class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+          x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+          x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+      >
+          <!-- Header -->
+          <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h3 class="text-lg font-bold text-gray-800 istok-web-bold">Configurar Capacidad</h3>
+              <button @click="aforoModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+              </button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6">
+              <!-- Formulario sin acción real por ahora -->
+              <form action="#" method="POST"> 
+                  @csrf
+                  <div class="mb-4">
+                      <label for="aforo_maximo" class="block text-sm font-medium text-gray-700 mb-2">
+                          Aforo Máximo Permitido
+                      </label>
+                      <div class="relative">
+                          <input 
+                              type="number" 
+                              name="aforo_maximo" 
+                              id="aforo_maximo" 
+                              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-lg font-semibold text-gray-900 placeholder-gray-400"
+                              placeholder="Ej. 150"
+                              value="100" 
+                          >
+                          <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                              <span class="text-gray-400 text-sm">personas</span>
+                          </div>
+                      </div>
+                      <p class="mt-2 text-xs text-gray-500">
+                          Esto ajustará los cálculos de porcentaje de ocupación en el dashboard y la app.
+                      </p>
+                  </div>
+
+                  <!-- Botones de Acción -->
+                  <div class="flex gap-3 mt-6">
+                      <button 
+                          type="button" 
+                          @click="aforoModalOpen = false"
+                          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      >
+                          Cancelar
+                      </button>
+                      <button 
+                          type="button"
+                          @click="aforoModalOpen = false" 
+                          class="flex-1 px-4 py-2.5 rounded-xl bg-[var(--azul)] text-white font-bold hover:bg-[var(--azul-oscuro)] shadow-md shadow-blue-500/20 transition-all"
+                      >
+                          Guardar
+                      </button>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </div>
+
+  <!-- MODAL DINÁMICO (CREAR / EDITAR PLAN) -->
+  <div 
+      x-show="editPlanModalOpen" 
+      style="display: none;"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+  >
+      <div 
+          @click.away="editPlanModalOpen = false"
+          class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+          x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+          x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+      >
+          <!-- Header -->
+          <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <!-- Título Dinámico -->
+              <h3 class="text-lg font-bold text-gray-800 istok-web-bold" x-text="isEditing ? 'Editar Plan' : 'Crear Nuevo Plan'"></h3>
+              
+              <button @click="editPlanModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+              </button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6">
+              <form action="#" method="POST">
+                  @csrf
+                  
+                  <!-- Solo incluimos el método PUT si estamos editando -->
+                  <template x-if="isEditing">
+                      <input type="hidden" name="_method" value="PUT">
+                  </template>
+                  
+                  <div class="space-y-4">
+                      <!-- Campo: Nombre -->
+                      <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Plan</label>
+                          <input 
+                              type="text" 
+                              x-model="currentPlan.nombre"
+                              class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
+                              placeholder="Ej. Plan Mensual"
+                          >
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-4">
+                          <!-- Campo: Precio -->
+                          <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Precio (MXN)</label>
+                              <div class="relative">
+                                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-bold">$</span>
+                                  <input 
+                                      type="number" 
+                                      step="0.01"
+                                      x-model="currentPlan.precio"
+                                      class="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
+                                      placeholder="0.00"
+                                  >
+                              </div>
+                          </div>
+
+                          <!-- Campo: Duración -->
+                          <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Duración</label>
+                              <div class="relative">
+                                  <input 
+                                      type="number" 
+                                      x-model="currentPlan.duracion"
+                                      class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
+                                      placeholder="30"
+                                  >
+                                  <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 text-sm pointer-events-none">días</span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Footer Botones -->
+                  <div class="flex gap-3 mt-8">
+                      <button 
+                          type="button" 
+                          @click="editPlanModalOpen = false"
+                          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      >
+                          Cancelar
+                      </button>
+                      <button 
+                          type="submit"
+                          class="flex-1 px-4 py-2.5 rounded-xl bg-[var(--azul)] text-white font-bold hover:bg-[var(--azul-oscuro)] shadow-md shadow-blue-500/20 transition-all"
+                          x-text="isEditing ? 'Guardar Cambios' : 'Crear Plan'"
+                      >
+                      </button>
+                  </div>
+              </form>
+          </div>
+      </div>
   </div>
 
   <!-- SCRIPT DE AFORO AUTOMÁTICO -->

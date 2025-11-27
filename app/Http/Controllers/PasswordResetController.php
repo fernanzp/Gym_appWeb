@@ -21,7 +21,11 @@ class PasswordResetController extends Controller
     // Envía el correo con el enlace
     public function sendResetLinkEmail(Request $request)
     {
-        $request->validate(['email' => 'required|email|exists:usuarios,email']);
+        $request->validate(['email' => 'required|email|exists:usuarios,email'
+    ], [
+        'email.required' => 'Ingresa un correo electrónico para continuar.',
+        'email.exists' => 'El correo ingresado no existe en nuestros registros.',
+    ]);
 
         $token = Str::random(64);
 
@@ -55,6 +59,12 @@ class PasswordResetController extends Controller
             'email' => 'required|email|exists:usuarios,email',
             'contrasena' => 'required|min:8|confirmed',
             'token' => 'required'
+        ], [
+            'email.required' => 'Rellena este campo para continuar.',
+            'email.email' => 'Ingresa un correo electrónico válido.',
+            'email.exists' => 'El correo ingresado no existe en nuestros registros.',
+            'contrasena.min' => 'La contraseña debe de contener al menos 8 carácteres.',
+            'contrasena.confirmed' => 'Las contraseñas no coinciden.'
         ]);
 
         // Validar token

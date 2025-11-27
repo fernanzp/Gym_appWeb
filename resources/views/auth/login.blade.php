@@ -44,6 +44,11 @@
 
     <!-- Contenedor principal -->
     <div class="w-full max-w-[50%] mt-[5vh]">
+        @if ($errors->has('email'))
+          <div class="mb-3 p-3 rounded-md bg-red-100 text-red-800">
+            {{ $errors->first('email') }}
+          </div>
+        @endif
         <h1 class="text-4xl font-bold text-center mb-8 istok-web-bold">Inicia sesión</h1>
 
         <form action="{{ route('login.submit') }}" method="POST" class="space-y-4">

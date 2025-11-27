@@ -30,9 +30,15 @@ class ClienteController extends Controller
         $request->validate([
             'nombre_comp'   => ['required','string','max:160'],
             'email'         => ['required','email','max:160','unique:usuarios,email'],
-            'telefono'      => ['nullable','regex:/^\d{10}$/'],
+            'telefono'      => ['nullable','numeric','digits_between:10,15','unique:usuarios,telefono'],
             'fecha_nac'     => ['nullable','date'],
             'plan_id'       => ['required','exists:planes,id'],
+        ], [
+            'nombre_comp.required' => 'Ingresa un nombre de usuario para continuar.',
+            'email.required' => 'Ingresa un correo electrónico para continuar.',
+            'email.unique' => 'Este correo ya pertenece a otro usuario.',
+            'telefono.unique'   => 'Este teléfono ya pertenece a otro usuario.',
+            'telefono.numeric'  => 'El teléfono solo debe contener números.'
         ]);
 
         $plan = Plan::findOrFail($request->plan_id);

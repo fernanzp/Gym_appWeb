@@ -86,18 +86,21 @@
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
                     <input name="nombre_comp" type="text" value="{{ old('nombre_comp', $usuario->nombre_comp ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular">
                 </div>
+                @error('nombre_comp') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Correo electrónico</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
                     <input name="email" type="email" value="{{ old('email', $usuario->email ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular">
                 </div>
+                @error('email') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Teléfono</label>
                 <div class="flex items-center bg-[var(--gris-bajito)] rounded-md px-4 py-3 ring-1 ring-transparent focus-within:ring-[var(--azul)]">
                     <input name="telefono" type="tel" value="{{ old('telefono', $usuario->telefono ?? '') }}" class="flex-1 bg-transparent outline-none istok-web-regular">
                 </div>
+                @error('telefono') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block font-bold mb-1 istok-web-bold">Estatus</label>
@@ -218,118 +221,116 @@
         </div>
     </div>
 
-    <script>
+<script>
     let pollingInterval;
-    const userId = "{{ $usuario->id }}";
+    
+    // Variables de sesión seguras
+    const userId = {{ json_encode($usuario->id) }};
+    const sessionError = {{ json_encode(session('error')) }}; 
+    const sessionSuccess = {{ json_encode(session('success')) }};
+    const triggerEnroll = {{ json_encode(session('trigger_enroll')) }}; 
 
+    // --- FUNCIÓN PARA MOSTRAR LOADER ---
     function activarLoader() {
         const overlay = document.getElementById('modalOverlay');
         const cargando = document.getElementById('estadoCargando');
-        const errorModal = document.getElementById('estadoError');
-        const exitoModal = document.getElementById('estadoExito');
         
-        cargando.classList.add('hidden');
-        errorModal.classList.add('hidden');
-        exitoModal.classList.add('hidden');
+        // Aseguramos que los otros modales estén ocultos
+        document.getElementById('estadoError').classList.add('hidden');
+        document.getElementById('estadoExito').classList.add('hidden');
         
         overlay.classList.remove('hidden');
         cargando.classList.remove('hidden');
-
-        iniciarPolling();
     }
 
     function cerrarModal() {
         document.getElementById('modalOverlay').classList.add('hidden');
-        clearInterval(pollingInterval);
+        if(pollingInterval) clearInterval(pollingInterval);
     }
 
+    // --- POLLING (Solo si hay éxito en la conexión) ---
     function iniciarPolling() {
-        clearInterval(pollingInterval);
+        if(pollingInterval) clearInterval(pollingInterval);
         let intentos = 0;
 
         pollingInterval = setInterval(async () => {
             intentos++;
-
             try {
                 const res = await fetch(`/api/user-status/${userId}`);
                 const data = await res.json();
 
-                const cargando = document.getElementById('estadoCargando');
-                const exito = document.getElementById('estadoExito');
-                const error = document.getElementById('estadoError');
-
-                // ERROR → estatus 8 o 9
+                // Caso Error en sensor
                 if (data.estatus == 8 || data.estatus == 9) {
                     clearInterval(pollingInterval);
-                    cargando.classList.add('hidden');
-                    error.classList.remove('hidden');
-
-                    if (data.estatus == 9)
-                        document.getElementById('msgError').innerText = "Se acabó el tiempo de espera.";
-                    else
-                        document.getElementById('msgError').innerText = "Las huellas no coincidieron o hubo error.";
-
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    
+                    const modalError = document.getElementById('estadoError');
+                    modalError.classList.remove('hidden');
+                    
+                    document.getElementById('msgError').innerText = (data.estatus == 9) 
+                        ? "Tiempo de espera agotado en el sensor." 
+                        : "Error de lectura: Las huellas no coincidieron.";
                     return;
                 }
 
-                // ÉXITO → fingerprint asignado
+                // Caso Éxito
                 if (data.fingerprint_id != null) {
                     clearInterval(pollingInterval);
-                    cargando.classList.add('hidden');
-                    exito.classList.remove('hidden');
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    document.getElementById('estadoExito').classList.remove('hidden');
                     setTimeout(() => location.reload(), 2000);
                     return;
                 }
 
-                if (intentos > 60) clearInterval(pollingInterval);
+                if (intentos > 60) {
+                    clearInterval(pollingInterval);
+                    document.getElementById('estadoCargando').classList.add('hidden');
+                    document.getElementById('estadoError').classList.remove('hidden');
+                    document.getElementById('msgError').innerText = "El navegador perdió contacto con el servidor.";
+                }
 
             } catch (e) { console.error(e); }
         }, 1000);
     }
 
-
-    // -----------------------------
-    // 🔥 MANEJO DE MENSAJES DE SESIÓN
-    // -----------------------------
+    // --- LÓGICA PRINCIPAL AL CARGAR PAGINA ---
     document.addEventListener("DOMContentLoaded", function() {
 
-    const successMsg = "{{ session('success') }}";
-    const errorMsg = "{{ session('error') }}"; 
-    const isEnroll = "{{ session('trigger_enroll') ? 1 : 0 }}"; 
+        // 1. SI HAY ERROR (Desde el Controlador)
+        if (sessionError) {
+            // A. Buscamos si existe una alerta rosa genérica en el HTML y la ocultamos
+            // (Ajusta el selector '.alert-danger' o similar según tu plantilla)
+            const alertasGenericas = document.querySelectorAll('.bg-red-100, .alert-danger'); 
+            alertasGenericas.forEach(el => el.style.display = 'none');
 
-    // 1. Si hubo error → modal rojo
-    if (errorMsg && errorMsg.trim() !== "") {
-        const overlay = document.getElementById('modalOverlay');
-        const errorModal = document.getElementById('estadoError');
-        const txtError = document.getElementById('msgError');
+            // B. Mostramos TU Modal Rojo Diseño
+            const overlay = document.getElementById('modalOverlay');
+            const errorModal = document.getElementById('estadoError');
+            const txtError = document.getElementById('msgError');
 
-        txtError.innerText = errorMsg;
-        overlay.classList.remove('hidden');
-        errorModal.classList.remove('hidden');
-        return;
-    }
+            txtError.innerText = sessionError; // Ponemos el mensaje del controlador
+            overlay.classList.remove('hidden');
+            errorModal.classList.remove('hidden');
+            
+            // Importante: No activamos polling ni loader aquí
+            return; 
+        }
 
-    // 2. Biometría → SOLO mostrar loader
-    if (isEnroll == "1") {
-        activarLoader();
-        return;
-    }
+        // 2. SI TODO SALIÓ BIEN Y ESTAMOS ENROLANDO
+        if (triggerEnroll) {
+            activarLoader();
+            iniciarPolling();
+            return;
+        }
 
-    // 3. Éxito normal (NO biometría)
-    if (successMsg && successMsg.trim() !== "" && isEnroll == "0") {
-        const overlay = document.getElementById('modalOverlay');
-        const exito = document.getElementById('estadoExito');
-
-        overlay.classList.remove('hidden');
-        exito.classList.remove('hidden');
-
-        setTimeout(() => {
-            overlay.classList.add('hidden');
-        }, 2000);
-
-        return;
-    }
-
+        // 3. ÉXITO GENÉRICO (Mensaje verde)
+        if (sessionSuccess) {
+            const overlay = document.getElementById('modalOverlay');
+            const exito = document.getElementById('estadoExito');
+            overlay.classList.remove('hidden');
+            exito.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('hidden'), 3000);
+        }
     });
 </script>
 

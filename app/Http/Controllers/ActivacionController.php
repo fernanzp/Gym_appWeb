@@ -48,6 +48,9 @@ class ActivacionController extends Controller
             'email'      => 'required|email|exists:usuarios,email',
             'token'      => 'required|string',
             'contrasena' => 'required|confirmed|min:8', // 'confirmed' busca 'contrasena_confirmation'
+        ], [
+            'contrasena.confirmed' => 'Las contraseñas ingresadas no coinciden.',
+            'contrasena.min' => 'La contraseña debe tener al menos 8 carácteres.'
         ]);
 
         // Validamos el token otra vez

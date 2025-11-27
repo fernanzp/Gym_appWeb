@@ -33,6 +33,11 @@
             font-weight: 700;
             font-style: normal;
         }
+
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-between min-h-screen bg-white text-black">

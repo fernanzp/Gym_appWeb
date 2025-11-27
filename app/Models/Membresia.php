@@ -8,7 +8,7 @@ use Carbon\Carbon; // Importante para manejar fechas
 class Membresia extends Model
 {
     protected $table = 'membresias';
-    public $timestamps = false;
+    public $timestamps = true;
     
     protected $fillable = [
         'usuario_id','plan_id','fecha_ini','fecha_fin','dias_congelados','precio_pagado','estatus','creada','actualizada'

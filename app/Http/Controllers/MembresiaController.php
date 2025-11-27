@@ -11,23 +11,44 @@ class MembresiaController extends Controller
 {
     public function index(Request $request)
     {
-        // Ejecutamos una actualización rápida antes de mostrar (truco si no tienes cron jobs)
+        // 0. ACTUALIZACIÓN AUTOMÁTICA DE VENCIMIENTOS
         Membresia::where('estatus', 'vigente')
             ->where('fecha_fin', '<', now()->format('Y-m-d'))
             ->update(['estatus' => 'vencida']);
 
-        // 1. STATS (Usando strings del ENUM)
-        $totalActivas = Membresia::where('estatus', 'vigente')->count();
-        $totalVencidas = Membresia::where('estatus', 'vencida')->count();
-        $totalCongeladas = Membresia::where('estatus', 'congelada')->count();
+        // --- CORE: SUBCONSULTA PARA OBTENER SOLO LA ÚLTIMA MEMBRESÍA DE CADA USUARIO ---
+        // Esto es lo que "limpia" la basura histórica.
+        // Seleccionamos el ID más alto agrupado por usuario.
+        $subqueryUltimas = Membresia::selectRaw('MAX(id)')->groupBy('usuario_id');
+
+
+        // 1. STATS (Ahora aplicando el filtro de últimas membresías)
+        // Usamos whereIn('id', $subqueryUltimas) en cada contador para asegurar precisión real.
+
+        $totalActivas = Membresia::whereIn('id', $subqueryUltimas)
+                            ->where('estatus', 'vigente')
+                            ->count();
+
+        $totalVencidas = Membresia::whereIn('id', $subqueryUltimas)
+                            ->where('estatus', 'vencida')
+                            ->count();
+
+        $totalCongeladas = Membresia::whereIn('id', $subqueryUltimas)
+                            ->where('estatus', 'congelada')
+                            ->count();
 
         $fechaLimite = Carbon::now()->addDays(15);
-        $totalPorVencer = Membresia::where('estatus', 'vigente')
-            ->whereBetween('fecha_fin', [Carbon::now(), $fechaLimite])
-            ->count();
+        $totalPorVencer = Membresia::whereIn('id', $subqueryUltimas)
+                            ->where('estatus', 'vigente')
+                            ->whereBetween('fecha_fin', [Carbon::now(), $fechaLimite])
+                            ->count();
 
-        // 2. FILTRO
-        $query = Membresia::with(['usuario', 'plan']);
+
+        // 2. TABLA PRINCIPAL (También filtrada)
+        $query = Membresia::with(['usuario', 'plan'])
+                    ->whereIn('id', $subqueryUltimas); // <--- Aplicamos el filtro base aquí
+
+        // Filtros de la interfaz
         $filtro = $request->get('filter', 'todas');
 
         switch ($filtro) {
@@ -46,6 +67,7 @@ class MembresiaController extends Controller
                 break;
         }
 
+        // Buscador
         if ($search = $request->get('search')) {
             $query->whereHas('usuario', function($q) use ($search) {
                 $q->where('nombre_comp', 'like', "%{$search}%")
@@ -54,7 +76,6 @@ class MembresiaController extends Controller
         }
 
         $membresias = $query->orderBy('fecha_fin', 'asc')->paginate(10);
-
         $planes = Plan::all();
 
         return view('membresias', compact('membresias', 'totalActivas', 'totalVencidas', 'totalCongeladas', 'totalPorVencer', 'filtro', 'planes'));
@@ -63,57 +84,59 @@ class MembresiaController extends Controller
     public function toggleStatus($id)
     {
         $membresia = Membresia::findOrFail($id);
-        $hoy = Carbon::now(); // Fecha actual
+        
+        // Usamos startOfDay para que la hora (09:00am vs 00:00am) no afecte la comparación
+        $hoy = Carbon::now()->startOfDay(); 
 
-        // LOGICA PARA CONGELAR
         if ($membresia->estatus === 'vigente') {
             
-            // 1. Calcular días restantes (Fecha Fin - Hoy)
-            // Usamos diffInDays(..., false) para obtener negativos si ya pasó, 
-            // pero validaremos que sea positivo.
-            $fechaFin = Carbon::parse($membresia->fecha_fin);
+            $fechaFin = Carbon::parse($membresia->fecha_fin)->startOfDay();
             
-            // Si la fecha fin es hoy o futura, calculamos la diferencia
+            // Verificamos que la fecha fin sea hoy o futura
             if ($fechaFin->greaterThanOrEqualTo($hoy)) {
+                // diffInDays retorna entero positivo absoluto
                 $diasRestantes = $hoy->diffInDays($fechaFin);
                 
-                // Guardamos esos días en la columna temporal
+                // Si vence HOY, diffInDays da 0. Aseguramos al menos 1 día o lo que consideres lógico.
+                // Opcional: si quieres permitir guardar 0 días, deja la línea como estaba.
+                // $diasRestantes = $diasRestantes === 0 ? 1 : $diasRestantes; 
+
                 $membresia->dias_congelados = $diasRestantes;
                 $membresia->estatus = 'congelada';
                 
-                $mensaje = "Membresía congelada. Se guardaron $diasRestantes días restantes.";
+                // 1. GUARDAMOS ANTES DE RETORNAR
+                $membresia->save();
+
+                return back()->with('success', 'Membresía congelada correctamente.');
             } else {
                 return back()->with('error', 'No se puede congelar una membresía que ya venció.');
             }
 
-        // LOGICA PARA REACTIVAR
         } elseif ($membresia->estatus === 'congelada') {
             
-            // Verificamos que tenga días guardados
             if ($membresia->dias_congelados !== null) {
                 
-                // 1. Nueva Fecha Fin = Hoy + Días Guardados
+                // Al reactivar, sumamos los días guardados a la fecha de HOY
                 $nuevaFechaFin = $hoy->copy()->addDays($membresia->dias_congelados);
                 
-                // 2. Actualizamos la fecha fin y limpiamos los días guardados
                 $membresia->fecha_fin = $nuevaFechaFin;
                 $membresia->dias_congelados = null;
                 $membresia->estatus = 'vigente';
+                
+                // 1. GUARDAMOS ANTES DE RETORNAR
+                $membresia->save();
 
-                $mensaje = "Membresía reactivada. Nueva fecha de vencimiento: " . $nuevaFechaFin->format('d/m/Y');
+                return back()->with('success', 'Membresía reactivada correctamente.');
             } else {
-                // Caso de error (datos corruptos o manuales)
+                // Corrección de datos corruptos
                 $membresia->estatus = 'vigente';
-                $mensaje = 'Membresía reactivada (No había días guardados registrados).';
+                $membresia->save();
+                return back()->with('warning', 'Membresía reactivada (No había días guardados registrados).');
             }
 
         } else {
             return back()->with('error', 'No se puede modificar una membresía vencida.');
         }
-
-        $membresia->save();
-
-        return back()->with('success', $mensaje);
     }
 
     public function prepararRenovacion(Request $request)
@@ -152,24 +175,36 @@ class MembresiaController extends Controller
 
     public function procesarRenovacion(Request $request)
     {
+        // 1. Validamos los datos entrantes
         $request->validate([
-            'membresia_id' => 'required|exists:membresias,id',
+            'membresia_id' => 'required|exists:membresias,id', // ID de la membresía ANTERIOR
             'plan_id' => 'required|exists:planes,id',
             'fecha_ini' => 'required|date',
             'fecha_fin' => 'required|date',
         ]);
 
-        $membresia = Membresia::findOrFail($request->membresia_id);
+        // 2. Recuperamos la información necesaria
+        $membresiaAnterior = Membresia::findOrFail($request->membresia_id);
+        $planNuevo = Plan::findOrFail($request->plan_id); // Buscamos el plan para obtener el precio actual
         
-        // Actualizamos la membresía
-        $membresia->plan_id = $request->plan_id;
-        $membresia->fecha_ini = $request->fecha_ini;
-        $membresia->fecha_fin = $request->fecha_fin;
-        $membresia->estatus = 'vigente'; // Reactivamos si estaba vencida
-        $membresia->dias_congelados = null; // Reseteamos congelados al renovar
-        $membresia->save();
+        // 3. CREAMOS el nuevo registro (Aquí ocurre la magia de la retención)
+        Membresia::create([
+            'usuario_id'    => $membresiaAnterior->usuario_id, // Usamos el mismo usuario
+            'plan_id'       => $planNuevo->id,
+            'precio_pagado' => $planNuevo->precio, // <--- IMPORTANTE: Guardamos el precio histórico
+            'fecha_ini'     => $request->fecha_ini,
+            'fecha_fin'     => $request->fecha_fin,
+            'estatus'       => 'vigente',
+            'dias_congelados' => null,
+            'created_at'    => now(), // Aseguramos la fecha de creación para reportes
+            'updated_at'    => now(),
+        ]);
 
-        // Opcional: Aquí podrías crear un registro en una tabla de 'pagos' o 'ingresos'
+        // NOTA SOBRE LA MEMBRESÍA ANTERIOR:
+        // No necesitamos cambiarle el estatus a la anterior manualmente.
+        // Tu función index() ya se encarga de poner en 'vencida' 
+        // cualquier membresía cuya fecha_fin haya pasado. 
+        // Así permites que termine sus días restantes si renovó por adelantado.
 
         return redirect()->route('membresias')
             ->with('success', 'Membresía renovada exitosamente.');
