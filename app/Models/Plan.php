@@ -9,4 +9,9 @@ class Plan extends Model
     protected $table = 'planes';
     public $timestamps = false; // según el .sql
     protected $fillable = ['nombre','descripcion','duracion_dias','precio'];
+
+    public function membresias()
+    {
+        return $this->hasMany(Membresia::class, 'plan_id');
+    }
 }

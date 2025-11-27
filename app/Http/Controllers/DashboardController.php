@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Usuario; 
 use App\Models\RegistroAcceso; // 🔥 Importante para el historial de visitas
+use App\Models\Plan;
 
 class DashboardController extends Controller
 {
@@ -55,12 +56,24 @@ class DashboardController extends Controller
                                      ->orderBy('created_at', 'desc')
                                      ->get();
 
+        $planes = Plan::withCount(['membresias as usuarios_activos' => function ($query) {
+                $query->where('estatus', 'vigente');
+            }])
+            // AGREGAMOS ESTE FILTRO:
+            ->where(function($query) {
+                // Traer planes que NO sean 'desactivado' O que sean NULL (por si acaso)
+                $query->where('descripcion', '!=', 'desactivado')
+                    ->orWhereNull('descripcion');
+            })
+            ->get();
+
         return view('dashboard', [
             'nuevosUsuariosCount' => $nuevosUsuariosCount,
             'porVencerCount'      => $porVencerCount,
             'nuevosUsuarios'      => $nuevosUsuarios,
             'todayHuman'          => $now->isoFormat('ddd, D MMM'),
-            'usuariosPendientes'  => $usuariosPendientes, 
+            'usuariosPendientes'  => $usuariosPendientes,
+            'planes'              => $planes
         ]);
     }
 

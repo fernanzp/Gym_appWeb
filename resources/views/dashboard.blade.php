@@ -31,7 +31,23 @@
         .istok-web-bold { font-family: "Istok Web", sans-serif; font-weight: 700; font-style: normal; }
     </style>
 </head>
-<body class="antialiased istok-web-regular" x-data="{ aforoModalOpen: false, editPlanModalOpen: false, currentPlan: { nombre: '', precio: 0, duracion: 0 }, isEditing: false }">
+<body class="antialiased istok-web-regular" 
+      x-data="{ 
+          aforoModalOpen: false, 
+          editPlanModalOpen: {{ $errors->hasAny(['nombre', 'precio', 'duracion']) ? 'true' : 'false' }}, 
+          deletePlanModalOpen: false, {{-- NUEVO --}}
+          
+          currentPlan: { 
+              id: '{{ old('id') }}', 
+              nombre: '{{ old('nombre', '') }}', 
+              precio: '{{ old('precio', '') }}', 
+              duracion: '{{ old('duracion', '') }}' 
+          },
+          
+          planToDelete: { id: null, nombre: '' }, {{-- NUEVO --}}
+          
+          isEditing: {{ old('_method') === 'PUT' ? 'true' : 'false' }} 
+      }">
   <div class="min-h-screen p-6">
     <!-- GRID PRINCIPAL: [Sidebar | Área principal] -->
     <div class="grid grid-cols-[84px_minmax(0,1fr)] gap-6 h-[calc(100vh-3rem)]">
@@ -358,19 +374,18 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[var(--gris-bajito)] istok-web-regular">
-                            @forelse($planesDummy as $plan)
+                            @forelse($planes as $plan)
                                 <tr class="hover:bg-[#FAFAFA] transition-colors group">
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[var(--azul)]">
-                                                <!-- Icono Plan -->
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                                 </svg>
                                             </div>
                                             <div>
                                                 <p class="font-bold text-gray-900 text-lg">{{ $plan->nombre }}</p>
-                                                <p class="text-xs text-gray-500">ID: {{ $plan->id }}</p>
+                                                {{-- <p class="text-xs text-gray-500">ID: {{ $plan->id }}</p> --}}
                                             </div>
                                         </div>
                                     </td>
@@ -385,11 +400,11 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex gap-2 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                            <!-- Botón Editar -->
                                             <button 
                                                 type="button"
                                                 @click="
                                                     currentPlan = { 
+                                                        id: {{ $plan->id }},
                                                         nombre: '{{ $plan->nombre }}', 
                                                         precio: {{ $plan->precio }}, 
                                                         duracion: {{ $plan->duracion_dias }} 
@@ -403,7 +418,13 @@
                                                 </svg>
                                             </button>
                                             <!-- Botón Eliminar -->
-                                            <button class="p-2 rounded-lg text-[var(--gris-medio)] hover:text-red-600 hover:bg-red-50 transition-colors" title="Eliminar">
+                                            <button 
+                                                type="button"
+                                                @click="
+                                                    planToDelete = { id: {{ $plan->id }}, nombre: '{{ $plan->nombre }}' }; 
+                                                    deletePlanModalOpen = true"
+                                                class="p-2 rounded-lg text-[var(--gris-medio)] hover:text-red-600 hover:bg-red-50 transition-colors" 
+                                                title="Eliminar">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
@@ -413,8 +434,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                                        No hay planes registrados.
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                        No hay planes registrados en el sistema.
                                     </td>
                                 </tr>
                             @endforelse
@@ -547,8 +568,10 @@
 
           <!-- Body -->
           <div class="p-6">
-              <form action="#" method="POST">
+              <form method="POST"
+                    :action="isEditing ? '{{ url('planes') }}/' + currentPlan.id : '{{ route('planes.store') }}'">
                   @csrf
+                  <input type="hidden" name="id" x-model="currentPlan.id">
                   
                   <!-- Solo incluimos el método PUT si estamos editando -->
                   <template x-if="isEditing">
@@ -559,12 +582,17 @@
                       <!-- Campo: Nombre -->
                       <div>
                           <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Plan</label>
-                          <input 
-                              type="text" 
-                              x-model="currentPlan.nombre"
-                              class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
-                              placeholder="Ej. Plan Mensual"
-                          >
+                          <div>
+                            <input 
+                                type="text"
+                                name="nombre"
+                                x-model="currentPlan.nombre"
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
+                                placeholder="Ej. Plan Mensual"
+                                required
+                            >
+                          </div>
+                          @error('nombre') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                       </div>
 
                       <div class="grid grid-cols-2 gap-4">
@@ -575,12 +603,15 @@
                                   <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 font-bold">$</span>
                                   <input 
                                       type="number" 
+                                      name="precio"
                                       step="0.01"
                                       x-model="currentPlan.precio"
                                       class="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
                                       placeholder="0.00"
+                                      required
                                   >
                               </div>
+                              @error('precio') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                           </div>
 
                           <!-- Campo: Duración -->
@@ -588,13 +619,16 @@
                               <label class="block text-sm font-medium text-gray-700 mb-1">Duración</label>
                               <div class="relative">
                                   <input 
-                                      type="number" 
+                                      type="number"
+                                      name="duracion"
                                       x-model="currentPlan.duracion"
                                       class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-gray-900 font-medium"
                                       placeholder="30"
+                                      required
                                   >
                                   <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 text-sm pointer-events-none">días</span>
                               </div>
+                              @error('duracion') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                           </div>
                       </div>
                   </div>
@@ -615,6 +649,75 @@
                       >
                       </button>
                   </div>
+              </form>
+          </div>
+      </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN DE ELIMINAR -->
+  <div 
+      x-show="deletePlanModalOpen" 
+      style="display: none;"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+  >
+      <div 
+          @click.away="deletePlanModalOpen = false"
+          class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all border border-red-100"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+          x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+          x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+      >
+          <!-- Icono de Advertencia Grande -->
+          <div class="pt-6 pb-2 flex justify-center">
+            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+          </div>
+
+          <div class="p-6 text-center">
+              <h3 class="text-xl font-bold text-gray-900 mb-2">¿Eliminar Plan?</h3>
+              <p class="text-gray-600">
+                  Estás a punto de eliminar el plan <strong class="text-gray-900" x-text="planToDelete.nombre"></strong>. 
+                  <br>
+                  <span class="text-sm">Nota: El plan dejará de estar disponible para nuevas ventas, pero los usuarios actuales no se verán afectados.</span>
+              </p>
+          </div>
+
+          <!-- Botones -->
+          <div class="bg-gray-50 px-6 py-4 flex gap-3 justify-center">
+              <button 
+                  type="button" 
+                  @click="deletePlanModalOpen = false"
+                  class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-white transition-colors"
+              >
+                  Cancelar
+              </button>
+              
+              <!-- Formulario de Borrado -->
+              <form 
+                  method="POST" 
+                  :action="'{{ url('planes') }}/' + planToDelete.id" 
+                  class="flex-1"
+              >
+                  @csrf
+                  @method('DELETE')
+                  <button 
+                      type="submit" 
+                      class="w-full px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 shadow-md shadow-red-500/20 transition-all"
+                  >
+                      Sí, Eliminar
+                  </button>
               </form>
           </div>
       </div>
