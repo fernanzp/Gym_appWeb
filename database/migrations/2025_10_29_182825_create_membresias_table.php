@@ -15,10 +15,8 @@ return new class extends Migration
         $table->bigIncrements('id');
         $table->unsignedInteger('usuario_id');
         $table->unsignedInteger('plan_id');
-        $table->decimal('precio_pagado', 10, 2);
         $table->date('fecha_ini');
         $table->date('fecha_fin');
-        $table->integer('dias_congelados')->nullable();
         $table->enum('estatus', ['vigente', 'vencida', 'congelada'])->default('congelada');
         $table->timestamps();
 
