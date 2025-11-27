@@ -31,7 +31,7 @@
         .istok-web-bold { font-family: "Istok Web", sans-serif; font-weight: 700; font-style: normal; }
     </style>
 </head>
-<body class="antialiased istok-web-regular">
+<body class="antialiased istok-web-regular" x-data="{ aforoModalOpen: false }">
   <div class="min-h-screen p-6">
     <!-- GRID PRINCIPAL: [Sidebar | Área principal] -->
     <div class="grid grid-cols-[84px_minmax(0,1fr)] gap-6 h-[calc(100vh-3rem)]">
@@ -181,87 +181,103 @@
             </div>
 
         @endforeach
-        <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <section class="mt-6 flex-1 min-h-0 overflow-auto no-scrollbar">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
 
-              <!-- Card 1: Registrar Nuevo Cliente (Acción Principal) -->
-              <div class="h-[180px] flex flex-col gap-4">
-                  <!-- Botón 1.1: Registrar Nuevo Cliente -->
-                  <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
-                    <!-- He ajustado el layout a horizontal (flex-row) para que se vea bien en la mitad de altura -->
-                    <a href="{{ route('clientRegister') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
-                      <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">
-                              <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
-                          </svg>
-                      </div>
-                      <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nuevo Cliente</h3>
-                    </a>
-                  </article>
+                <!-- Card 1: Registrar Nuevo Cliente (Acción Principal) -->
+                <div class="h-[180px] flex flex-col gap-4">
+                    <!-- Botón 1.1: Registrar Nuevo Cliente -->
+                    <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
+                      <!-- He ajustado el layout a horizontal (flex-row) para que se vea bien en la mitad de altura -->
+                      <a href="{{ route('clientRegister') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">
+                                <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nuevo Cliente</h3>
+                      </a>
+                    </article>
 
-                  <!-- Botón 1.2: Nueva Recepcionista (NUEVO) -->
-                  <!-- Mismo estilo que Nuevo Cliente, ruta 'register' (ajústala si es distinta) -->
-                  <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
-                    <a href="{{ route('receptionist.create') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
-                      <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
-                          <!-- Icono: Usuario con gafete/corbata -->
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">
-                              <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
-                          </svg>
-                      </div>
-                      <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nueva Recepcionista</h3>
-                    </a>
-                  </article>
-              </div>
-
-              <!-- Card 2: Control de Acceso (Entrada/Salida) -->
-              <div class="h-[180px] flex flex-col gap-4">
-                  
-                  <!-- Botón Abrir Entrada (Estilo Verde/Clean) -->
-                  <form action="{{ route('access.visita') }}" method="POST" class="flex-1 h-full">
-                      @csrf
-                      <input type="hidden" name="direction" value="entry">
-                      
-                      <button type="submit" class="w-full h-full rounded-xl bg-blue-50 border border-blue-100 text-[var(--azul)] hover:bg-blue-100 hover:shadow-sm flex items-center justify-center gap-3 transition-all group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 512 512">
-                          <path d="M352 96l64 0c17.7 0 32 14.3 32 32l0 256c0 17.7-14.3 32-32 32l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0c53 0 96-43 96-96l0-256c0-53-43-96-96-96l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32zm-9.4 182.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L242.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/>
-                        </svg>
-                        <span class="font-bold group-hover:scale-105 transition-transform block">Abrir Entrada</span>
-                      </button>
-                  </form>
-
-                  <!-- Botón Abrir Salida (Estilo Rojo/Clean) -->
-                  <form action="{{ route('access.visita') }}" method="POST" class="flex-1 h-full">
-                      @csrf
-                      <input type="hidden" name="direction" value="exit">
-                      
-                      <button type="submit" class="w-full h-full rounded-xl bg-blue-50 border border-blue-100 text-[var(--azul)] hover:bg-blue-100 hover:shadow-sm flex items-center justify-center gap-3 transition-all group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                        </svg>
-                        <span class="font-bold group-hover:scale-105 transition-transform block">Abrir Salida</span>
-                      </button>
-                  </form>
-              </div>
-
-              <!-- Card 3: Ocupación Actual (Aforo) -->
-              <article class="h-[180px] bg-white p-4 rounded-2xl border border-[var(--gris-medio-bajito)] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                  <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                      <!-- Icono Personas/Aforo -->
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 640 512">
-                          <path d="M320 16a104 104 0 1 1 0 208 104 104 0 1 1 0-208zM96 88a72 72 0 1 1 0 144 72 72 0 1 1 0-144zM0 416c0-70.7 57.3-128 128-128 12.8 0 25.2 1.9 36.9 5.4-32.9 36.8-52.9 85.4-52.9 138.6l0 16c0 11.4 2.4 22.2 6.7 32L32 480c-17.7 0-32-14.3-32-32l0-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32l0-16c0-53.2-20-101.8-52.9-138.6 11.7-3.5 24.1-5.4 36.9-5.4 70.7 0 128 57.3 128 128l0 32c0 17.7-14.3 32-32 32l-86.7 0zM472 160a72 72 0 1 1 144 0 72 72 0 1 1 -144 0zM160 432c0-88.4 71.6-160 160-160s160 71.6 160 160l0 16c0 17.7-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32l0-16z"/>
-                      </svg>
-                  </div>
+                    <!-- Botón 1.2: Nueva Recepcionista (NUEVO) -->
+                    <!-- Mismo estilo que Nuevo Cliente, ruta 'register' (ajústala si es distinta) -->
+                    <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
+                      <a href="{{ route('receptionist.create') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
+                            <!-- Icono: Usuario con gafete/corbata -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 640 512" fill="currentColor">
+                                <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nueva Recepcionista</h3>
+                      </a>
+                    </article>
                 </div>
-                <div>
-                    <p class="text-[var(--gris-oscuro)] text-sm font-medium">Ocupación Actual</p>
-                    <div class="flex items-baseline gap-1 mt-1">
-                      <!-- ID txt-aforo mantenido para el JS del aforo en vivo -->
-                      <h3 id="txt-aforo" class="text-4xl istok-web-bold text-gray-900">-</h3>
+
+                <!-- Card 2: Control de Acceso (Entrada/Salida) -->
+                <div class="h-[180px] flex flex-col gap-4">
+                    
+                    <!-- Botón Abrir Entrada (Estilo Verde/Clean) -->
+                    <form action="{{ route('access.visita') }}" method="POST" class="flex-1 h-full">
+                        @csrf
+                        <input type="hidden" name="direction" value="entry">
+                        
+                        <button type="submit" class="w-full h-full rounded-xl bg-blue-50 border border-blue-100 text-[var(--azul)] hover:bg-blue-100 hover:shadow-sm flex items-center justify-center gap-3 transition-all group">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 512 512">
+                            <path d="M352 96l64 0c17.7 0 32 14.3 32 32l0 256c0 17.7-14.3 32-32 32l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0c53 0 96-43 96-96l0-256c0-53-43-96-96-96l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32zm-9.4 182.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L242.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z"/>
+                          </svg>
+                          <span class="font-bold group-hover:scale-105 transition-transform block">Abrir Entrada</span>
+                        </button>
+                    </form>
+
+                    <!-- Botón Abrir Salida (Estilo Rojo/Clean) -->
+                    <form action="{{ route('access.visita') }}" method="POST" class="flex-1 h-full">
+                        @csrf
+                        <input type="hidden" name="direction" value="exit">
+                        
+                        <button type="submit" class="w-full h-full rounded-xl bg-blue-50 border border-blue-100 text-[var(--azul)] hover:bg-blue-100 hover:shadow-sm flex items-center justify-center gap-3 transition-all group">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                          </svg>
+                          <span class="font-bold group-hover:scale-105 transition-transform block">Abrir Salida</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Card 3: Ocupación Actual (Aforo) - MODIFICADA -->
+                <!-- Importante: Verifica que en tu <body x-data="{ aforoModalOpen: false }"> esté declarado el x-data -->
+                <article class="h-[180px] bg-white p-4 rounded-2xl border border-[var(--gris-bajito)] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
+                    
+                    <div class="flex justify-between items-start">
+                        <!-- Icono Izquierdo -->
+                        <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 640 512">
+                                <path d="M320 16a104 104 0 1 1 0 208 104 104 0 1 1 0-208zM96 88a72 72 0 1 1 0 144 72 72 0 1 1 0-144zM0 416c0-70.7 57.3-128 128-128 12.8 0 25.2 1.9 36.9 5.4-32.9 36.8-52.9 85.4-52.9 138.6l0 16c0 11.4 2.4 22.2 6.7 32L32 480c-17.7 0-32-14.3-32-32l0-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32l0-16c0-53.2-20-101.8-52.9-138.6 11.7-3.5 24.1-5.4 36.9-5.4 70.7 0 128 57.3 128 128l0 32c0 17.7-14.3 32-32 32l-86.7 0zM472 160a72 72 0 1 1 144 0 72 72 0 1 1 -144 0zM160 432c0-88.4 71.6-160 160-160s160 71.6 160 160l0 16c0 17.7-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32l0-16z"/>
+                            </svg>
+                        </div>
+
+                        <!-- Botón Configuración (Engranaje) -->
+                        <button 
+                            @click="aforoModalOpen = true" 
+                            class="text-gray-300 hover:text-[var(--azul)] hover:bg-blue-50 p-1.5 rounded-full transition-all"
+                            title="Configurar Aforo Máximo"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
                     </div>
-                </div>
-              </article>
+
+                    <div>
+                        <p class="text-[var(--gris-oscuro)] text-sm font-medium">Ocupación Actual</p>
+                        <div class="flex items-baseline gap-1 mt-1">
+                            <h3 id="txt-aforo" class="text-4xl istok-web-bold text-gray-900">-</h3>
+                            <!-- Puedes poner dinámico este / 100 después -->
+                            <span class="text-sm text-gray-400 font-medium">/ 100</span> 
+                        </div>
+                    </div>
+                </article>
 
               <!-- Card 4: Membresías por Vencer -->
               <article class="h-[180px] bg-white p-4 rounded-2xl border border-[var(--gris-medio-bajito)] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
@@ -343,6 +359,89 @@
         </section>
       </main>
     </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURACIÓN DE AFORO (Alpine.js) -->
+  <!-- Este bloque va al final de tu archivo dashboard.blade.php, antes del </body> -->
+  <div 
+      x-show="aforoModalOpen" 
+      style="display: none;"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+  >
+      <!-- Contenedor del Modal -->
+      <div 
+          @click.away="aforoModalOpen = false"
+          class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+          x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+          x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+      >
+          <!-- Header -->
+          <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h3 class="text-lg font-bold text-gray-800 istok-web-bold">Configurar Capacidad</h3>
+              <button @click="aforoModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+              </button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6">
+              <!-- Formulario sin acción real por ahora -->
+              <form action="#" method="POST"> 
+                  @csrf
+                  <div class="mb-4">
+                      <label for="aforo_maximo" class="block text-sm font-medium text-gray-700 mb-2">
+                          Aforo Máximo Permitido
+                      </label>
+                      <div class="relative">
+                          <input 
+                              type="number" 
+                              name="aforo_maximo" 
+                              id="aforo_maximo" 
+                              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all text-lg font-semibold text-gray-900 placeholder-gray-400"
+                              placeholder="Ej. 150"
+                              value="100" 
+                          >
+                          <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                              <span class="text-gray-400 text-sm">personas</span>
+                          </div>
+                      </div>
+                      <p class="mt-2 text-xs text-gray-500">
+                          Esto ajustará los cálculos de porcentaje de ocupación en el dashboard y la app.
+                      </p>
+                  </div>
+
+                  <!-- Botones de Acción -->
+                  <div class="flex gap-3 mt-6">
+                      <button 
+                          type="button" 
+                          @click="aforoModalOpen = false"
+                          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      >
+                          Cancelar
+                      </button>
+                      <button 
+                          type="button"
+                          @click="aforoModalOpen = false" 
+                          class="flex-1 px-4 py-2.5 rounded-xl bg-[var(--azul)] text-white font-bold hover:bg-[var(--azul-oscuro)] shadow-md shadow-blue-500/20 transition-all"
+                      >
+                          Guardar
+                      </button>
+                  </div>
+              </form>
+          </div>
+      </div>
   </div>
 
   <!-- SCRIPT DE AFORO AUTOMÁTICO -->
