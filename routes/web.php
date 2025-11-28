@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AccessController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\RecepcionistaController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\ReporteController;
 
 // Ruta base
 Route::get('/', function () {
@@ -72,6 +73,10 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
         ->name('api.analytics.revenue');
     Route::get('/api/analytics/live', [AnalyticsController::class, 'liveActivityData'])
         ->name('api.analytics.live');
+
+    //Pdf
+    Route::get('/reportes/descargar-analytics', [ReporteController::class, 'descargarAnalytics'])
+        ->name('reportes.analytics');
 
     // Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
