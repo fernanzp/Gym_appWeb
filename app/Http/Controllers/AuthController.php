@@ -36,6 +36,18 @@ class AuthController extends Controller
 
         // Verificar la contraseña
         if (Hash::check($request->password, $usuario->contrasena)) {
+            //Verificación del rol
+            $tienePermiso = $usuario->roles()
+                ->whereIn('rol', ['admin', 'staff'])
+                ->exists();
+
+            if (!$tienePermiso) {
+                // Si la contraseña es correcta pero no es personal del gym:
+                return back()->withErrors([
+                    'email' => 'Tu cuenta no tiene permisos para acceder al panel administrativo.',
+                ]);
+            }
+
             // Autenticación exitosa
             Auth::login($usuario);
 

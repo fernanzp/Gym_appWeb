@@ -96,12 +96,14 @@
           </a>-->
 
           <!-- Análisis y reportes -->
+          @can('admin-only')
           <a href="{{ route('analytics') }}" class="p-2 rounded-xl text-[var(--gris-medio)] hover:text-[var(--gris-oscuro)]" title="Análisis y reportes"> <!--ring-2 ring-[var(--gris-medio)] hover:ring-[var(--gris-oscuro)]-->
             <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="currentColor" d="M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7 262.6 153.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l73.4-73.4 57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z"/>
             </svg>
             <span class="sr-only">Análisis y reportes</span>
           </a>
+          @endcan
         </nav>
       </aside>
 
@@ -224,6 +226,7 @@
 
                     <!-- Botón 1.2: Nueva Recepcionista (NUEVO) -->
                     <!-- Mismo estilo que Nuevo Cliente, ruta 'register' (ajústala si es distinta) -->
+                    @can('admin-only')
                     <article class="flex-1 bg-white rounded-xl border-2 border-dashed border-blue-200 hover:border-[var(--azul)] hover:shadow-md transition-all group">
                       <a href="{{ route('receptionist.create') }}" class="w-full h-full flex flex-row items-center justify-center gap-3 px-2">
                         <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] group-hover:scale-110 transition-transform">
@@ -235,6 +238,7 @@
                         <h3 class="text-lg font-bold text-[var(--azul)] group-hover:text-[var(--azul-oscuro)] group-hover:scale-105 transition-transform">Nueva Recepcionista</h3>
                       </a>
                     </article>
+                    @endcan
                 </div>
 
                 <!-- Card 2: Control de Acceso (Entrada/Salida) -->
@@ -280,6 +284,7 @@
                         </div>
 
                         <!-- Botón Configuración (Engranaje) -->
+                        @can('admin-only')
                         <button 
                             @click="aforoModalOpen = true" 
                             class="text-[var(--gris-medio)] hover:text-[var(--azul)] hover:bg-blue-50 p-1.5 rounded-full transition-all"
@@ -290,6 +295,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                         </button>
+                        @endcan
                     </div>
 
                     <div>
@@ -337,6 +343,7 @@
           </div>
 
           <!-- Sección: Gestión de Planes y Membresías -->
+          @can('admin-only')
           <div class="mt-8">
             
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -451,6 +458,7 @@
                 </div>
             </div>
           </div>
+          @endcan
 
           <!-- Sección: Membresías Próximas a Vencer -->
           <div class="mt-8 mb-12">
