@@ -11,6 +11,8 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Api\AccessController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\RecepcionistaController;
+use App\Http\Controllers\PlanController;
+use App\Http\Controllers\ReporteController;
 
 // Ruta base
 Route::get('/', function () {
@@ -49,9 +51,21 @@ Route::middleware('auth')->group(function () {
 
 // Rutas administrativas (Admin o Staff)
 Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
+
+    // Ruta para establecer el aforo maximo
+    Route::post('/configuracion/aforo', [DashboardController::class, 'updateAforo'])->name('configuracion.updateAforo');
     
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Ruta para guardar planes
+    // Ruta para CREAR (POST)
+    Route::post('/planes', [PlanController::class, 'store'])->name('planes.store');
+
+    // Ruta para EDITAR (PUT)
+    Route::put('/planes/{plan}', [PlanController::class, 'update'])->name('planes.update');
+
+    // Ruta para ELIMINAR (DELETE) - ¡Esta es la que te falta o no detecta!
+    Route::delete('/planes/{plan}', [PlanController::class, 'destroy'])->name('planes.destroy');
 
     // Análisis y Reportes (Vista de Diseño)
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
@@ -59,6 +73,10 @@ Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
         ->name('api.analytics.revenue');
     Route::get('/api/analytics/live', [AnalyticsController::class, 'liveActivityData'])
         ->name('api.analytics.live');
+
+    //Pdf
+    Route::get('/reportes/descargar-analytics', [ReporteController::class, 'descargarAnalytics'])
+        ->name('reportes.analytics');
 
     // Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
