@@ -102,7 +102,18 @@
                         $meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
                         $fechaCorta = $dias[$hoy->dayOfWeek] . ', ' . $hoy->format('j') . ' ' . $meses[$hoy->month - 1];
                     @endphp
-                    <h1 class="text-3xl istok-web-bold">Análisis y reportes</h1>
+                    <!-- CAMBIO AQUÍ: Agrupamos Título y Botón en un div flex -->
+                    <div class="flex items-center gap-4">
+                        <h1 class="text-3xl istok-web-bold">Análisis y reportes</h1>
+                        
+                        <!-- Botón Descargar PDF -->
+                        <a href="{{ route('reportes.analytics') }}" target="_blank" class="hidden md:inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-600 hover:text-[var(--azul)] hover:border-blue-200 px-3 py-1.5 rounded-xl text-sm font-bold transition-all shadow-sm" title="Descargar Reporte Mensual">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 384 512">
+                                <path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-277.5c0-17-6.7-33.3-18.7-45.3L258.7 18.7C246.7 6.7 230.5 0 213.5 0L64 0zM325.5 176L232 176c-13.3 0-24-10.7-24-24L208 58.5 325.5 176z"/>
+                            </svg>
+                            <span class="hidden lg:inline">Descargar</span> PDF
+                        </a>
+                    </div>
                     <div class="flex items-center gap-3">
                         <div class="text-right leading-tight">
                             <p class="istok-web-bold">
