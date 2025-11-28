@@ -76,7 +76,17 @@ class MembresiaController extends Controller
         }
 
         $membresias = $query->orderBy('fecha_fin', 'asc')->paginate(10);
-        $planes = Plan::all();
+        
+        $planes = Plan::withCount(['membresias as usuarios_activos' => function ($query) {
+                $query->where('estatus', 'vigente');
+            }])
+            // AGREGAMOS ESTE FILTRO:
+            ->where(function($query) {
+                // Traer planes que NO sean 'desactivado' O que sean NULL (por si acaso)
+                $query->where('descripcion', '!=', 'desactivado')
+                    ->orWhereNull('descripcion');
+            })
+            ->get();
 
         return view('membresias', compact('membresias', 'totalActivas', 'totalVencidas', 'totalCongeladas', 'totalPorVencer', 'filtro', 'planes'));
     }

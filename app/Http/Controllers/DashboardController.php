@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\Usuario; 
 use App\Models\RegistroAcceso; // 🔥 Importante para el historial de visitas
 use App\Models\Plan;
+use App\Models\Configuracion;
 
 class DashboardController extends Controller
 {
@@ -67,14 +68,36 @@ class DashboardController extends Controller
             })
             ->get();
 
+        //OBTENER AFORO MÁXIMO (Si no existe, usamos 100 por defecto)
+        $aforoMaximo = Configuracion::where('clave', 'aforo_maximo')->value('valor');
+        if (!$aforoMaximo) {
+            $aforoMaximo = 100; // Valor default
+        }
+
         return view('dashboard', [
             'nuevosUsuariosCount' => $nuevosUsuariosCount,
             'porVencerCount'      => $porVencerCount,
             'nuevosUsuarios'      => $nuevosUsuarios,
             'todayHuman'          => $now->isoFormat('ddd, D MMM'),
             'usuariosPendientes'  => $usuariosPendientes,
+            'aforoMaximo'         => $aforoMaximo,
             'planes'              => $planes
         ]);
+    }
+
+    public function updateAforo(Request $request)
+    {
+        $request->validate([
+            'aforo_maximo' => 'required|integer|min:1'
+        ]);
+
+        // Usamos updateOrCreate: si existe la clave la actualiza, si no, la crea
+        Configuracion::updateOrCreate(
+            ['clave' => 'aforo_maximo'],
+            ['valor' => $request->aforo_maximo]
+        );
+
+        return redirect()->back()->with('success', 'Capacidad máxima actualizada correctamente.');
     }
 
     // 🔥 NUEVA API PARA AFORO EN VIVO (Socios + Visitas) 🔥

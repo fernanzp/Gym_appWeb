@@ -8,6 +8,7 @@ use App\Models\RegistroAcceso; // Asegúrate de tener este modelo creado
 use App\Models\Usuario;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\Configuracion;
 
 class AnalyticsController extends Controller
 {
@@ -175,7 +176,10 @@ class AnalyticsController extends Controller
 
     public function liveActivityData()
     {
-        $capacidadMaxima = 100; // Dato fijo por ahora
+        $capacidadMaxima = Configuracion::where('clave', 'aforo_maximo')->value('valor');
+        if (!$capacidadMaxima) {
+            $capacidadMaxima = 100; // Valor default
+        }
         $hoy = Carbon::now();
         $ayer = Carbon::yesterday();
 

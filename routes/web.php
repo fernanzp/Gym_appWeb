@@ -50,6 +50,9 @@ Route::middleware('auth')->group(function () {
 
 // Rutas administrativas (Admin o Staff)
 Route::middleware(['auth', 'can:admin-or-staff'])->group(function () {
+
+    // Ruta para establecer el aforo maximo
+    Route::post('/configuracion/aforo', [DashboardController::class, 'updateAforo'])->name('configuracion.updateAforo');
     
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
