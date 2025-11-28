@@ -34,9 +34,16 @@
 <body class="antialiased istok-web-regular" 
       x-data="{ 
           aforoModalOpen: false, 
-          editPlanModalOpen: {{ $errors->hasAny(['nombre', 'precio', 'duracion']) ? 'true' : 'false' }}, 
-          deletePlanModalOpen: false, {{-- NUEVO --}}
           
+          // Lógica existente para mantener el modal abierto si hay errores de validación
+          editPlanModalOpen: {{ $errors->hasAny(['nombre', 'precio', 'duracion']) ? 'true' : 'false' }}, 
+          deletePlanModalOpen: false,
+          
+          // NUEVO: Variables para el Modal de Renovación
+          renewModalOpen: false,
+          renewData: { id: 0, usuario: '', plan_id: 0 },
+
+          // Lógica existente para repoblar datos viejos (old inputs)
           currentPlan: { 
               id: '{{ old('id') }}', 
               nombre: '{{ old('nombre', '') }}', 
@@ -44,7 +51,7 @@
               duracion: '{{ old('duracion', '') }}' 
           },
           
-          planToDelete: { id: null, nombre: '' }, {{-- NUEVO --}}
+          planToDelete: { id: null, nombre: '' },
           
           isEditing: {{ old('_method') === 'PUT' ? 'true' : 'false' }} 
       }">
@@ -444,6 +451,116 @@
                 </div>
             </div>
           </div>
+
+          <!-- Sección: Membresías Próximas a Vencer -->
+          <div class="mt-8 mb-12">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl istok-web-bold text-gray-900">Membresías Próximas a Vencer</h2>
+                    <p class="text-sm text-[var(--gris-oscuro)]">Usuarios que requieren renovación en los próximos 7 días.</p>
+                </div>
+                
+                <!-- Botón Ver Todas -->
+                <a href="{{ route('membresias', ['filter' => 'por_vencer']) }}" class="text-[var(--azul)] font-bold hover:underline text-sm flex items-center gap-1">
+                    Ver todas
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+
+            <div class="overflow-hidden rounded-2xl bg-white border border-[var(--gris-medio-bajito)] shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-[#F8F8F8] border-b border-[var(--gris-medio-bajito)] istok-web-bold">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-gray-600">Socio</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Plan Actual</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Fecha Vencimiento</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Días Restantes</th>
+                                <th class="px-6 py-4 text-left text-gray-600">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--gris-medio-bajito)] istok-web-regular">
+                            @forelse($membresiasPorVencer as $m)
+                                @php
+                                    if ($m->fecha_fin < now()){
+                                        $diasRestantes = 0;
+                                    } else {
+                                        $diasRestantes = now()->diffInDays($m->fecha_fin);
+                                    }
+                                    
+                                    // Estilo de urgencia
+                                    $urgenciaClass = 'bg-orange-100 text-orange-700 border-orange-200'; // Default (<7 días)
+                                    if ($diasRestantes <= 2) {
+                                        $urgenciaClass = 'bg-red-100 text-red-700 border-red-200';
+                                    }
+                                @endphp
+
+                                <tr class="hover:bg-[#FAFAFA] transition-colors group">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <!-- Avatar / Inicial -->
+                                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[var(--azul)] font-bold border border-blue-100 text-sm">
+                                                {{ substr($m->usuario->nombre_comp, 0, 1) }}
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-gray-900">{{ $m->usuario->nombre_comp }}</p>
+                                                <p class="text-xs text-gray-500">{{ $m->usuario->email ?? 'Sin correo' }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-700 font-medium">
+                                        {{ $m->plan->nombre }}
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-600">
+                                        {{ $m->fecha_fin->format('d/m/Y') }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold border {{ $urgenciaClass }} flex items-center w-fit gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {{ round($diasRestantes) }} días
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <!-- Botón Renovar (Conectado a Alpine) -->
+                                        <button 
+                                            type="button"
+                                            @click="
+                                                renewData = { 
+                                                    id: {{ $m->id }}, 
+                                                    usuario: '{{ $m->usuario->nombre_comp }}', 
+                                                    plan_id: {{ $m->plan_id }} 
+                                                };
+                                                renewModalOpen = true;
+                                            "
+                                            class="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200 text-xs font-bold hover:bg-green-100 transition-colors shadow-sm cursor-pointer"
+                                            title="Renovar Membresía"
+                                        >
+                                            Renovar
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <p>¡Todo en orden! No hay membresías por vencer esta semana.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+          </div>
         </section>
       </main>
     </div>
@@ -718,6 +835,101 @@
                   </button>
               </form>
           </div>
+      </div>
+  </div>
+
+  <!-- MODAL DE RENOVACIÓN (Alpine.js) -->
+  <div 
+      x-show="renewModalOpen" 
+      style="display: none;"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+  >
+      <div 
+          @click.away="renewModalOpen = false"
+          class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+          x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+          x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+      >
+          <form action="{{ route('membresias.prepararRenovacion') }}" method="POST">
+              @csrf
+              <!-- ID vinculado a Alpine -->
+              <input type="hidden" name="membresia_id" x-model="renewData.id">
+
+              <!-- Header -->
+              <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                  <h3 class="text-lg font-bold text-gray-800 istok-web-bold">Renovar Membresía</h3>
+                  <button type="button" @click="renewModalOpen = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                  </button>
+              </div>
+
+              <!-- Body -->
+              <div class="p-6">
+                  <!-- Icono -->
+                  <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 mb-4">
+                      <svg class="h-6 w-6 text-[var(--azul)]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
+                  </div>
+
+                  <div class="text-center mb-6">
+                      <p class="text-sm text-gray-500">
+                          Selecciona el plan para renovar a <span class="font-bold text-[var(--azul)] text-lg" x-text="renewData.usuario"></span>.
+                      </p>
+                  </div>
+
+                  <!-- Selector de Plan -->
+                  <div class="mb-6">
+                      <label for="renewPlanSelect" class="block text-sm font-medium text-gray-700 mb-2">Plan a Renovar</label>
+                      <div class="relative">
+                          <select 
+                              name="plan_id" 
+                              id="renewPlanSelect" 
+                              x-model="renewData.plan_id"
+                              class="block w-full rounded-xl border border-gray-300 py-3 pl-4 pr-10 text-gray-900 focus:ring-2 focus:ring-blue-100 focus:border-[var(--azul)] outline-none transition-all appearance-none bg-white"
+                          >
+                              @foreach($planes as $plan)
+                                  <option value="{{ $plan->id }}">
+                                      {{ $plan->nombre }} - ${{ number_format($plan->precio, 0) }} ({{ $plan->duracion_dias }} días)
+                                  </option>
+                              @endforeach
+                          </select>
+                          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Botones -->
+                  <div class="flex gap-3">
+                      <button 
+                          type="button" 
+                          @click="renewModalOpen = false"
+                          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      >
+                          Cancelar
+                      </button>
+                      <button 
+                          type="submit"
+                          class="flex-1 px-4 py-2.5 rounded-xl bg-[var(--azul)] text-white font-bold hover:bg-[var(--azul-oscuro)] shadow-md shadow-blue-500/20 transition-all"
+                      >
+                          Continuar al Pago
+                      </button>
+                  </div>
+              </div>
+          </form>
       </div>
   </div>
 

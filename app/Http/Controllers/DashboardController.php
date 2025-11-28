@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Usuario; 
-use App\Models\RegistroAcceso; // 🔥 Importante para el historial de visitas
+use App\Models\RegistroAcceso; // Importante para el historial de visitas
+use App\Models\Membresia;
 use App\Models\Plan;
 use App\Models\Configuracion;
 
@@ -44,7 +45,7 @@ class DashboardController extends Controller
                 DB::raw('COALESCE(lm.estatus, NULL) as membresia_estatus')
             ]);
 
-        // ---- Membresías por vencer esta semana
+        // ---- Membresías por vencer esta semana (Conteo para Cards)
         $finDeSemana = (clone $now)->endOfWeek(); 
         $porVencerCount = DB::table('membresias')
             ->where('estatus', 'vigente')
@@ -52,17 +53,26 @@ class DashboardController extends Controller
             ->whereDate('fecha_fin', '<=', $finDeSemana->toDateString())
             ->count();
 
-        // ⭐️ AÑADIR CONSULTA PARA UX Y REINTENTO ⭐️
+        // NUEVA CONSULTA: Tabla "Próximas a Vencer" (Datos reales para la tabla)
+        // Traemos las que vencen desde HOY hasta en 7 días
+        $subqueryUltimas = Membresia::selectRaw('MAX(id)')->groupBy('usuario_id');
+        $membresiasPorVencer = Membresia::with(['usuario', 'plan'])
+            ->whereIn('id', $subqueryUltimas)
+            ->where('estatus', 'vigente')
+            ->whereBetween('fecha_fin', [$now->startOfDay(), $now->copy()->addDays(7)->endOfDay()])
+            ->orderBy('fecha_fin', 'asc') // Las más urgentes primero
+            ->get();
+
+        // UX y Reintento
         $usuariosPendientes = Usuario::whereIn('estatus', [8, 9])
                                      ->orderBy('created_at', 'desc')
                                      ->get();
 
+        // Planes para el selector de renovación
         $planes = Plan::withCount(['membresias as usuarios_activos' => function ($query) {
                 $query->where('estatus', 'vigente');
             }])
-            // AGREGAMOS ESTE FILTRO:
             ->where(function($query) {
-                // Traer planes que NO sean 'desactivado' O que sean NULL (por si acaso)
                 $query->where('descripcion', '!=', 'desactivado')
                     ->orWhereNull('descripcion');
             })
@@ -81,7 +91,8 @@ class DashboardController extends Controller
             'todayHuman'          => $now->isoFormat('ddd, D MMM'),
             'usuariosPendientes'  => $usuariosPendientes,
             'aforoMaximo'         => $aforoMaximo,
-            'planes'              => $planes
+            'planes'              => $planes,
+            'membresiasPorVencer' => $membresiasPorVencer
         ]);
     }
 
