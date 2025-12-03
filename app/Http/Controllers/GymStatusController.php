@@ -17,10 +17,37 @@ class GymStatusController extends Controller
     public function getAforo()
     {
         try {
-            $personasDentro = Usuario::where('is_inside', 1)->count();
+            // A. SOCIOS: Contar los que tienen is_inside = 1 (excluyendo el usuario visita 99999)
+            $sociosAdentro = Usuario::where('is_inside', 1)
+                                    ->where('id', '!=', 99999) 
+                                    ->count();
 
+            // B. VISITAS: Lógica de tu compañero (Recorrido cronológico)
+            $visitaId = 99999; // ID reservado para visitas
+            $visitasAdentro = 0;
+
+            // Obtenemos movimientos de visita de HOY en orden
+            $movimientos = RegistroAcceso::where('usuario_id', $visitaId)
+                            ->where('acceso', 1)
+                            ->whereDate('fecha', Carbon::today())
+                            ->orderBy('fecha', 'asc')
+                            ->get(['direccion']); // 1=Entrada, 0=Salida
+
+            foreach ($movimientos as $mov) {
+                if ($mov->direccion == 1) {
+                    $visitasAdentro++;
+                } else {
+                    if ($visitasAdentro > 0) {
+                        $visitasAdentro--;
+                    }
+                }
+            }
+
+            // C. TOTAL FINAL
+            $personasDentro = $sociosAdentro + $visitasAdentro;
+
+            // D. CAPACIDAD MÁXIMA (Desde Configuración)
             $config = Configuracion::where('clave', 'aforo_maximo')->first();
-            
             $capacidadMaxima = $config ? (int)$config->valor : 0; 
 
             $porcentaje = 0;
@@ -29,9 +56,11 @@ class GymStatusController extends Controller
             }
 
             return response()->json([
-                'cantidad' => $personasDentro,
+                'cantidad' => $personasDentro, // Total (Socios + Visitas)
                 'porcentaje' => round($porcentaje),
-                'maximo' => $capacidadMaxima
+                'maximo' => $capacidadMaxima,
+                // Opcional: Enviamos desglose por si quieres mostrarlo en debug
+                'debug_info' => "Socios: $sociosAdentro, Visitas: $visitasAdentro"
             ]);
 
         } catch (\Exception $e) {
