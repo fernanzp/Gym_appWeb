@@ -99,7 +99,7 @@ class DashboardController extends Controller
     public function updateAforo(Request $request)
     {
         $request->validate([
-            'aforo_maximo' => 'required|integer|min:1'
+            'aforo_maximo' => 'required|integer|min:2|max:120'
         ]);
 
         // Usamos updateOrCreate: si existe la clave la actualiza, si no, la crea
